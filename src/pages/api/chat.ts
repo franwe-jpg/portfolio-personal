@@ -11,8 +11,9 @@ const FALLBACK_SALT = 'portfolio-personal-fallback-salt';
 
 // Visitor-facing copy is intentionally Spanish.
 const QUOTA_MESSAGE =
-  `Llegaste al limite de ${DAILY_LIMIT} preguntas por dia. ` +
-  'Si querés seguir la charla, escribime por email y te respondo personalmente.';
+  `Por hoy llegamos al límite de ${DAILY_LIMIT} preguntas desde tu red. ` +
+  'Mañana se renueva, y mientras tanto escribime a francomartin2012@hotmail.com ' +
+  'que te respondo yo en persona.';
 const UNAVAILABLE_MESSAGE =
   'El asistente no está disponible en este momento. ' +
   'Escribime por email y te respondo personalmente.';
