@@ -1,0 +1,44 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "portfolio-personal",
+
+  // No `main`: @astrojs/cloudflare supplies the Worker entrypoint itself and
+  // emits the deployable config to dist/server/wrangler.json.
+  "compatibility_date": "2026-09-18",
+  "compatibility_flags": ["nodejs_compat"],
+
+  // Prerendered pages are served straight from static assets; requests that
+  // match no asset (i.e. /api/chat) fall through to the Worker.
+  // `astro build` emits the client bundle here and rewrites this path to a
+  // build-relative one in dist/server/wrangler.json.
+  "assets": {
+    "binding": "ASSETS",
+    "directory": "./dist/client"
+  },
+
+  // Workers AI.
+  //
+  // DISABLED FOR LOCAL DEVELOPMENT. Workers AI has no local emulation, so the
+  // Vite plugin opens a remote proxy session and `astro dev` exits before it
+  // becomes ready unless Cloudflare credentials are present.
+  //
+  // Uncomment this block once the project is connected to Cloudflare
+  // (`wrangler login`). Until then /api/chat serves a dev stub; see
+  // src/pages/api/chat.ts.
+  // "ai": {
+  //   "binding": "AI"
+  // },
+
+  // Run `wrangler d1 create portfolio` and paste the returned id below.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "portfolio",
+      "database_id": "REPLACE_WITH_D1_ID"
+    }
+  ],
+
+  "observability": {
+    "enabled": true
+  }
+}
