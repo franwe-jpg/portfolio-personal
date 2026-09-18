@@ -18,23 +18,20 @@
 
   // Workers AI.
   //
-  // DISABLED FOR LOCAL DEVELOPMENT. Workers AI has no local emulation, so the
-  // Vite plugin opens a remote proxy session and `astro dev` exits before it
-  // becomes ready unless Cloudflare credentials are present.
-  //
-  // Uncomment this block once the project is connected to Cloudflare
-  // (`wrangler login`). Until then /api/chat serves a dev stub; see
+  // Workers AI has no local emulation: with this binding enabled the Vite dev
+  // server opens a remote proxy session against Cloudflare. That works now that
+  // the project is authenticated, but comment it out again if `astro dev` ever
+  // refuses to start offline — /api/chat then falls back to the DEV stub in
   // src/pages/api/chat.ts.
-  // "ai": {
-  //   "binding": "AI"
-  // },
+  "ai": {
+    "binding": "AI"
+  },
 
-  // Run `wrangler d1 create portfolio` and paste the returned id below.
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "portfolio",
-      "database_id": "REPLACE_WITH_D1_ID"
+      "database_id": "1c695d5e-403a-499f-9dcd-7bae928ad983"
     }
   ],
 
