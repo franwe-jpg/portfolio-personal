@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Franco Soler — Analista Programador</title>
+<style>
+  :root{
+    /* Tema claro de WhatsApp */
+    --wa-wall:      #efeae2;  /* fondo del chat */
+    --wa-panel:     #f0f2f5;  /* header y composer */
+    --wa-in:        #ffffff;  /* burbuja entrante (Franco) */
+    --wa-out:       #d9fdd3;  /* burbuja saliente (visitante) */
+    --wa-text:      #111b21;
+    --wa-muted:     #667781;
+    --wa-link:      #027eb5;
+    --wa-tick:      #53bdeb;
+    --wa-accent:    #000000;
+    --wa-border:    #e9edef;
+    --wa-chip:      #ffffff;
+    --wa-chip-warn: #fff8c4;
+
+    --radius-bubble: 8px;
+    --chat-h: min(760px, calc(100svh - 96px));
+
+    --font: "Segoe UI", "Helvetica Neue", Helvetica, -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif;
+  }
+
+  *{ box-sizing:border-box; }
+
+  body{
+    margin:0;
+    font-family:var(--font);
+    color:var(--wa-text);
+    background:#f7f5f2;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ── Escenario ──────────────────────────────────────────────── */
+  #stage{ position:relative; }
+
+  #sticky{
+    position:sticky; top:0;
+    height:100svh;
+    display:flex; align-items:center; justify-content:center;
+    gap:clamp(32px, 6vw, 88px);
+    padding:24px;
+  }
+
+  /* ── Chat (común a los 3 modelos) ───────────────────────────── */
+  .chat{
+    position:relative;
+    width:580px; max-width:100%;
+    height:var(--chat-h);
+    display:flex; flex-direction:column;
+    background:var(--wa-wall);
+    border-radius:14px;
+    overflow:hidden;
+    box-shadow:0 1px 2px rgba(11,20,26,.08), 0 18px 48px -18px rgba(11,20,26,.28);
+  }
+
+  .chat-header{
+    flex:none; background:var(--wa-panel);
+    border-bottom:1px solid var(--wa-border);
+    display:flex; align-items:center; gap:12px;
+    padding:9px 16px;
+  }
+  .back{ display:none; color:var(--wa-muted); flex:none; }
+  .avatar{
+    flex:none; width:40px; height:40px; border-radius:50%;
+    background:linear-gradient(145deg,#2b2b2b,#050505);
+    display:grid; place-items:center;
+    font-size:15px; font-weight:600; color:#fff; letter-spacing:.5px;
+  }
+  .who{ flex:1; min-width:0; }
+  .who .name{ font-size:16px; font-weight:500; line-height:1.3; }
+  .who .status{ font-size:12.5px; color:var(--wa-muted); line-height:1.35; height:17px; overflow:hidden; }
+  .who .status b{ color:var(--wa-accent); font-weight:500; }
+  .hdr-actions{ display:flex; gap:20px; color:#54656f; flex:none; }
+
+  .chat-body{
+    position:relative; flex:1; overflow:hidden;
+    background-color:var(--wa-wall);
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cg fill='none' stroke='%23000000' stroke-opacity='0.045' stroke-width='1.5' stroke-linecap='round'%3E%3Ccircle cx='22' cy='24' r='8'/%3E%3Cpath d='M60 16h20v15H70l-6 7v-7h-4z'/%3E%3Cpath d='M108 34l7-13 7 13z'/%3E%3Cpath d='M14 80q10-13 20 0t20 0'/%3E%3Crect x='90' y='70' width='18' height='18' rx='4'/%3E%3Cpath d='M28 116l9 9 16-18'/%3E%3Ccircle cx='116' cy='112' r='6'/%3E%3Cpath d='M64 96v18M55 105h18'/%3E%3C/g%3E%3C/svg%3E");
+  }
+  .chat-body::before{
+    content:""; position:absolute; inset:0 0 auto 0; height:44px; z-index:3;
+    background:linear-gradient(to bottom, var(--wa-wall), rgba(239,234,226,0));
+    pointer-events:none;
+  }
+
+  .chat-list{
+    position:absolute; left:0; right:0; top:0;
+    padding:14px 10px 10px;
+    display:flex; flex-direction:column; gap:3px;
+    will-change:transform;
+    transition:transform .5s cubic-bezier(.22,.61,.36,1);
+  }
+
+  .chip{
+    align-self:center; margin:6px 0 10px;
+    background:var(--wa-chip); color:var(--wa-muted);
+    font-size:12.5px; padding:6px 12px; border-radius:8px;
+    box-shadow:0 1px .5px rgba(11,20,26,.13);
+  }
+  .chip.lock{
+    max-width:86%; text-align:center; color:#5b5344;
+    background:var(--wa-chip-warn); line-height:1.5;
+  }
+
+  .row{ display:flex; }
+  .row.in{ justify-content:flex-start; }
+  .row.out{ justify-content:flex-end; }
+
+  .bubble{
+    position:relative; max-width:82%;
+    padding:6px 9px 8px;
+    border-radius:var(--radius-bubble);
+    font-size:14.8px; line-height:20px;
+    box-shadow:0 1px .5px rgba(11,20,26,.13);
+    word-wrap:break-word;
+    animation:pop .26s cubic-bezier(.2,.8,.3,1) both;
+  }
+  @keyframes pop{ from{ opacity:0; transform:translateY(10px) scale(.965);} to{ opacity:1; transform:none;} }
+
+  .in .bubble{ background:var(--wa-in); border-top-left-radius:0; }
+  .out .bubble{ background:var(--wa-out); border-top-right-radius:0; }
+  .row.same .bubble{ border-radius:var(--radius-bubble); }
+
+  .row:not(.same) .bubble::after{ content:""; position:absolute; top:0; width:9px; height:13px; }
+  .in:not(.same) .bubble::after{ left:-8px; background:var(--wa-in); clip-path:polygon(100% 0,100% 100%,0 0); }
+  .out:not(.same) .bubble::after{ right:-8px; background:var(--wa-out); clip-path:polygon(0 0,0 100%,100% 0); }
+
+  .bubble a{ color:var(--wa-link); text-decoration:none; border-bottom:1px solid rgba(2,126,181,.3); }
+  .bubble a:hover{ border-bottom-color:var(--wa-link); }
+  .bubble a:focus-visible{ outline:2px solid var(--wa-link); outline-offset:3px; border-radius:2px; }
+
+  .meta{
+    float:right; display:inline-flex; align-items:center; gap:3px;
+    margin:8px -2px -4px 8px;
+    font-size:11px; color:var(--wa-muted); white-space:nowrap;
+  }
+  .tick{ color:var(--wa-tick); }
+
+  .typing{ display:inline-flex; gap:4px; align-items:center; padding:12px 13px; }
+  .typing i{ width:7px; height:7px; border-radius:50%; background:#9aa7ad; animation:blink 1.2s infinite ease-in-out; }
+  .typing i:nth-child(2){ animation-delay:.18s; }
+  .typing i:nth-child(3){ animation-delay:.36s; }
+  @keyframes blink{ 0%,60%,100%{ opacity:.35; transform:translateY(0);} 30%{ opacity:1; transform:translateY(-3px);} }
+
+  .composer{
+    flex:none; padding:9px 12px; background:var(--wa-panel);
+    border-top:1px solid var(--wa-border);
+    display:flex; align-items:center; gap:10px;
+  }
+  .input{
+    flex:1; background:#fff; border-radius:9px; padding:10px 14px;
+    color:var(--wa-muted); font-size:14.5px;
+    display:flex; align-items:center; gap:10px; min-width:0;
+  }
+  .input span{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .send{ flex:none; color:#54656f; display:grid; place-items:center; }
+
+  .hint{
+    position:absolute; left:50%; bottom:22px; transform:translateX(-50%);
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+    color:var(--wa-muted); font-size:12.5px;
+    background:rgba(255,255,255,.72); backdrop-filter:blur(3px);
+    padding:8px 14px; border-radius:20px;
+    transition:opacity .4s ease; pointer-events:none;
+  }
+  .hint.gone{ opacity:0; }
+  .hint svg{ animation:nudge 1.6s infinite ease-in-out; }
+  @keyframes nudge{ 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(5px);} }
+
+  /* ── Piezas propias de cada modelo ──────────────────────────── */
+  .intro{ display:none; }
+
+  /* Modelo A · Tarjeta ───────────────────────────────────────── */
+  body[data-variant="card"]{ background:#f4f1ec; }
+  body[data-variant="card"] .chat{
+    width:520px; border-radius:20px;
+    box-shadow:0 2px 6px rgba(11,20,26,.06), 0 30px 70px -24px rgba(11,20,26,.32);
+  }
+  body[data-variant="card"] #sticky::after{
+    content:"Franco Soler · Analista Programador";
+    position:absolute; top:28px; left:50%; transform:translateX(-50%);
+    font-size:13px; color:#9c9689; letter-spacing:.02em;
+  }
+
+  /* Modelo B · Presentación ──────────────────────────────────── */
+  body[data-variant="split"]{ background:#ffffff; }
+  body[data-variant="split"] #sticky{ justify-content:center; }
+  body[data-variant="split"] .intro{
+    display:block; max-width:400px; flex:none;
+  }
+  .intro h1{
+    font-size:clamp(40px, 4.4vw, 60px);
+    line-height:1.02; letter-spacing:-.035em; font-weight:600; margin:0 0 18px;
+  }
+  .intro p{
+    font-size:16.5px; line-height:1.65; color:#4a5a63; margin:0 0 28px; max-width:36ch;
+  }
+  .intro .links{ display:flex; gap:10px; flex-wrap:wrap; }
+  .intro .links a, .intro .links button{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:9px 15px; border-radius:999px;
+    border:1px solid #dfe5e7; color:var(--wa-text);
+    font-size:14px; text-decoration:none;
+    background:#fff; font:inherit; cursor:pointer;
+    transition:border-color .18s ease, background .18s ease;
+  }
+  .intro .links a:hover, .intro .links button:hover{ border-color:var(--wa-accent); background:#f3f4f6; }
+  .intro .links a:focus-visible, .intro .links button:focus-visible{ outline:2px solid var(--wa-accent); outline-offset:2px; }
+  .intro .links svg{ color:var(--wa-accent); }
+  body[data-variant="split"] .chat{ width:580px; }
+
+  /* ── Botón flotante de alternancia (móvil) ──────────────────── */
+  .view-toggle-mobile{
+    display:none;
+    align-items:center; gap:6px;
+    padding:8px 13px; border-radius:999px;
+    border:1px solid #e3e7e9; background:rgba(255,255,255,.94);
+    backdrop-filter:blur(6px);
+    color:var(--wa-text); font:inherit; font-size:12.5px; cursor:pointer;
+  }
+
+  /* ── Chat / Proyectos: paneles deslizables ──────────────────── */
+  .chat > .screen{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column;
+    height:100%;
+    background:#fff;
+    transition:transform .42s cubic-bezier(.22,.61,.36,1);
+    will-change:transform;
+  }
+  .chat > .screen.no-anim{ transition:none; }
+  #chatScreen{ transform:translateY(0); z-index:2; }
+  #projectsScreen{ transform:translateY(-100%); z-index:1; }
+
+  .proj-body{ flex:1; overflow-y:auto; background:#fff; padding:16px 14px 30px; }
+  .proj-list{ display:flex; flex-direction:column; gap:20px; }
+  .proj-card{ background:#F3F4F6; border-radius:18px; padding:14px 14px 16px; }
+
+  .proj-carousel{ position:relative; border-radius:12px; overflow:hidden; aspect-ratio:16/10; background:#e3e6ea; }
+  .proj-track{ display:flex; height:100%; transition:transform .35s ease; }
+  .proj-track img{ width:100%; height:100%; object-fit:cover; flex:none; }
+  .proj-arrow{
+    position:absolute; top:50%; margin-top:-14px;
+    width:28px; height:28px; border-radius:50%; border:0;
+    background:rgba(0,0,0,.55); color:#fff; cursor:pointer;
+    display:grid; place-items:center; font-size:16px; line-height:1;
+  }
+  .proj-arrow.prev{ left:8px; }
+  .proj-arrow.next{ right:8px; }
+  .proj-arrow:hover{ background:rgba(0,0,0,.75); }
+  .proj-dots{ position:absolute; bottom:8px; left:0; right:0; display:flex; justify-content:center; gap:5px; }
+  .proj-dots span{ width:6px; height:6px; border-radius:50%; background:rgba(255,255,255,.55); }
+  .proj-dots span.active{ background:#fff; }
+
+  .proj-title{ margin:14px 2px 6px; font-size:16.5px; font-weight:600; }
+  .proj-desc{ margin:0 2px 12px; font-size:13.5px; line-height:1.55; color:#4a5560; }
+  .proj-links{ display:flex; gap:8px; flex-wrap:wrap; }
+  .proj-links a{
+    font-size:12.5px; padding:7px 12px; border-radius:999px;
+    background:#fff; border:1px solid #e2e5e8; color:#111;
+    text-decoration:none; transition:border-color .18s ease;
+  }
+  .proj-links a:hover{ border-color:#000; }
+
+  /* ── Selector de modelo ─────────────────────────────────────── */
+  .switch{
+    position:fixed; z-index:70; left:50%; bottom:18px; transform:translateX(-50%);
+    display:flex; gap:4px; padding:4px;
+    background:rgba(255,255,255,.92); backdrop-filter:blur(8px);
+    border:1px solid #e3e7e9; border-radius:999px;
+    box-shadow:0 6px 24px -8px rgba(11,20,26,.3);
+  }
+  .switch button{
+    border:0; background:transparent; cursor:pointer;
+    font:inherit; font-size:13px; color:var(--wa-muted);
+    padding:7px 15px; border-radius:999px;
+    transition:background .18s ease, color .18s ease;
+  }
+  .switch button[aria-pressed="true"]{ background:var(--wa-accent); color:#fff; }
+  .switch button:focus-visible{ outline:2px solid var(--wa-accent); outline-offset:2px; }
+
+  /* ── Mobile: los 3 modelos colapsan al mismo chat a pantalla completa ── */
+  @media (max-width:900px){
+    :root{ --chat-h:100svh; }
+    #sticky{ padding:0 !important; gap:0 !important; }
+    #sticky::before, #sticky::after{ display:none !important; }
+    .intro{ display:none !important; }
+    .chat,
+    body[data-variant="card"] .chat,
+    body[data-variant="split"] .chat{
+      width:100% !important; max-width:100%; height:100svh;
+      border-radius:0 !important; box-shadow:none !important;
+    }
+    .back{ display:flex; }
+    .chat-header{ padding:9px 12px; gap:10px; }
+    .hdr-actions{ gap:18px; }
+    .switch{ bottom:auto; top:10px; }
+    .view-toggle-mobile{
+      display:inline-flex;
+      position:fixed; right:12px; bottom:92px; z-index:65;
+      box-shadow:0 6px 24px -8px rgba(11,20,26,.35);
+    }
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    .bubble{ animation:none; }
+    .chat-list{ transition:none; }
+    .hint svg,.typing i{ animation:none; }
+    .chat > .screen{ transition:none; }
+    .proj-track{ transition:none; }
+  }
+</style>
+</head>
+<body data-variant="split">
+
+<nav class="switch" aria-label="Modelo de diseño">
+  <button data-set="card"  aria-pressed="false">Tarjeta</button>
+  <button data-set="split" aria-pressed="true">Presentación</button>
+</nav>
+
+<button type="button" class="view-toggle-btn view-toggle-mobile" id="viewToggleMobile">
+  <span class="vt-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.3"/><rect x="14" y="3" width="7" height="7" rx="1.3"/><rect x="3" y="14" width="7" height="7" rx="1.3"/><rect x="14" y="14" width="7" height="7" rx="1.3"/></svg></span>
+  <span class="vt-label">Ver proyectos</span>
+</button>
+
+<div id="stage">
+  <div id="sticky">
+
+    <!-- Modelo C -->
+    <div class="intro">
+      <h1>Franco Soler</h1>
+      <p>Analista Programador. Hago interfaces web que se sienten rápidas y se entienden solas. Abrí el chat de al lado: contesta todo lo que quieras preguntarme.</p>
+      <div class="links">
+        <a href="https://www.linkedin.com/in/TU-USUARIO" target="_blank" rel="noopener">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M4.98 3.5a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5zM3 9h4v12H3zM10 9h3.8v1.7h.05c.53-.95 1.83-1.95 3.77-1.95C21.4 8.75 22 11.1 22 14.2V21h-4v-6c0-1.43-.03-3.27-2-3.27-2 0-2.3 1.56-2.3 3.17V21h-4z"/></svg>
+          LinkedIn</a>
+        <a href="https://www.instagram.com/TU-USUARIO" target="_blank" rel="noopener">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1.2" fill="currentColor" stroke="none"/></svg>
+          Instagram</a>
+        <button type="button" class="view-toggle-btn" id="viewToggleDesktop">
+          <span class="vt-icon"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.3"/><rect x="14" y="3" width="7" height="7" rx="1.3"/><rect x="3" y="14" width="7" height="7" rx="1.3"/><rect x="14" y="14" width="7" height="7" rx="1.3"/></svg></span>
+          <span class="vt-label">Ver proyectos</span>
+        </button>
+        <a href="mailto:TU-CORREO@dominio.com">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="2" y="4.5" width="20" height="15" rx="2.5"/><path d="m3 7 9 6 9-6"/></svg>
+          Correo</a>
+      </div>
+    </div>
+
+    <!-- Chat / Proyectos -->
+    <div class="chat">
+      <div class="screen" id="chatScreen">
+        <div class="chat-header">
+          <span class="back"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></span>
+          <div class="avatar">FS</div>
+          <div class="who">
+            <div class="name">Franco Soler</div>
+            <div class="status" id="status">en línea</div>
+          </div>
+          <div class="hdr-actions">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 7l-7 5 7 5V7z"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.5 2.8.6a2 2 0 0 1 1.7 2.1z"/></svg>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.9"/><circle cx="12" cy="12" r="1.9"/><circle cx="12" cy="19" r="1.9"/></svg>
+          </div>
+        </div>
+
+        <div class="chat-body" id="body">
+          <div class="chat-list" id="list">
+            <div class="chip lock">Este chat es una simulación. El CV, los links y las ganas de trabajar son reales.</div>
+            <div class="chip">HOY</div>
+          </div>
+          <div class="hint" id="hint">
+            <span>Scrolleá para leer la conversación</span>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"/></svg>
+          </div>
+        </div>
+
+        <div class="composer">
+          <div class="input">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0" stroke-linecap="round"/><circle cx="9" cy="10" r="1.1" fill="currentColor"/><circle cx="15" cy="10" r="1.1" fill="currentColor"/></svg>
+            <span>Escribí un mensaje</span>
+          </div>
+          <div class="send"><svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M2.5 21.5 22 12 2.5 2.5 2.5 10l14 2-14 2z"/></svg></div>
+        </div>
+
+      </div>
+
+      <div class="screen" id="projectsScreen">
+        <div class="chat-header">
+          <div class="avatar">FS</div>
+          <div class="who">
+            <div class="name">Proyectos</div>
+            <div class="status">Demo en vivo + código fuente</div>
+          </div>
+        </div>
+
+        <div class="proj-body">
+          <div class="proj-list" id="projList">
+
+            <article class="proj-card">
+              <div class="proj-carousel">
+                <div class="proj-track">
+                  <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='400'%3E%3Crect width='640' height='400' fill='%23e3e6ea'/%3E%3Ctext x='320' y='212' font-family='sans-serif' font-size='26' fill='%239aa3ad' text-anchor='middle'%3ECaptura 1%3C/text%3E%3C/svg%3E" alt="Captura 1 — Proyecto 1">
+                  <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='400'%3E%3Crect width='640' height='400' fill='%23e3e6ea'/%3E%3Ctext x='320' y='212' font-family='sans-serif' font-size='26' fill='%239aa3ad' text-anchor='middle'%3ECaptura 2%3C/text%3E%3C/svg%3E" alt="Captura 2 — Proyecto 1">
+                  <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='400'%3E%3Crect width='640' height='400' fill='%23e3e6ea'/%3E%3Ctext x='320' y='212' font-family='sans-serif' font-size='26' fill='%239aa3ad' text-anchor='middle'%3ECaptura 3%3C/text%3E%3C/svg%3E" alt="Captura 3 — Proyecto 1">
+                </div>
+                <button type="button" class="proj-arrow prev" aria-label="Imagen anterior">‹</button>
+                <button type="button" class="proj-arrow next" aria-label="Imagen siguiente">›</button>
+                <div class="proj-dots"><span class="active"></span><span></span><span></span></div>
+              </div>
+              <h3 class="proj-title">Nombre del proyecto 1</h3>
+              <p class="proj-desc">Descripción breve: qué problema resuelve y con qué stack está hecho.</p>
+              <div class="proj-links">
+                <a href="#" target="_blank" rel="noopener">Ver en producción</a>
+                <a href="https://github.com/franwe-jpg" target="_blank" rel="noopener">Código</a>
+              </div>
+            </article>
+
+            <article class="proj-card">
+              <div class="proj-carousel">
+                <div class="proj-track">
+                  <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='400'%3E%3Crect width='640' height='400' fill='%23e3e6ea'/%3E%3Ctext x='320' y='212' font-family='sans-serif' font-size='26' fill='%239aa3ad' text-anchor='middle'%3ECaptura 1%3C/text%3E%3C/svg%3E" alt="Captura 1 — Proyecto 2">
+                  <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='400'%3E%3Crect width='640' height='400' fill='%23e3e6ea'/%3E%3Ctext x='320' y='212' font-family='sans-serif' font-size='26' fill='%239aa3ad' text-anchor='middle'%3ECaptura 2%3C/text%3E%3C/svg%3E" alt="Captura 2 — Proyecto 2">
+                </div>
+                <button type="button" class="proj-arrow prev" aria-label="Imagen anterior">‹</button>
+                <button type="button" class="proj-arrow next" aria-label="Imagen siguiente">›</button>
+                <div class="proj-dots"><span class="active"></span><span></span></div>
+              </div>
+              <h3 class="proj-title">Nombre del proyecto 2</h3>
+              <p class="proj-desc">Descripción breve: qué problema resuelve y con qué stack está hecho.</p>
+              <div class="proj-links">
+                <a href="#" target="_blank" rel="noopener">Ver en producción</a>
+                <a href="https://github.com/franwe-jpg" target="_blank" rel="noopener">Código</a>
+              </div>
+            </article>
+
+            <article class="proj-card">
+              <div class="proj-carousel">
+                <div class="proj-track">
+                  <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='400'%3E%3Crect width='640' height='400' fill='%23e3e6ea'/%3E%3Ctext x='320' y='212' font-family='sans-serif' font-size='26' fill='%239aa3ad' text-anchor='middle'%3ECaptura 1%3C/text%3E%3C/svg%3E" alt="Captura 1 — Proyecto 3">
+                  <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='400'%3E%3Crect width='640' height='400' fill='%23e3e6ea'/%3E%3Ctext x='320' y='212' font-family='sans-serif' font-size='26' fill='%239aa3ad' text-anchor='middle'%3ECaptura 2%3C/text%3E%3C/svg%3E" alt="Captura 2 — Proyecto 3">
+                </div>
+                <button type="button" class="proj-arrow prev" aria-label="Imagen anterior">‹</button>
+                <button type="button" class="proj-arrow next" aria-label="Imagen siguiente">›</button>
+                <div class="proj-dots"><span class="active"></span><span></span></div>
+              </div>
+              <h3 class="proj-title">Nombre del proyecto 3</h3>
+              <p class="proj-desc">Descripción breve: qué problema resuelve y con qué stack está hecho.</p>
+              <div class="proj-links">
+                <a href="#" target="_blank" rel="noopener">Ver en producción</a>
+                <a href="https://github.com/franwe-jpg" target="_blank" rel="noopener">Código</a>
+              </div>
+            </article>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  const MESSAGES = [
+    { from:"franco",  html:"¿Hola?", t:"21:14" },
+    { from:"visitor", html:"Hola.", t:"21:14" },
+    { from:"franco",  html:"¡Hola! Me llamo Franco Soler 👋", t:"21:15" },
+    { from:"franco",  html:"Gracias por abrir el chat. Preguntame lo que quieras, ya tengo las respuestas preparadas.", t:"21:15" },
+
+    { from:"visitor", html:"¿A qué te dedicás?", t:"21:15" },
+    { from:"franco",  html:"Soy Analista Programador. Desarrollo web full stack, con el foco puesto en el front-end: interfaces, interacción y render performance.", t:"21:16" },
+
+    { from:"visitor", html:"¿Con qué tecnologías trabajás?", t:"21:16" },
+    { from:"franco",  html:"JavaScript y TypeScript en el día a día. React y Astro del lado del cliente, Node.js del lado del servidor.", t:"21:16" },
+    { from:"franco",  html:"También Canvas y Three.js cuando la cosa se pone visual. Esta misma landing es scroll puro, sin librerías de animación.", t:"21:17" },
+
+    { from:"visitor", html:"¿Y experiencia?", t:"21:17" },
+    { from:"franco",  html:"[Años] de experiencia entre [Empresa A] y [Empresa B], armando productos que usa gente real: dashboards, e-commerce y algún que otro juego.", t:"21:18" },
+    { from:"franco",  html:"Cómodo en equipos chicos donde uno toca base de datos, API y UI en el mismo día.", t:"21:18" },
+
+    { from:"visitor", html:"¿Dónde estás ubicado?", t:"21:18" },
+    { from:"franco",  html:"Trelew, Chubut 🇦🇷. Trabajo remoto hace [X] años, así que el huso horario no es problema.", t:"21:19" },
+
+    { from:"visitor", html:"¿Puedo ver tus proyectos?", t:"21:19" },
+    { from:"franco",  html:"Sí, mirá: <a href=\"#\" data-action=\"proyectos\">abrir mis proyectos</a>", t:"21:19" },
+    { from:"franco",  html:"Cada uno tiene demo en vivo y el código en <a href=\"https://github.com/franwe-jpg\" target=\"_blank\" rel=\"noopener\">github.com/franwe-jpg</a>, con README y commits prolijos. Eso también es parte del trabajo.", t:"21:20" },
+
+    { from:"visitor", html:"¿Tenés CV?", t:"21:20" },
+    { from:"franco",  html:"📄 <a href=\"/cv-franco-soler.pdf\" target=\"_blank\" rel=\"noopener\">CV — Franco Soler.pdf</a><br><span style=\"color:#667781;font-size:12.5px\">Una página, sin relleno.</span>", t:"21:20" },
+
+    { from:"visitor", html:"¿Cómo te contacto?", t:"21:21" },
+    { from:"franco",  html:"Por mail: <a href=\"mailto:TU-CORREO@dominio.com\">TU-CORREO@dominio.com</a>", t:"21:21" },
+    { from:"franco",  html:"O por LinkedIn: <a href=\"https://www.linkedin.com/in/TU-USUARIO\" target=\"_blank\" rel=\"noopener\">linkedin.com/in/TU-USUARIO</a>", t:"21:21" },
+    { from:"franco",  html:"Y si querés ver el lado menos formal: <a href=\"https://www.instagram.com/TU-USUARIO\" target=\"_blank\" rel=\"noopener\">Instagram</a>", t:"21:21" },
+
+    { from:"visitor", html:"Buenísimo. Te escribo.", t:"21:22" },
+    { from:"franco",  html:"Te leo. Y si te quedó alguna duda, escribime acá abajo 👇", t:"21:22" }
+  ];
+
+  const list=document.getElementById("list"),
+        body=document.getElementById("body"),
+        stage=document.getElementById("stage"),
+        status=document.getElementById("status"),
+        hint=document.getElementById("hint");
+
+  stage.style.height = ((MESSAGES.length + 2) * 55) + "svh";
+
+  const TICK='<svg class="tick" width="16" height="11" viewBox="0 0 16 11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1 6.2l2.6 2.8L9 2.5"/><path d="M6.4 9l5.4-6.5"/></svg>';
+
+  const nodes=[]; let typingEl=null, shown=-1, typingFor=-1;
+
+  function buildMessage(i){
+    const m=MESSAGES[i], prev=MESSAGES[i-1];
+    const row=document.createElement("div");
+    row.className="row "+(m.from==="franco"?"in":"out")+(prev&&prev.from===m.from?" same":"");
+    row.innerHTML='<div class="bubble">'+m.html+'<span class="meta">'+m.t+(m.from==="visitor"?TICK:"")+'</span></div>';
+    return row;
+  }
+
+  function showTyping(i){
+    if(typingFor===i) return;
+    hideTyping(); typingFor=i;
+    const m=MESSAGES[i];
+    typingEl=document.createElement("div");
+    typingEl.className="row "+(m.from==="franco"?"in":"out");
+    typingEl.innerHTML='<div class="bubble"><span class="typing"><i></i><i></i><i></i></span></div>';
+    list.appendChild(typingEl);
+    if(m.from==="franco") status.innerHTML="<b>escribiendo…</b>";
+    reflow();
+  }
+  function hideTyping(){
+    if(typingEl){ typingEl.remove(); typingEl=null; }
+    typingFor=-1; status.textContent="en línea";
+  }
+  function reflow(){
+    const o=list.scrollHeight-body.clientHeight;
+    list.style.transform="translateY("+(o>0?-o:0)+"px)";
+  }
+  function render(target){
+    while(shown<target){ shown++; hideTyping(); const n=buildMessage(shown); nodes[shown]=n; list.appendChild(n); }
+    while(shown>target){ if(nodes[shown]) nodes[shown].remove(); nodes[shown]=null; shown--; hideTyping(); }
+    reflow();
+  }
+
+  let ticking=false;
+  function onScroll(){
+    if(ticking) return; ticking=true;
+    requestAnimationFrame(function(){
+      ticking=false;
+      const max=stage.offsetHeight-window.innerHeight;
+      const p=Math.min(1,Math.max(0,(window.scrollY-stage.offsetTop)/max));
+      const raw=p*(MESSAGES.length+0.25);
+      const target=Math.min(MESSAGES.length-1, Math.floor(raw)-1);
+      const frac=raw-Math.floor(raw);
+      render(target);
+      const next=target+1;
+      if(next<MESSAGES.length && frac>0.45) showTyping(next); else if(typingFor!==-1) hideTyping();
+      hint.classList.toggle("gone", p>0.02);
+    });
+  }
+
+  window.addEventListener("scroll", onScroll, { passive:true });
+  window.addEventListener("resize", function(){ reflow(); onScroll(); });
+
+  document.querySelector(".switch").addEventListener("click", function(e){
+    const b=e.target.closest("button[data-set]"); if(!b) return;
+    document.body.dataset.variant=b.dataset.set;
+    document.querySelectorAll(".switch button").forEach(function(x){
+      x.setAttribute("aria-pressed", String(x===b));
+    });
+    requestAnimationFrame(function(){ reflow(); onScroll(); });
+  });
+
+  render(-1); onScroll();
+})();
+</script>
+
+<script>
+(function(){
+  "use strict";
+
+  const ICON_PROJECTS = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.3"/><rect x="14" y="3" width="7" height="7" rx="1.3"/><rect x="3" y="14" width="7" height="7" rx="1.3"/><rect x="14" y="14" width="7" height="7" rx="1.3"/></svg>';
+  const ICON_CHAT = '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12c0 4.4-4 8-9 8a9.7 9.7 0 0 1-3-.46L3 21l1.4-4.2A7.9 7.9 0 0 1 3 12c0-4.4 4-8 9-8s9 3.6 9 8z"/></svg>';
+
+  const chatScreen=document.getElementById("chatScreen"),
+        projectsScreen=document.getElementById("projectsScreen");
+
+  let currentView="chat";
+
+  function setLabels(view){
+    document.querySelectorAll(".view-toggle-btn .vt-label").forEach(function(el){
+      el.textContent = view==="chat" ? "Ver proyectos" : "Ver el chat";
+    });
+    document.querySelectorAll(".view-toggle-btn .vt-icon").forEach(function(el){
+      el.innerHTML = view==="chat" ? ICON_PROJECTS : ICON_CHAT;
+    });
+  }
+
+  function slideSwap(entering, leaving){
+    entering.classList.add("no-anim");
+    entering.style.transform="translateY(-100%)";
+    entering.offsetHeight;
+    entering.classList.remove("no-anim");
+    leaving.style.transform="translateY(100%)";
+    requestAnimationFrame(function(){ entering.style.transform="translateY(0)"; });
+  }
+
+  function toggleView(){
+    if(currentView==="chat"){
+      slideSwap(projectsScreen, chatScreen);
+      currentView="projects";
+    } else {
+      slideSwap(chatScreen, projectsScreen);
+      currentView="chat";
+    }
+    setLabels(currentView);
+  }
+
+  document.querySelectorAll(".view-toggle-btn").forEach(function(btn){
+    btn.addEventListener("click", toggleView);
+  });
+
+  document.addEventListener("click", function(e){
+    if(!e.target.closest('[data-action="proyectos"]')) return;
+    e.preventDefault();
+    if(currentView==="chat") toggleView();
+  });
+
+  document.querySelectorAll(".proj-carousel").forEach(function(car){
+    const track=car.querySelector(".proj-track");
+    const slides=car.querySelectorAll(".proj-track img");
+    const dots=car.querySelectorAll(".proj-dots span");
+    let idx=0;
+    function go(i){
+      idx=(i+slides.length)%slides.length;
+      track.style.transform="translateX(-"+(idx*100)+"%)";
+      dots.forEach(function(d,j){ d.classList.toggle("active", j===idx); });
+    }
+    car.querySelector(".prev").addEventListener("click", function(){ go(idx-1); });
+    car.querySelector(".next").addEventListener("click", function(){ go(idx+1); });
+  });
+})();
+</script>
+</body>
+</html>
