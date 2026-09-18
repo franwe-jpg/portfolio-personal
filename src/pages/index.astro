@@ -1,0 +1,29 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Intro from '../components/Intro.astro';
+import ChatPanel from '../components/ChatPanel.astro';
+import ProjectsPanel from '../components/ProjectsPanel.astro';
+import ViewToggleButton from '../components/ViewToggleButton.astro';
+import { profile } from '../data/profile';
+
+const description = `${profile.role} en Trelew, Chubut. Desarrollo web full stack con foco en front-end. Abrí el chat y preguntame lo que quieras.`;
+---
+
+<Layout title={profile.tagline} description={description}>
+  <ViewToggleButton id="viewToggleMobile" class="view-toggle-mobile" />
+
+  <div id="stage">
+    <div id="sticky">
+      <Intro />
+
+      <div class="chat">
+        <ChatPanel />
+        <ProjectsPanel />
+      </div>
+    </div>
+  </div>
+
+  <script>
+    import '../scripts/landing';
+  </script>
+</Layout>

@@ -1,0 +1,49 @@
+---
+import type { Project } from '../data/projects';
+
+interface Props {
+  project: Project;
+}
+
+const { project } = Astro.props;
+const hasCarousel = project.images.length > 1;
+---
+
+<article class="proj-card">
+  <div class="proj-carousel">
+    <div class="proj-track">
+      {project.images.map((image) => <img src={image.src} alt={image.alt} loading="lazy" />)}
+    </div>
+    {
+      hasCarousel && (
+        <>
+          <button type="button" class="proj-arrow prev" aria-label="Imagen anterior">
+            ‹
+          </button>
+          <button type="button" class="proj-arrow next" aria-label="Imagen siguiente">
+            ›
+          </button>
+          <div class="proj-dots">
+            {project.images.map((_, index) => (
+              <span class={index === 0 ? 'active' : undefined} />
+            ))}
+          </div>
+        </>
+      )
+    }
+  </div>
+  {project.badge && <p class="proj-badge">{project.badge}</p>}
+  <h3 class="proj-title">{project.title}</h3>
+  <p class="proj-desc">{project.description}</p>
+  {
+    project.links.length > 0 && (
+      <div class="proj-links">
+        {project.links.map((link) => (
+          <a href={link.href} target="_blank" rel="noopener">
+            {link.label}
+          </a>
+        ))}
+      </div>
+    )
+  }
+</article>

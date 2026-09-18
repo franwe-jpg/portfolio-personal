@@ -1,0 +1,125 @@
+---
+import { profile } from '../data/profile';
+import { MAX_QUESTION_CHARS } from '../lib/persona';
+---
+
+<div class="screen" id="chatScreen">
+  <div class="chat-header">
+    <span class="back"
+      ><svg
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg
+      ></span
+    >
+    <div class="avatar">{profile.initials}</div>
+    <div class="who">
+      <div class="name">{profile.name}</div>
+      <div class="status" id="status">en línea</div>
+    </div>
+    <div class="hdr-actions">
+      <button
+        type="button"
+        class="hdr-btn"
+        id="hdrMenuBtn"
+        aria-label="Más opciones"
+        aria-haspopup="menu"
+        aria-expanded="false"
+        aria-controls="hdrMenu"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"
+          ><circle cx="12" cy="5" r="1.9"></circle><circle cx="12" cy="12" r="1.9"></circle><circle
+            cx="12"
+            cy="19"
+            r="1.9"></circle></svg
+        >
+      </button>
+
+      <div class="hdr-menu" id="hdrMenu" role="menu" aria-labelledby="hdrMenuBtn" hidden>
+        <button type="button" role="menuitem" id="themeMenuItem">
+          <span class="theme-icon" aria-hidden="true"></span>
+          <span class="theme-label">Tema oscuro</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="chat-body" id="body">
+    <div class="chat-list" id="list">
+      <div class="chip lock">
+        Este chat es una simulación. El CV, los links y las ganas de trabajar son reales.
+      </div>
+      <div class="chip">HOY</div>
+      <!-- Burbujas del chat en vivo; el render por scroll nunca las toca. -->
+      <div class="live-list" id="liveList" aria-live="polite"></div>
+    </div>
+    <div class="hint" id="hint">
+      <span>Scrolleá para leer la conversación</span>
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"></path></svg
+      >
+    </div>
+  </div>
+
+  <form class="composer" id="composer" autocomplete="off">
+    <label class="sr-only" for="composerInput">Escribile un mensaje a {profile.name}</label>
+
+    <!-- El <emoji-picker> se inyecta acá recién en el primer clic. -->
+    <div class="emoji-popover" id="emojiPopover" hidden></div>
+
+    <div class="input">
+      <button
+        type="button"
+        class="emoji-btn"
+        id="emojiBtn"
+        aria-label="Elegir un emoji"
+        aria-haspopup="dialog"
+        aria-expanded="false"
+        aria-controls="emojiPopover"
+        disabled
+      >
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.7"
+          aria-hidden="true"
+          ><circle cx="12" cy="12" r="9"></circle><path
+            d="M8.5 14.5a4.5 4.5 0 0 0 7 0"
+            stroke-linecap="round"></path><circle cx="9" cy="10" r="1.1" fill="currentColor"></circle><circle
+            cx="15"
+            cy="10"
+            r="1.1"
+            fill="currentColor"></circle></svg
+        >
+      </button>
+      <input
+        type="text"
+        id="composerInput"
+        name="question"
+        placeholder="Escribí un mensaje"
+        maxlength={MAX_QUESTION_CHARS}
+        disabled
+      />
+    </div>
+    <button type="submit" class="send" id="composerSend" aria-label="Enviar mensaje" disabled>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"
+        ><path d="M2.5 21.5 22 12 2.5 2.5 2.5 10l14 2-14 2z"></path></svg
+      >
+    </button>
+  </form>
+</div>

@@ -1,0 +1,66 @@
+---
+import { profile } from '../data/profile';
+import '../styles/landing.css';
+
+interface Props {
+  title: string;
+  description: string;
+}
+
+const { title, description } = Astro.props;
+
+// `Astro.site` comes from `site` in astro.config.mjs; it falls back to the
+// request URL so the tags stay valid before the domain is configured.
+const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).href;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+
+    {/*
+      Resolves the theme before the first paint so the page never flashes the
+      wrong palette. `is:inline` keeps it out of the bundle graph: it must run
+      synchronously in <head>, ahead of the stylesheet. Kept in sync with the
+      THEME_STORAGE_KEY constant in src/scripts/landing.ts.
+    */}
+    <script is:inline>
+      (function () {
+        var stored = null;
+        try {
+          stored = localStorage.getItem('theme');
+        } catch (error) {
+          /* localStorage throws in some privacy modes; fall back to the OS. */
+        }
+        var theme =
+          stored === 'dark' || stored === 'light'
+            ? stored
+            : window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+              ? 'dark'
+              : 'light';
+        document.documentElement.setAttribute('data-theme', theme);
+      })();
+    </script>
+
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+
+    <meta property="og:type" content="profile" />
+    <meta property="og:site_name" content={profile.name} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content="es_AR" />
+
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

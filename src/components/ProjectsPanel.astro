@@ -1,0 +1,21 @@
+---
+import { profile } from '../data/profile';
+import { PROJECTS } from '../data/projects';
+import ProjectCard from './ProjectCard.astro';
+---
+
+<div class="screen" id="projectsScreen">
+  <div class="chat-header">
+    <div class="avatar">{profile.initials}</div>
+    <div class="who">
+      <div class="name">Proyectos</div>
+      <div class="status">Demo en vivo + código fuente</div>
+    </div>
+  </div>
+
+  <div class="proj-body">
+    <div class="proj-list" id="projList">
+      {PROJECTS.map((project) => <ProjectCard project={project} />)}
+    </div>
+  </div>
+</div>
