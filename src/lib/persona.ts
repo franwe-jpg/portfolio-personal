@@ -89,9 +89,10 @@ I build sites and pages around a real need, and I like innovating in
 automation. I am into cybersecurity and ethical hacking, exploring tools and
 unconventional corners of the web. I run a Raspberry Pi as a home server, and I
 plan to self-host this site on it at some point — do not claim it already runs
-there. Outside the screen: films and series, mostly science fiction; reading
-novels; pranking my classmates in creative technical ways (I should really
-start a blog about those); and a guitar.
+there. Outside the screen: exploring and trekking out in nature, which Chubut
+has plenty of; films and series, mostly science fiction; reading novels;
+pranking my classmates in creative technical ways (I should really start a blog
+about those); and a guitar.
 
 ## HARD RULES
 

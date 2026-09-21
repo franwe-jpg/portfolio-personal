@@ -1,12 +1,23 @@
 ---
-import { profile } from '../data/profile';
+import { profile, PROFILE_COPY } from '../data/profile';
+import type { Lang } from '../i18n/config';
+import { UI } from '../i18n/ui';
 import ViewToggleButton from './ViewToggleButton.astro';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const copy = PROFILE_COPY[lang];
 ---
 
 <div class="intro">
   <h1>{profile.name}</h1>
-  <p>{profile.bio}</p>
+  <div class="bio">{copy.bio.map((line) => <p>{line}</p>)}</div>
   <div class="links">
+    <ViewToggleButton lang={lang} id="viewToggleDesktop" />
+    <div class="links-row">
     <a href={profile.links.linkedin} target="_blank" rel="noopener">
       <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"
         ><path
@@ -26,7 +37,6 @@ import ViewToggleButton from './ViewToggleButton.astro';
       >
       Instagram</a
     >
-    <ViewToggleButton id="viewToggleDesktop" />
     <a href={`mailto:${profile.links.email}`}>
       <svg
         width="17"
@@ -38,7 +48,8 @@ import ViewToggleButton from './ViewToggleButton.astro';
         stroke-linejoin="round"
         ><rect x="2" y="4.5" width="20" height="15" rx="2.5"></rect><path d="m3 7 9 6 9-6"></path></svg
       >
-      Correo</a
+      {UI[lang].emailLink}</a
     >
+    </div>
   </div>
 </div>

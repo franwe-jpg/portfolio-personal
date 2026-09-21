@@ -1,21 +1,29 @@
 ---
-import { profile } from '../data/profile';
-import { PROJECTS } from '../data/projects';
+import { projectsFor } from '../data/projects';
+import type { Lang } from '../i18n/config';
+import { UI } from '../i18n/ui';
 import ProjectCard from './ProjectCard.astro';
+import Avatar from './Avatar.astro';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const projects = projectsFor(lang);
 ---
 
 <div class="screen" id="projectsScreen">
   <div class="chat-header">
-    <div class="avatar">{profile.initials}</div>
+    <Avatar lang={lang} />
     <div class="who">
-      <div class="name">Proyectos</div>
-      <div class="status">Demo en vivo + código fuente</div>
+      <div class="name">{UI[lang].projectsTitle}</div>
     </div>
   </div>
 
   <div class="proj-body">
     <div class="proj-list" id="projList">
-      {PROJECTS.map((project) => <ProjectCard project={project} />)}
+      {projects.map((project) => <ProjectCard lang={lang} project={project} />)}
     </div>
   </div>
 </div>

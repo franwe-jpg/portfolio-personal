@@ -1,0 +1,23 @@
+---
+import { Image } from 'astro:assets';
+import { profile } from '../data/profile';
+import type { Lang } from '../i18n/config';
+import { UI } from '../i18n/ui';
+// Square 240x240 crop derived from the original photo in src/perfil.jpg.
+// The Cloudflare adapter uses a passthrough image service, so the source has
+// to ship already sized: Astro does not resize it at build time.
+import perfil from '../assets/perfil-avatar.webp';
+
+interface Props {
+  lang: Lang;
+  /** Rendered pixel size of the circle. */
+  size?: number;
+}
+
+const { lang, size = 40 } = Astro.props;
+const t = UI[lang];
+---
+
+<div class="avatar" style={`--avatar-size:${size}px`}>
+  <Image src={perfil} alt={t.avatarAlt(profile.name)} loading="eager" />
+</div>

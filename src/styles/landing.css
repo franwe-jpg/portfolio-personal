@@ -57,6 +57,12 @@
   --btn-bg:           #ffffff;
   --btn-border:       #dfe5e7;
   --btn-hover-bg:     #f3f4f6;
+  /* CTA de contorno: sin bloque de color, para no romper la estética clara.
+     El azul es --wa-link oscurecido hasta 5.5:1 sobre blanco. */
+  --cta-bg:           #ffffff;
+  --cta-text:         #0270a2;
+  --cta-border:       #0270a2;
+  --cta-hover-bg:     #eff7fb;
   --float-bg:         rgba(255,255,255,.94);
   --float-border:     #e3e7e9;
 
@@ -116,6 +122,10 @@
     --btn-bg:           #202c33;
     --btn-border:       #2a3942;
     --btn-hover-bg:     #2a3942;
+    --cta-bg:           #182229;
+    --cta-text:         #53bdeb;
+    --cta-border:       #53bdeb;
+    --cta-hover-bg:     #1f2f38;
     --float-bg:         rgba(32,44,51,.94);
     --float-border:     #2a3942;
 
@@ -169,6 +179,10 @@
   --btn-bg:           #202c33;
   --btn-border:       #2a3942;
   --btn-hover-bg:     #2a3942;
+  --cta-bg:           #182229;
+  --cta-text:         #53bdeb;
+  --cta-border:       #53bdeb;
+  --cta-hover-bg:     #1f2f38;
   --float-bg:         rgba(32,44,51,.94);
   --float-border:     #2a3942;
 
@@ -228,11 +242,13 @@ body{
 }
 .back{ display:none; color:var(--wa-muted); flex:none; }
 .avatar{
-  flex:none; width:40px; height:40px; border-radius:50%;
+  flex:none; width:var(--avatar-size,40px); height:var(--avatar-size,40px);
+  border-radius:50%; overflow:hidden;
   background:var(--avatar-grad);
   display:grid; place-items:center;
   font-size:15px; font-weight:600; color:#fff; letter-spacing:.5px;
 }
+.avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
 .who{ flex:1; min-width:0; }
 .who .name{ font-size:16px; font-weight:500; line-height:1.3; }
 .who .status{ font-size:12.5px; color:var(--wa-muted); line-height:1.35; height:17px; overflow:hidden; }
@@ -259,15 +275,18 @@ body{
   box-shadow:0 10px 28px -8px var(--menu-shadow);
 }
 .hdr-menu[hidden]{ display:none; }
-.hdr-menu button{
+/* El item de idioma es un <a> para que funcione sin JS; comparte exactamente
+   la misma pinta que los items <button>. */
+.hdr-menu button, .hdr-menu a{
   display:flex; align-items:center; gap:10px; width:100%;
   padding:9px 12px; border:0; border-radius:7px;
   background:transparent; color:var(--wa-text);
   font:inherit; font-size:14px; text-align:left; cursor:pointer;
+  text-decoration:none;
 }
-.hdr-menu button:hover{ background:var(--menu-hover); }
-.hdr-menu button:focus-visible{ outline:2px solid var(--wa-accent); outline-offset:-2px; }
-.hdr-menu button svg{ flex:none; color:var(--icon-muted); }
+.hdr-menu button:hover, .hdr-menu a:hover{ background:var(--menu-hover); }
+.hdr-menu button:focus-visible, .hdr-menu a:focus-visible{ outline:2px solid var(--wa-accent); outline-offset:-2px; }
+.hdr-menu button svg, .hdr-menu a svg{ flex:none; color:var(--icon-muted); }
 
 .chat-body{
   position:relative; flex:1; overflow:hidden;
@@ -450,12 +469,29 @@ body{
 }
 .intro h1{
   font-size:clamp(40px, 4.4vw, 60px);
-  line-height:1.02; letter-spacing:-.035em; font-weight:600; margin:0 0 18px;
+  line-height:1.02; letter-spacing:-.035em; font-weight:600; margin:0 0 12px;
 }
 .intro p{
-  font-size:16.5px; line-height:1.65; color:var(--intro-text); margin:0 0 28px; max-width:36ch;
+  font-size:16.5px; line-height:1.5; color:var(--intro-text); margin:0 0 16px; max-width:36ch;
 }
-.intro .links{ display:flex; gap:10px; flex-wrap:wrap; }
+/* Cada renglón de la bio es su propio párrafo: se separan sólo lo justo para
+   leerse como renglones distintos, no como bloques. */
+.intro .bio{ margin:0 0 16px; }
+.intro .bio p{ margin:0 0 3px; }
+.intro .bio p:last-child{ margin-bottom:0; }
+.intro .links{ display:flex; flex-direction:column; align-items:stretch; gap:8px; }
+.intro .links-row{ display:flex; gap:8px; flex-wrap:wrap; }
+.intro .links > .view-toggle-btn{
+  width:100%; justify-content:center;
+  background:var(--cta-bg); color:var(--cta-text);
+  /* 1.5px y peso 500: es la única forma de que un botón de contorno conserve
+     jerarquía frente a los tres enlaces de abajo, que comparten estas pills. */
+  border:1.5px solid var(--cta-border); font-weight:500;
+}
+.intro .links > .view-toggle-btn:hover{
+  background:var(--cta-hover-bg); border-color:var(--cta-border);
+}
+.intro .links > .view-toggle-btn svg{ color:var(--cta-text); }
 .intro .links a, .intro .links button{
   display:inline-flex; align-items:center; gap:8px;
   padding:9px 15px; border-radius:999px;

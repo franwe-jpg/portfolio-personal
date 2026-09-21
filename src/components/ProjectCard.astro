@@ -1,11 +1,15 @@
 ---
 import type { Project } from '../data/projects';
+import type { Lang } from '../i18n/config';
+import { UI } from '../i18n/ui';
 
 interface Props {
+  lang: Lang;
   project: Project;
 }
 
-const { project } = Astro.props;
+const { lang, project } = Astro.props;
+const t = UI[lang];
 const hasCarousel = project.images.length > 1;
 ---
 
@@ -17,10 +21,10 @@ const hasCarousel = project.images.length > 1;
     {
       hasCarousel && (
         <>
-          <button type="button" class="proj-arrow prev" aria-label="Imagen anterior">
+          <button type="button" class="proj-arrow prev" aria-label={t.previousImage}>
             ‹
           </button>
-          <button type="button" class="proj-arrow next" aria-label="Imagen siguiente">
+          <button type="button" class="proj-arrow next" aria-label={t.nextImage}>
             ›
           </button>
           <div class="proj-dots">

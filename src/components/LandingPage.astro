@@ -1,0 +1,38 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Intro from './Intro.astro';
+import ChatPanel from './ChatPanel.astro';
+import ProjectsPanel from './ProjectsPanel.astro';
+import ViewToggleButton from './ViewToggleButton.astro';
+import { PROFILE_COPY } from '../data/profile';
+import type { Lang } from '../i18n/config';
+import { UI } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+}
+
+// The whole page body lives here so /(es) and /en/ cannot drift apart.
+const { lang } = Astro.props;
+const copy = PROFILE_COPY[lang];
+const description = UI[lang].metaDescription(copy.role);
+---
+
+<Layout lang={lang} title={copy.tagline} description={description}>
+  <ViewToggleButton lang={lang} id="viewToggleMobile" class="view-toggle-mobile" />
+
+  <div id="stage">
+    <div id="sticky">
+      <Intro lang={lang} />
+
+      <div class="chat">
+        <ChatPanel lang={lang} />
+        <ProjectsPanel lang={lang} />
+      </div>
+    </div>
+  </div>
+
+  <script>
+    import '../scripts/landing';
+  </script>
+</Layout>

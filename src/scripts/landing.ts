@@ -1,4 +1,12 @@
 import { MESSAGES } from '../data/messages';
+import { LANG_STORAGE_KEY, type Lang } from '../i18n/config';
+import { UI } from '../i18n/ui';
+
+// The rendered <html lang> is the single runtime source of truth: the route,
+// the markup and this script can never disagree about the active language.
+const lang: Lang = document.documentElement.lang === 'en' ? 'en' : 'es';
+const t = UI[lang];
+const messages = MESSAGES[lang];
 
 const TICK =
   '<svg class="tick" width="16" height="11" viewBox="0 0 16 11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M1 6.2l2.6 2.8L9 2.5"/><path d="M6.4 9l5.4-6.5"/></svg>';
@@ -13,14 +21,36 @@ const ICON_MOON =
 const ICON_SUN =
   '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2v2.2M12 19.8V22M4.2 4.2l1.6 1.6M18.2 18.2l1.6 1.6M2 12h2.2M19.8 12H22M4.2 19.8l1.6-1.6M18.2 5.8l1.6-1.6"/></svg>';
 
-const STATUS_ONLINE = 'en línea';
-const STATUS_TYPING = '<b>escribiendo…</b>';
-const PLACEHOLDER_OPEN = 'Preguntame lo que quieras';
-const NETWORK_ERROR =
-  'No pude conectarme. Probá de nuevo en un momento, o escribime por mail.';
+const STATUS_ONLINE = t.statusOnline;
+const STATUS_TYPING = t.statusTyping;
+const PLACEHOLDER_OPEN = t.composerPlaceholderOpen;
+const NETWORK_ERROR = t.networkError;
 
-/** Self-hosted Spanish emoji dataset; fetched only when the picker opens. */
-const EMOJI_DATA_SOURCE = '/emoji/emoji-es.json';
+/**
+ * Timestamps follow the visitor's own device clock. Argentina is only a
+ * fallback for the rare runtime that reports no resolvable time zone, so a
+ * visitor abroad still sees a sensible hour instead of a blank meta line.
+ */
+const FALLBACK_TIME_ZONE = 'America/Argentina/Buenos_Aires';
+
+const TIME_FORMATTER = ((): Intl.DateTimeFormat => {
+  // hourCycle 'h23' rather than hour12:false: the latter renders midnight as
+  // "24:00" in some engines.
+  const options: Intl.DateTimeFormatOptions = {
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  };
+  try {
+    const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    return new Intl.DateTimeFormat(t.locale, { ...options, timeZone: zone || FALLBACK_TIME_ZONE });
+  } catch {
+    return new Intl.DateTimeFormat(t.locale, { ...options, timeZone: FALLBACK_TIME_ZONE });
+  }
+})();
+
+/** Self-hosted emoji dataset for the active language; fetched on first open. */
+const EMOJI_DATA_SOURCE = t.emoji.dataSource;
 
 /** Must match the key used by the inline theme script in Layout.astro. */
 const THEME_STORAGE_KEY = 'theme';
@@ -116,7 +146,7 @@ function initHeaderMenu(theme: ThemeController): void {
   /** The item is named after the theme it switches TO, not the current one. */
   function syncThemeItem(current: Theme): void {
     const switchesToDark = current === 'light';
-    if (label) label.textContent = switchesToDark ? 'Tema oscuro' : 'Tema claro';
+    if (label) label.textContent = switchesToDark ? t.themeDark : t.themeLight;
     // Authored icon constants, never network input.
     if (icon) icon.innerHTML = switchesToDark ? ICON_MOON : ICON_SUN;
   }
@@ -207,6 +237,19 @@ function initHeaderMenu(theme: ThemeController): void {
     theme.toggle();
     closeMenu(true);
   });
+
+  // The item is a plain <a>, so navigation is the browser's job. All this does
+  // is record the deliberate pick first, so the automatic geo redirect on the
+  // destination page can never undo it.
+  byId<HTMLAnchorElement>('langMenuItem')?.addEventListener('click', function (event) {
+    const target = (event.currentTarget as HTMLAnchorElement).dataset.lang;
+    if (target !== 'es' && target !== 'en') return;
+    try {
+      localStorage.setItem(LANG_STORAGE_KEY, target);
+    } catch {
+      /* Privacy mode: the switch still works, it just is not remembered. */
+    }
+  });
 }
 
 // ── Emoji picker ────────────────────────────────────────────────
@@ -261,14 +304,18 @@ function initEmojiPicker(theme: ThemeController): void {
     if (picker || loading) return picker;
     loading = true;
     try {
-      const [{ default: Picker }, { default: es }] = await Promise.all([
+      // Both i18n modules are static specifiers so the bundler can see them;
+      // only the one for the active language is ever requested.
+      const [{ default: Picker }, { default: i18n }] = await Promise.all([
         import('emoji-picker-element/picker.js'),
-        import('emoji-picker-element/i18n/es.js'),
+        lang === 'en'
+          ? import('emoji-picker-element/i18n/en.js')
+          : import('emoji-picker-element/i18n/es.js'),
       ]);
       const element = new Picker({
         dataSource: EMOJI_DATA_SOURCE,
-        locale: 'es',
-        i18n: es,
+        locale: t.emoji.locale,
+        i18n,
       }) as unknown as HTMLElement;
       element.addEventListener('emoji-click', function (event) {
         const detail = (event as CustomEvent<{ unicode?: string }>).detail;
@@ -349,7 +396,7 @@ function initConversation(): void {
     return;
   }
 
-  stage.style.height = (MESSAGES.length + 2) * 55 + 'svh';
+  stage.style.height = (messages.length + 2) * 55 + 'svh';
 
   const nodes: (HTMLElement | null)[] = [];
   let typingEl: HTMLElement | null = null;
@@ -378,8 +425,8 @@ function initConversation(): void {
   }
 
   function buildMessage(index: number): HTMLElement {
-    const message = MESSAGES[index];
-    const previous = MESSAGES[index - 1];
+    const message = messages[index];
+    const previous = messages[index - 1];
     const row = document.createElement('div');
     row.className =
       'row ' +
@@ -390,7 +437,7 @@ function initConversation(): void {
       '<div class="bubble">' +
       message.html +
       '<span class="meta">' +
-      message.t +
+      clock() +
       (message.from === 'visitor' ? TICK : '') +
       '</span></div>';
     return row;
@@ -400,7 +447,7 @@ function initConversation(): void {
     if (typingFor === index) return;
     hideTyping();
     typingFor = index;
-    const message = MESSAGES[index];
+    const message = messages[index];
     typingEl = document.createElement('div');
     typingEl.className = 'row ' + (message.from === 'franco' ? 'in' : 'out');
     typingEl.innerHTML = '<div class="bubble"><span class="typing"><i></i><i></i><i></i></span></div>';
@@ -446,7 +493,7 @@ function initConversation(): void {
     hideTyping();
 
     // Make sure the whole script is rendered, permanently.
-    while (shown < MESSAGES.length - 1) {
+    while (shown < messages.length - 1) {
       shown++;
       const node = buildMessage(shown);
       nodes[shown] = node;
@@ -484,7 +531,7 @@ function initConversation(): void {
       shown--;
       hideTyping();
     }
-    if (shown >= MESSAGES.length - 1) {
+    if (shown >= messages.length - 1) {
       completeConversation();
       return;
     }
@@ -500,13 +547,13 @@ function initConversation(): void {
       if (conversationComplete) return;
       const max = stage!.offsetHeight - window.innerHeight;
       const p = Math.min(1, Math.max(0, (window.scrollY - stage!.offsetTop) / max));
-      const raw = p * (MESSAGES.length + 0.25);
-      const target = Math.min(MESSAGES.length - 1, Math.floor(raw) - 1);
+      const raw = p * (messages.length + 0.25);
+      const target = Math.min(messages.length - 1, Math.floor(raw) - 1);
       const frac = raw - Math.floor(raw);
       render(target);
       if (conversationComplete) return;
       const next = target + 1;
-      if (next < MESSAGES.length && frac > 0.45) showTyping(next);
+      if (next < messages.length && frac > 0.45) showTyping(next);
       else if (typingFor !== -1) hideTyping();
       hint!.classList.toggle('gone', p > 0.02);
     });
@@ -522,10 +569,7 @@ function initConversation(): void {
   // ── Live chat ─────────────────────────────────────────────────
 
   function clock(): string {
-    const now = new Date();
-    return (
-      String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0')
-    );
+    return TIME_FORMATTER.format(new Date());
   }
 
   /**
@@ -574,7 +618,8 @@ function initConversation(): void {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ question }),
+        // `lang` only picks which language the endpoint's own messages use.
+        body: JSON.stringify({ question, lang }),
       });
       const data = (await response.json().catch(() => null)) as
         | { answer?: unknown; error?: unknown }
@@ -624,7 +669,7 @@ function initPanels(): void {
 
   function setLabels(view: 'chat' | 'projects'): void {
     document.querySelectorAll('.view-toggle-btn .vt-label').forEach(function (el) {
-      el.textContent = view === 'chat' ? 'Ver proyectos' : 'Ver el chat';
+      el.textContent = view === 'chat' ? t.viewProjects : t.viewChat;
     });
     document.querySelectorAll('.view-toggle-btn .vt-icon').forEach(function (el) {
       el.innerHTML = view === 'chat' ? ICON_PROJECTS : ICON_CHAT;

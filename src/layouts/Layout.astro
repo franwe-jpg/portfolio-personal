@@ -1,21 +1,33 @@
 ---
 import { profile } from '../data/profile';
+import { LANG_STORAGE_KEY, pathForLang, SPANISH_COUNTRIES, type Lang } from '../i18n/config';
+import { UI } from '../i18n/ui';
 import '../styles/landing.css';
 
 interface Props {
+  lang: Lang;
   title: string;
   description: string;
 }
 
-const { title, description } = Astro.props;
+const { lang, title, description } = Astro.props;
 
 // `Astro.site` comes from `site` in astro.config.mjs; it falls back to the
 // request URL so the tags stay valid before the domain is configured.
-const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).href;
+const base = Astro.site ?? Astro.url;
+const canonical = new URL(Astro.url.pathname, base).href;
+const esHref = new URL(pathForLang('es'), base).href;
+const enHref = new URL(pathForLang('en'), base).href;
+
+// Inlined into the language script below so the country list has exactly one
+// source of truth: the constant in src/i18n/config.ts.
+const spanishCountries = Array.from(SPANISH_COUNTRIES);
+/** Marks the automatic redirect as already attempted for this session. */
+const langAutoKey = 'lang-auto';
 ---
 
 <!doctype html>
-<html lang="es">
+<html lang={lang}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -45,16 +57,79 @@ const canonical = new URL(Astro.url.pathname, Astro.site ?? Astro.url).href;
       })();
     </script>
 
+    {/*
+      Resolves the language the same way: inline and out of the bundle graph,
+      so a visitor who landed on the wrong route is moved before the page is
+      worth reading. `define:vars` carries the constants in, which is why the
+      country list is not duplicated here. Kept in sync with the
+      LANG_STORAGE_KEY constant in src/i18n/config.ts.
+    */}
+    <script define:vars={{ langKey: LANG_STORAGE_KEY, langAutoKey, spanishCountries }}>
+      (function () {
+        var current = document.documentElement.lang === 'en' ? 'en' : 'es';
+
+        // An explicit choice always wins, and never consumes the session flag.
+        var stored = null;
+        try {
+          stored = localStorage.getItem(langKey);
+        } catch (error) {
+          /* Privacy modes throw; treat it as no choice made. */
+        }
+        if (stored === 'es' || stored === 'en') {
+          if (stored !== current) location.replace(stored === 'en' ? '/en/' : '/');
+          return;
+        }
+
+        // The guess only ever runs on the default route. /en/ is an address
+        // someone typed, shared or was sent: guessing there would drag a
+        // deliberately English link back to Spanish.
+        if (current !== 'es') return;
+
+        // At most one automatic redirect per session, so the two routes can
+        // never bounce a visitor back and forth.
+        try {
+          if (sessionStorage.getItem(langAutoKey)) return;
+          sessionStorage.setItem(langAutoKey, '1');
+        } catch (error) {
+          /* Without sessionStorage the guard is gone, so do not redirect. */
+          return;
+        }
+
+        // A Spanish-speaking browser stays on Spanish whatever the IP says:
+        // plenty of Argentines read this page from abroad.
+        var nav = (navigator.language || '').toLowerCase();
+        if (nav.indexOf('es') === 0) return;
+
+        fetch('/api/geo')
+          .then(function (response) {
+            return response.json();
+          })
+          .then(function (data) {
+            var country =
+              data && typeof data.country === 'string' ? data.country.toUpperCase() : null;
+            if (!country) return;
+            if (spanishCountries.indexOf(country) === -1) location.replace('/en/');
+          })
+          .catch(function () {
+            /* Silent: the visitor simply keeps the page they were served. */
+          });
+      })();
+    </script>
+
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
+
+    <link rel="alternate" hreflang="es" href={esHref} />
+    <link rel="alternate" hreflang="en" href={enHref} />
+    <link rel="alternate" hreflang="x-default" href={esHref} />
 
     <meta property="og:type" content="profile" />
     <meta property="og:site_name" content={profile.name} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
-    <meta property="og:locale" content="es_AR" />
+    <meta property="og:locale" content={UI[lang].ogLocale} />
 
     <meta name="twitter:card" content="summary" />
     <meta name="twitter:title" content={title} />
