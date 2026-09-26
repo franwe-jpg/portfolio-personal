@@ -717,7 +717,7 @@ function initPanels(): void {
 function initCarousels(): void {
   document.querySelectorAll<HTMLElement>('.proj-carousel').forEach(function (carousel) {
     const track = carousel.querySelector<HTMLElement>('.proj-track');
-    const slides = carousel.querySelectorAll('.proj-track img');
+    const slides = carousel.querySelectorAll('.proj-track > *');
     const dots = carousel.querySelectorAll('.proj-dots span');
     const prev = carousel.querySelector('.prev');
     const next = carousel.querySelector('.next');

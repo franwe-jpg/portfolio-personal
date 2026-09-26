@@ -99,15 +99,8 @@ export const MESSAGES: Record<Lang, ChatMessage[]> = {
     },
     {
       from: 'franco',
-      html: 'Está mi proyecto final de la tecnicatura, y las landings que hago para negocios.',
+      html: 'Está mi proyecto final de la tecnicatura, y las landings que hago para instituciones/negocios.',
     },
-
-    { from: 'visitor', html: '¿Tenés CV?' },
-    {
-      from: 'franco',
-      html: '📄 <a href="/cv-franco-soler.pdf" target="_blank" rel="noopener">CV — Franco Soler.pdf</a>',
-    },
-
     { from: 'visitor', html: '¿Cómo te contacto?' },
     {
       from: 'franco',

@@ -10,13 +10,28 @@ interface Props {
 
 const { lang, project } = Astro.props;
 const t = UI[lang];
-const hasCarousel = project.images.length > 1;
+const hasCarousel = project.media.length > 1;
 ---
 
 <article class="proj-card">
   <div class="proj-carousel">
     <div class="proj-track">
-      {project.images.map((image) => <img src={image.src} alt={image.alt} loading="lazy" />)}
+      {
+        project.media.map((item) =>
+          item.kind === 'video' ? (
+            <iframe
+              class="proj-video"
+              src={`https://www.youtube-nocookie.com/embed/${item.youtubeId}`}
+              title={item.alt}
+              loading="lazy"
+              allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen
+            />
+          ) : (
+            <img src={item.src} alt={item.alt} loading="lazy" />
+          ),
+        )
+      }
     </div>
     {
       hasCarousel && (
@@ -28,7 +43,7 @@ const hasCarousel = project.images.length > 1;
             ›
           </button>
           <div class="proj-dots">
-            {project.images.map((_, index) => (
+            {project.media.map((_, index) => (
               <span class={index === 0 ? 'active' : undefined} />
             ))}
           </div>

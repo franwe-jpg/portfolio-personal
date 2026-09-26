@@ -24,7 +24,7 @@ export interface ProfileCopy {
 // The linkedin and instagram handles are still placeholders: the owner has not
 // provided them yet. Everything else is real.
 export const profile: Profile = {
-  name: 'Franco Soler',
+  name: 'Franco Martin Soler',
   initials: 'FS',
   links: {
     linkedin: 'https://www.linkedin.com/in/franco-martin-soler-19745a346',
@@ -37,7 +37,7 @@ export const profile: Profile = {
 export const PROFILE_COPY: Record<Lang, ProfileCopy> = {
   es: {
     role: 'Analista Programador',
-    tagline: 'Franco Soler — Analista Programador',
+    tagline: 'Franco Martin Soler — Analista Programador',
     bio: [
       'Analista Programador y estudiante avanzado de Licenciatura en Sistemas.',
       'Haciendo del mundo un lugar mejor, pero no tanto...',
