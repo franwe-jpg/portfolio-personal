@@ -20,7 +20,7 @@
 │  SYSTEM.INFO                                                         │
 ├──────────────────────────────────────────────────────────────────────┤
 │  > what      a portfolio that is a chat, not a page                  │
-│  > how       scroll to read the scripted intro, then ask anything    │
+│  > how       tap through the scripted intro, then ask anything       │
 │  > who       an AI persona answers in first person, ES / EN          │
 │  > where     static HTML on Cloudflare + one Worker route            │
 │  > status    ██████████████████████████████  ONLINE                  │
@@ -29,16 +29,16 @@
 
 ## `01` // The interface
 
-Scrolling drives the conversation. Every scripted visitor message is typed into
-the composer letter by letter before it is sent, and when the script ends the chat
-opens up to real questions.
+Each tap plays one exchange. The scripted visitor question is typed into the
+composer letter by letter and sent, then Franco types and answers. When the script
+ends, the chat scrolls natively and opens up to real questions.
 
 <div align="center">
 
 | `[ boot ]` | `[ typing… ]` | `[ your turn ]` |
 | :---: | :---: | :---: |
-| <img src="docs/readme/screen-scroll-hint.png" width="230" alt="Scroll hint centered on an empty chat"> | <img src="docs/readme/screen-typing.png" width="230" alt="Visitor message being typed in the composer"> | <img src="docs/readme/screen-your-turn.png" width="230" alt="Invitation to write once the script ends"> |
-| A pulsing hint asks you to scroll | The draft takes 1–2 s; the scroll waits for it | Ask anything, and the AI persona replies |
+| <img src="docs/readme/screen-tap-hint.png" width="230" alt="Pulsing tap hint centered on the chat"> | <img src="docs/readme/screen-typing.png" width="230" alt="Visitor message being typed in the composer"> | <img src="docs/readme/screen-your-turn.png" width="230" alt="Invitation to write once the script ends"> |
+| A pulsing hint asks for a tap | The draft takes 1–2 s, then it is sent | Ask anything, and the AI persona replies |
 
 </div>
 
@@ -97,7 +97,7 @@ src/
 │   ├── index.astro ▸ /      (Spanish)
 │   ├── en/         ▸ /en/   (English)
 │   └── api/chat.ts ▸ the only server route
-├── scripts/        ▸ scroll-driven chat, typing drafts, Turnstile, theme
+├── scripts/        ▸ tap-driven chat, typing drafts, Turnstile, theme
 └── styles/         ▸ landing.css, with light and dark themes
 db/schema.sql       ▸ D1 tables: question_quota, chat_log
 public/_headers     ▸ security headers for static responses

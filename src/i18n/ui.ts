@@ -31,7 +31,9 @@ export interface UiCopy {
 
   disclaimer: string;
   todayChip: string;
-  scrollHint: string;
+  /** Shown on touch screens; `clickHint` replaces it with a fine pointer. */
+  tapHint: string;
+  clickHint: string;
   openPromptTitle: string;
   openPromptText: string;
 
@@ -71,7 +73,8 @@ export const UI: Record<Lang, UiCopy> = {
 
     disclaimer: 'Este chat es una simulación. El CV, los links y las ganas de trabajar son reales.',
     todayChip: 'HOY',
-    scrollHint: 'Scrolleá para leer la conversación',
+    tapHint: 'Tocá la pantalla para continuar',
+    clickHint: 'Hacé clic para chatear',
     openPromptTitle: 'Ahora te toca a vos',
     openPromptText: 'Escribime lo que quieras acá abajo y te respondo.',
 
@@ -110,7 +113,8 @@ export const UI: Record<Lang, UiCopy> = {
 
     disclaimer: 'This chat is a simulation. The CV, the links and the willingness to work are real.',
     todayChip: 'TODAY',
-    scrollHint: 'Scroll to read the conversation',
+    tapHint: 'Tap the screen to continue',
+    clickHint: 'Click to continue',
     openPromptTitle: 'Your turn',
     openPromptText: 'Ask me anything below and I will reply.',
 

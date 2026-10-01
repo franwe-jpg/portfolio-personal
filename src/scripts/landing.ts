@@ -36,6 +36,27 @@ const DRAFT_MAX_MS = 2000;
 const DRAFT_SHORT_CHARS = 5;
 const DRAFT_LONG_CHARS = 30;
 
+/** How long Franco's typing bubble shows before each scripted reply. */
+const REPLY_MIN_MS = 700;
+const REPLY_MAX_MS = 1400;
+const REPLY_LONG_CHARS = 120;
+/** Share of the chat height the bubbles may fill before the hint goes compact. */
+const HINT_COMPACT_AT = 0.45;
+/** Beat between a typed draft and its bubble, and between consecutive bubbles. */
+const SEND_PAUSE_MS = 250;
+const BETWEEN_MESSAGES_MS = 450;
+
+function replyDuration(length: number): number {
+  const ratio = Math.min(1, length / REPLY_LONG_CHARS);
+  return REPLY_MIN_MS + ratio * (REPLY_MAX_MS - REPLY_MIN_MS);
+}
+
+function wait(ms: number): Promise<void> {
+  return new Promise(function (resolve) {
+    setTimeout(resolve, ms);
+  });
+}
+
 function draftDuration(length: number): number {
   const span = DRAFT_LONG_CHARS - DRAFT_SHORT_CHARS;
   const ratio = Math.min(1, Math.max(0, (length - DRAFT_SHORT_CHARS) / span));
@@ -553,16 +574,17 @@ function initConversation(): void {
 
   const humanCheck = initHumanCheck();
 
-  stage.style.height = (messages.length + 2) * 55 + 'svh';
+  // The page never scrolls: taps drive the scripted intro, and once it ends
+  // the chat body scrolls natively.
+  stage.style.height = '100svh';
 
   const nodes: (HTMLElement | null)[] = [];
   let typingEl: HTMLElement | null = null;
   let liveTypingEl: HTMLElement | null = null;
   let draftTimer: number | null = null;
-  /** Index of the visitor message whose draft has been fully typed, or -1. */
-  let draftDoneFor = -1;
+  /** True while a tap-triggered exchange is being played. */
+  let playing = false;
   let shown = -1;
-  let typingFor = -1;
   let composerReady = false;
   let requestInFlight = false;
   /** One-way latch: the scroll-driven intro is a first-visit effect only. */
@@ -612,41 +634,30 @@ function initConversation(): void {
 
   /**
    * Types the visitor's next scripted message into the composer, letter by
-   * letter. The message is only "sent" (rendered as a bubble) once the draft
-   * is complete, however fast the visitor scrolls: see pendingDraft().
+   * letter, and resolves once the whole draft is in place. Rendering the
+   * message afterwards "sends" it: hideTyping() clears the draft.
    */
-  function startDraft(index: number): void {
+  function typeDraft(index: number): Promise<void> {
     // Array.from splits by code point, so an emoji is never typed in halves.
     const chars = Array.from(plainText(messages[index].html));
     composer!.classList.add('is-drafting');
 
-    function finish(): void {
-      stopDraftTimer();
-      draftDoneFor = index;
-      // The visitor may already be scrolled past this message: catch up.
-      onScroll();
-    }
-
     if (chars.length === 0 || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
       input!.value = chars.join('');
-      finish();
-      return;
+      return Promise.resolve();
     }
-    let typed = 0;
-    draftTimer = window.setInterval(function () {
-      typed++;
-      input!.value = chars.slice(0, typed).join('');
-      input!.scrollLeft = input!.scrollWidth;
-      if (typed >= chars.length) finish();
-    }, draftDuration(chars.length) / chars.length);
-  }
-
-  /** First visitor message up to `target` whose draft has not been typed yet. */
-  function pendingDraft(target: number): number {
-    for (let index = shown + 1; index <= target; index++) {
-      if (messages[index].from === 'visitor' && draftDoneFor !== index) return index;
-    }
-    return -1;
+    return new Promise(function (resolve) {
+      let typed = 0;
+      draftTimer = window.setInterval(function () {
+        typed++;
+        input!.value = chars.slice(0, typed).join('');
+        input!.scrollLeft = input!.scrollWidth;
+        if (typed >= chars.length) {
+          stopDraftTimer();
+          resolve();
+        }
+      }, draftDuration(chars.length) / chars.length);
+    });
   }
 
   function stopDraftTimer(): void {
@@ -658,27 +669,19 @@ function initConversation(): void {
 
   function clearDraft(): void {
     stopDraftTimer();
-    draftDoneFor = -1;
     if (!composer!.classList.contains('is-drafting')) return;
     composer!.classList.remove('is-drafting');
     input!.value = '';
   }
 
-  function showTyping(index: number): void {
-    if (typingFor === index) return;
+  /** Franco's typing bubble; the visitor types in the composer instead. */
+  function showTyping(): void {
     hideTyping();
-    typingFor = index;
-    const message = messages[index];
-    // The visitor "types" in the composer; only Franco gets a typing bubble.
-    if (message.from === 'visitor') {
-      startDraft(index);
-      return;
-    }
     typingEl = document.createElement('div');
-    typingEl.className = 'row ' + (message.from === 'franco' ? 'in' : 'out');
+    typingEl.className = 'row in';
     typingEl.innerHTML = '<div class="bubble"><span class="typing"><i></i><i></i><i></i></span></div>';
     insertScripted(typingEl);
-    if (message.from === 'franco') status!.innerHTML = STATUS_TYPING;
+    status!.innerHTML = STATUS_TYPING;
     reflow();
   }
 
@@ -688,7 +691,6 @@ function initConversation(): void {
       typingEl.remove();
       typingEl = null;
     }
-    typingFor = -1;
     // A live request owns the status line while it is pending.
     if (!requestInFlight) status!.textContent = STATUS_ONLINE;
   }
@@ -708,20 +710,15 @@ function initConversation(): void {
 
   /**
    * Fires once, the moment the last scripted message has been shown, and
-   * never unwinds. It turns the scroll-driven intro into an ordinary chat:
+   * never unwinds. It turns the tap-driven intro into an ordinary chat:
    * every scripted message stays in the DOM, the typing indicator is gone
    * for good, and `.chat-body` takes over with native scrolling so the
    * visitor can read up and down at their own pace.
-   *
-   * It also collapses `#stage` back to one viewport. The long scroll track
-   * only ever existed to drive the animation, and the page must not keep
-   * scrolling past the end of the conversation.
    */
   function completeConversation(): void {
     if (conversationComplete) return;
     conversationComplete = true;
 
-    window.removeEventListener('scroll', onScroll);
     hideTyping();
 
     // Make sure the whole script is rendered, permanently.
@@ -741,13 +738,11 @@ function initConversation(): void {
     list!.style.transform = '';
     body!.scrollTop = body!.scrollHeight;
 
-    // `#sticky` is pinned at the top of the viewport at any scroll offset,
-    // so collapsing the stage does not move anything on screen.
-    stage!.style.height = '100svh';
     hint!.classList.add('gone');
     if (openPrompt) openPrompt.hidden = false;
   }
 
+  /** Appends scripted messages up to `target`; the intro never rewinds. */
   function render(target: number): void {
     if (conversationComplete) return;
     while (shown < target) {
@@ -757,13 +752,6 @@ function initConversation(): void {
       nodes[shown] = node;
       insertScripted(node);
     }
-    while (shown > target) {
-      const node = nodes[shown];
-      if (node) node.remove();
-      nodes[shown] = null;
-      shown--;
-      hideTyping();
-    }
     if (shown >= messages.length - 1) {
       completeConversation();
       return;
@@ -771,42 +759,69 @@ function initConversation(): void {
     reflow();
   }
 
-  let ticking = false;
-  function onScroll(): void {
-    if (conversationComplete || ticking) return;
-    ticking = true;
-    requestAnimationFrame(function () {
-      ticking = false;
-      if (conversationComplete) return;
-      const max = stage!.offsetHeight - window.innerHeight;
-      const p = Math.min(1, Math.max(0, (window.scrollY - stage!.offsetTop) / max));
-      const raw = p * (messages.length + 0.25);
-      const target = Math.min(messages.length - 1, Math.floor(raw) - 1);
-      const frac = raw - Math.floor(raw);
-      hint!.classList.toggle('gone', p > 0.02);
-
-      // Scrolling ahead of an untyped visitor message holds the conversation
-      // there until its draft finishes; finish() then calls back in here.
-      const gate = pendingDraft(target);
-      if (gate !== -1) {
-        render(gate - 1);
-        showTyping(gate);
-        return;
-      }
-
-      render(target);
-      if (conversationComplete) return;
-      const next = target + 1;
-      if (next < messages.length && frac > 0.45) showTyping(next);
-      else if (typingFor !== -1) hideTyping();
-    });
+  /**
+   * Shows the "tap to continue" hint: big and centred while the bubbles leave
+   * room for it, compact near the bottom once they would sit underneath.
+   */
+  function setHint(visible: boolean): void {
+    hint!.classList.toggle('gone', !visible);
+    if (!visible || hint!.classList.contains('compact')) return;
+    if (list!.scrollHeight > body!.clientHeight * HINT_COMPACT_AT) {
+      // One-way: from here on the list keeps a strip free under the last
+      // bubble, so the background-less hint never sits on top of text.
+      hint!.classList.add('compact');
+      body!.classList.add('hint-space');
+      reflow();
+    }
   }
 
-  window.addEventListener('scroll', onScroll, { passive: true });
-  window.addEventListener('resize', function () {
+  /**
+   * Plays the next exchange: the visitor's question is typed and sent, then
+   * Franco types and answers, until the next visitor message is up. The
+   * opening greeting, which has no question before it, plays on its own.
+   */
+  async function playStep(): Promise<void> {
+    if (playing || conversationComplete) return;
+    playing = true;
+    setHint(false);
+    do {
+      const index = shown + 1;
+      const message = messages[index];
+      if (message.from === 'visitor') {
+        await typeDraft(index);
+        await wait(SEND_PAUSE_MS);
+      } else {
+        showTyping();
+        await wait(replyDuration(plainText(message.html).length));
+      }
+      render(index);
+      if (conversationComplete) break;
+      await wait(BETWEEN_MESSAGES_MS);
+    } while (messages[shown + 1].from !== 'visitor');
+    playing = false;
+    if (!conversationComplete) setHint(true);
+  }
+
+  // A tap anywhere on the chat advances it, except on links inside bubbles.
+  body.addEventListener('click', function (event) {
     if (conversationComplete) return;
-    reflow();
-    onScroll();
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('a, button')) return;
+    void playStep();
+  });
+
+  // Keyboard equivalent, ignored while focus is on a control of its own.
+  document.addEventListener('keydown', function (event) {
+    if (conversationComplete || event.defaultPrevented) return;
+    if (event.key !== 'Enter' && event.key !== ' ' && event.key !== 'ArrowDown') return;
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('a, button, input, textarea, [role="menu"], #emojiPopover')) return;
+    event.preventDefault();
+    void playStep();
+  });
+
+  window.addEventListener('resize', function () {
+    if (!conversationComplete) reflow();
   });
 
   // ── Live chat ─────────────────────────────────────────────────
@@ -909,7 +924,8 @@ function initConversation(): void {
   });
 
   render(-1);
-  onScroll();
+  setHint(false);
+  void playStep();
 }
 
 function initPanels(): void {
