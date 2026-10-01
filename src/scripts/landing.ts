@@ -26,8 +26,21 @@ const STATUS_TYPING = t.statusTyping;
 const PLACEHOLDER_OPEN = t.composerPlaceholderOpen;
 const NETWORK_ERROR = t.networkError;
 
-/** Typing speed of the simulated visitor drafts in the composer. */
-const DRAFT_CHAR_MS = 45;
+/**
+ * How long a simulated visitor draft takes to type in the composer: a short
+ * message ("Hola.") takes the minimum, one of DRAFT_LONG_CHARS or more the
+ * maximum, and anything in between scales linearly.
+ */
+const DRAFT_MIN_MS = 1000;
+const DRAFT_MAX_MS = 2000;
+const DRAFT_SHORT_CHARS = 5;
+const DRAFT_LONG_CHARS = 30;
+
+function draftDuration(length: number): number {
+  const span = DRAFT_LONG_CHARS - DRAFT_SHORT_CHARS;
+  const ratio = Math.min(1, Math.max(0, (length - DRAFT_SHORT_CHARS) / span));
+  return DRAFT_MIN_MS + ratio * (DRAFT_MAX_MS - DRAFT_MIN_MS);
+}
 
 /**
  * Timestamps follow the visitor's own device clock. Argentina is only a
@@ -546,6 +559,8 @@ function initConversation(): void {
   let typingEl: HTMLElement | null = null;
   let liveTypingEl: HTMLElement | null = null;
   let draftTimer: number | null = null;
+  /** Index of the visitor message whose draft has been fully typed, or -1. */
+  let draftDoneFor = -1;
   let shown = -1;
   let typingFor = -1;
   let composerReady = false;
@@ -597,15 +612,24 @@ function initConversation(): void {
 
   /**
    * Types the visitor's next scripted message into the composer, letter by
-   * letter. Scrolling on to the message "sends" it: render() inserts the
-   * bubble and hideTyping() clears the draft.
+   * letter. The message is only "sent" (rendered as a bubble) once the draft
+   * is complete, however fast the visitor scrolls: see pendingDraft().
    */
-  function startDraft(html: string): void {
+  function startDraft(index: number): void {
     // Array.from splits by code point, so an emoji is never typed in halves.
-    const chars = Array.from(plainText(html));
+    const chars = Array.from(plainText(messages[index].html));
     composer!.classList.add('is-drafting');
-    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+
+    function finish(): void {
+      stopDraftTimer();
+      draftDoneFor = index;
+      // The visitor may already be scrolled past this message: catch up.
+      onScroll();
+    }
+
+    if (chars.length === 0 || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
       input!.value = chars.join('');
+      finish();
       return;
     }
     let typed = 0;
@@ -613,8 +637,16 @@ function initConversation(): void {
       typed++;
       input!.value = chars.slice(0, typed).join('');
       input!.scrollLeft = input!.scrollWidth;
-      if (typed >= chars.length) stopDraftTimer();
-    }, DRAFT_CHAR_MS);
+      if (typed >= chars.length) finish();
+    }, draftDuration(chars.length) / chars.length);
+  }
+
+  /** First visitor message up to `target` whose draft has not been typed yet. */
+  function pendingDraft(target: number): number {
+    for (let index = shown + 1; index <= target; index++) {
+      if (messages[index].from === 'visitor' && draftDoneFor !== index) return index;
+    }
+    return -1;
   }
 
   function stopDraftTimer(): void {
@@ -626,6 +658,7 @@ function initConversation(): void {
 
   function clearDraft(): void {
     stopDraftTimer();
+    draftDoneFor = -1;
     if (!composer!.classList.contains('is-drafting')) return;
     composer!.classList.remove('is-drafting');
     input!.value = '';
@@ -638,7 +671,7 @@ function initConversation(): void {
     const message = messages[index];
     // The visitor "types" in the composer; only Franco gets a typing bubble.
     if (message.from === 'visitor') {
-      startDraft(message.html);
+      startDraft(index);
       return;
     }
     typingEl = document.createElement('div');
@@ -750,12 +783,22 @@ function initConversation(): void {
       const raw = p * (messages.length + 0.25);
       const target = Math.min(messages.length - 1, Math.floor(raw) - 1);
       const frac = raw - Math.floor(raw);
+      hint!.classList.toggle('gone', p > 0.02);
+
+      // Scrolling ahead of an untyped visitor message holds the conversation
+      // there until its draft finishes; finish() then calls back in here.
+      const gate = pendingDraft(target);
+      if (gate !== -1) {
+        render(gate - 1);
+        showTyping(gate);
+        return;
+      }
+
       render(target);
       if (conversationComplete) return;
       const next = target + 1;
       if (next < messages.length && frac > 0.45) showTyping(next);
       else if (typingFor !== -1) hideTyping();
-      hint!.classList.toggle('gone', p > 0.02);
     });
   }
 
