@@ -48,7 +48,7 @@ export const PROFILE_COPY: Record<Lang, ProfileCopy> = {
     // The degree name stays in Spanish, glossed once so an English reader knows
     // what it is. Everything after this point just says "software analyst".
     role: 'Analista Programador (Software Analyst)',
-    tagline: 'Franco Soler — Software Analyst',
+    tagline: 'Franco Martin Soler — Software Analyst',
     bio: [
       'Software analyst and senior-year student of Licenciatura en Sistemas.',
       'Making the world a better place, but only a little...',

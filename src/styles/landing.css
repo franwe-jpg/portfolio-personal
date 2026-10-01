@@ -7,9 +7,9 @@
    for byte; the dark palette only re-declares the same names.
 
    `data-theme` is stamped on <html> before the first paint by the
-   inline script in src/layouts/Layout.astro. The media query is the
-   no-JavaScript fallback and is scoped with :not([data-theme="light"])
-   so an explicit light choice always wins.
+   inline script in src/layouts/Layout.astro. Light is the default,
+   whatever the OS prefers; dark applies only after the visitor picks
+   it in the header menu.
    ════════════════════════════════════════════════════════════════ */
 :root{
   color-scheme: light;
@@ -47,6 +47,7 @@
   --focus-ring:   rgba(0,0,0,.12);
   --hint-bg:      rgba(255,255,255,.72);
   --avatar-grad:  linear-gradient(145deg,#2b2b2b,#050505);
+  --profile-bg:   #f0f2f5;  /* fondo de "Info. del contacto" */
   --menu-bg:      #ffffff;
   --menu-border:  #e2e5e8;
   --menu-hover:   #f3f4f6;
@@ -81,65 +82,8 @@
   --font: "Segoe UI", "Helvetica Neue", Helvetica, -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif;
 }
 
-/* Paleta oscura. Sólo redefine tokens: ninguna regla de abajo cambia. */
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    color-scheme: dark;
-
-    --wa-wall:      #0b141a;
-    --wa-wall-fade: rgba(11,20,26,0);
-    --wa-panel:     #202c33;
-    --wa-in:        #202c33;
-    --wa-out:       #005c4b;
-    --wa-text:      #e9edef;
-    --wa-muted:     #aebac1;
-    --wa-meta:      #bfcad1;
-    --wa-link:      #53bdeb;
-    --wa-link-underline: rgba(83,189,235,.35);
-    --wa-tick:      #53bdeb;
-    --wa-accent:    #ffffff;
-    --wa-border:    #2a3942;
-    --wa-chip:      #182229;
-    --wa-chip-warn: #182229;
-    --wa-chip-warn-text: #ffd279;
-
-    --wa-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='0.04' stroke-width='1.5' stroke-linecap='round'%3E%3Ccircle cx='22' cy='24' r='8'/%3E%3Cpath d='M60 16h20v15H70l-6 7v-7h-4z'/%3E%3Cpath d='M108 34l7-13 7 13z'/%3E%3Cpath d='M14 80q10-13 20 0t20 0'/%3E%3Crect x='90' y='70' width='18' height='18' rx='4'/%3E%3Cpath d='M28 116l9 9 16-18'/%3E%3Ccircle cx='116' cy='112' r='6'/%3E%3Cpath d='M64 96v18M55 105h18'/%3E%3C/g%3E%3C/svg%3E");
-
-    --page-bg:      #0b141a;
-    --screen-bg:    #111b21;
-    --icon-muted:   #aebac1;
-    --typing-dot:   #8696a0;
-    --input-bg:     #2a3942;
-    --focus-ring:   rgba(255,255,255,.18);
-    --hint-bg:      rgba(32,44,51,.82);
-    --avatar-grad:  linear-gradient(145deg,#3b4a54,#202c33);
-    --menu-bg:      #233138;
-    --menu-border:  #2a3942;
-    --menu-hover:   #2a3942;
-    --menu-shadow:  rgba(0,0,0,.5);
-
-    --intro-text:       #aebac1;
-    --btn-bg:           #202c33;
-    --btn-border:       #2a3942;
-    --btn-hover-bg:     #2a3942;
-    --cta-bg:           #182229;
-    --cta-text:         #53bdeb;
-    --cta-border:       #53bdeb;
-    --cta-hover-bg:     #1f2f38;
-    --float-bg:         rgba(32,44,51,.94);
-    --float-border:     #2a3942;
-
-    --proj-card-bg:      #182229;
-    --proj-carousel-bg:  #202c33;
-    --proj-text-muted:   #aebac1;
-    --proj-chip-bg:      #202c33;
-    --proj-chip-border:  #2a3942;
-    --proj-link-text:    #e9edef;
-    --proj-link-hover:   #8696a0;
-  }
-}
-
-/* Elección explícita del menú: gana sobre prefers-color-scheme. */
+/* Paleta oscura, sólo si se elige en el menú. Sólo redefine tokens:
+   ninguna regla de abajo cambia. */
 :root[data-theme="dark"]{
   color-scheme: dark;
 
@@ -170,6 +114,7 @@
   --focus-ring:   rgba(255,255,255,.18);
   --hint-bg:      rgba(32,44,51,.82);
   --avatar-grad:  linear-gradient(145deg,#3b4a54,#202c33);
+  --profile-bg:   #0b141a;
   --menu-bg:      #233138;
   --menu-border:  #2a3942;
   --menu-hover:   #2a3942;
@@ -249,7 +194,18 @@ body{
   font-size:15px; font-weight:600; color:#fff; letter-spacing:.5px;
 }
 .avatar img{ width:100%; height:100%; object-fit:cover; display:block; }
+/* Foto y nombre del header: un solo botón que abre el perfil. */
+.contact-btn{
+  flex:1; min-width:0; min-height:44px;
+  display:flex; align-items:center; gap:12px;
+  margin:-4px -6px; padding:4px 6px;
+  border:0; border-radius:10px; background:transparent;
+  color:inherit; font:inherit; text-align:left; cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+.contact-btn:focus-visible{ outline:2px solid var(--wa-accent); outline-offset:2px; }
 .who{ flex:1; min-width:0; }
+.who .name, .who .status{ display:block; }
 .who .name{ font-size:16px; font-weight:500; line-height:1.3; }
 .who .status{ font-size:12.5px; color:var(--wa-muted); line-height:1.35; height:17px; overflow:hidden; }
 .who .status b{ color:var(--wa-accent); font-weight:500; }
@@ -442,7 +398,11 @@ body{
   font:inherit; font-size:14.5px; line-height:1.4; color:var(--wa-text);
 }
 .input input::placeholder{ color:var(--wa-muted); opacity:1; }
-.input input:disabled{ cursor:default; }
+.input input:disabled{
+  cursor:default; opacity:1;
+  /* Safari atenúa el texto de un input deshabilitado; el borrador del guion debe leerse. */
+  color:var(--wa-text); -webkit-text-fill-color:var(--wa-text);
+}
 .input:focus-within{ box-shadow:0 0 0 2px var(--focus-ring); }
 .send{
   flex:none; color:var(--icon-muted); display:grid; place-items:center;
@@ -451,17 +411,118 @@ body{
 .send:disabled{ opacity:.45; cursor:default; }
 .send:focus-visible{ outline:2px solid var(--wa-accent); outline-offset:2px; border-radius:6px; }
 
+/* Aviso "tocá para continuar": texto blanco sin fondo, con la tipografía
+   del chat. La sombra lo mantiene legible sobre el fondo claro. Al
+   principio va centrado y grande; con mensajes en pantalla baja y se
+   achica para no tapar la lectura. */
 .hint{
-  position:absolute; left:50%; bottom:22px; transform:translateX(-50%);
-  display:flex; flex-direction:column; align-items:center; gap:6px;
-  color:var(--wa-muted); font-size:12.5px;
-  background:var(--hint-bg); backdrop-filter:blur(3px);
-  padding:8px 14px; border-radius:20px;
+  position:absolute; inset:0; z-index:4;
+  display:grid; place-items:center;
+  /* El margen inferior deja libre el botón flotante "Ver proyectos". */
+  padding:0 24px 88px;
   transition:opacity .4s ease; pointer-events:none;
 }
 .hint.gone{ opacity:0; }
-.hint svg{ animation:nudge 1.6s infinite ease-in-out; }
-@keyframes nudge{ 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(5px);} }
+.hint.compact{ place-items:end center; }
+/* Franja libre bajo la última burbuja para el aviso compacto. */
+.chat-body.hint-space:not(.is-complete) .chat-list{ padding-bottom:132px; }
+.hint-card{
+  display:flex; flex-direction:column; align-items:center; gap:12px;
+  font-family:var(--font); font-size:20px; font-weight:600; line-height:1.3; text-align:center;
+  color:#ffffff;
+  text-shadow:0 1px 2px rgba(0,0,0,.7), 0 0 8px rgba(0,0,0,.5), 0 0 20px rgba(0,0,0,.35);
+  animation:hint-pulse 1.6s infinite ease-in-out;
+}
+.hint.compact .hint-card{ flex-direction:row; gap:10px; font-size:16px; }
+.hint-text-pointer{ display:none; }
+@media (hover:hover) and (pointer:fine){
+  .hint-text-touch{ display:none; }
+  .hint-text-pointer{ display:inline; }
+}
+/* Un punto con una onda que se expande, como un toque en la pantalla. */
+.hint-tap{ position:relative; flex:none; width:44px; height:44px; }
+.hint.compact .hint-tap{ width:30px; height:30px; }
+.hint-tap::before, .hint-tap::after{
+  content:""; position:absolute; border-radius:50%;
+  box-shadow:0 0 10px rgba(0,0,0,.45);
+}
+.hint-tap::before{ inset:32%; background:#ffffff; }
+.hint-tap::after{ inset:0; border:2px solid #ffffff; animation:hint-ring 1.6s infinite ease-out; }
+@keyframes hint-pulse{
+  0%,100%{ transform:translateY(0) scale(1); }
+  50%{ transform:translateY(-5px) scale(1.05); }
+}
+@keyframes hint-ring{ from{ transform:scale(.35); opacity:1; } to{ transform:scale(1.2); opacity:0; } }
+@keyframes hint-nudge{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(9px); } }
+
+/* Mientras dura el guion, toda el área del chat es un botón de "seguir". */
+.chat-body:not(.is-complete){ cursor:pointer; -webkit-tap-highlight-color:transparent; }
+
+/* ── Preguntas sugeridas ─────────────────────────────────────
+   Tira tipo "sugerencias del teclado" sobre el composer. Los chips se
+   deslizan en loop de derecha a izquierda; el set está duplicado, así que
+   correrlo exactamente la mitad del ancho empalma sin salto. Se frena
+   mientras el puntero o el dedo están encima, para poder elegir. */
+.suggestions{
+  flex:none; overflow:hidden;
+  padding:8px 0;
+  background:var(--wa-panel);
+  border-top:1px solid var(--wa-border);
+  -webkit-mask-image:linear-gradient(to right, transparent, #000 24px, #000 calc(100% - 24px), transparent);
+          mask-image:linear-gradient(to right, transparent, #000 24px, #000 calc(100% - 24px), transparent);
+  animation:suggestions-in .3s cubic-bezier(.22,.61,.36,1);
+}
+.suggestions[hidden]{ display:none; }
+.suggestions-track{
+  display:flex; width:max-content;
+  animation:suggestions-marquee var(--suggestions-duration, 22s) linear infinite;
+}
+.suggestions:hover .suggestions-track,
+.suggestions.is-held .suggestions-track,
+.suggestions:focus-within .suggestions-track{ animation-play-state:paused; }
+/* Margen y no gap: así cada mitad del track mide exactamente lo mismo. */
+.suggestion{
+  flex:none; margin-right:8px;
+  padding:7px 14px; border-radius:18px;
+  border:1px solid var(--menu-border); background:var(--input-bg);
+  color:var(--wa-text); font:inherit; font-size:14px; white-space:nowrap;
+  cursor:pointer; -webkit-tap-highlight-color:transparent;
+}
+.suggestion:hover{ background:var(--menu-hover); }
+.suggestion:focus-visible{ outline:2px solid var(--wa-accent); outline-offset:1px; }
+@keyframes suggestions-marquee{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
+@keyframes suggestions-in{ from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:none; } }
+
+/* Con el teclado abierto el botón flotante solo estorba. */
+.composer-focused .view-toggle-mobile{ opacity:0; pointer-events:none; }
+
+/* Mientras el visitante "escribe" un mensaje del guion. */
+.composer.is-drafting .input{ box-shadow:0 0 0 2px var(--focus-ring); }
+.composer.is-drafting .send{ opacity:1; color:var(--wa-accent); }
+
+/* Invitación a escribir al terminar el guion. Vive en .screen y no en
+   .chat-body, porque ahí el scroll nativo la arrastraría. */
+.open-prompt{
+  position:absolute; left:50%; top:50%; z-index:5;
+  transform:translate(-50%, -50%);
+  width:min(300px, calc(100% - 48px));
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+  padding:20px 22px 16px; border:1px solid var(--menu-border); border-radius:22px;
+  background:var(--float-bg); backdrop-filter:blur(6px);
+  color:var(--wa-text); font:inherit; text-align:center; cursor:pointer;
+  box-shadow:0 14px 40px -14px var(--menu-shadow);
+  animation:open-prompt-in .45s cubic-bezier(.22,.61,.36,1);
+}
+.open-prompt[hidden]{ display:none; }
+.open-prompt.leaving{ opacity:0; transition:opacity .4s ease; }
+.open-prompt:focus-visible{ outline:2px solid var(--wa-accent); outline-offset:3px; }
+.open-prompt-title{ font-size:19px; font-weight:700; }
+.open-prompt-text{ font-size:15px; line-height:1.4; color:var(--wa-muted); }
+.open-prompt-arrow{ font-size:24px; animation:hint-nudge 1.6s infinite ease-in-out; }
+@keyframes open-prompt-in{
+  from{ opacity:0; transform:translate(-50%, -50%) scale(.92); }
+  to{ opacity:1; transform:translate(-50%, -50%); }
+}
 
 /* ── Presentación ───────────────────────────────────────────── */
 .intro{
@@ -527,6 +588,44 @@ body{
 #chatScreen{ transform:translateY(0); z-index:2; }
 #projectsScreen{ transform:translateY(-100%); z-index:1; }
 
+/* ── Info. del contacto ─────────────────────────────────────────
+   Entra desde la derecha sobre el chat, como en WhatsApp, y sale por
+   el mismo lado. El chat queda intacto debajo. */
+#profileScreen{ transform:translateX(100%); z-index:3; background:var(--profile-bg); }
+#profileScreen.is-open{ transform:translateX(0); box-shadow:-10px 0 30px rgba(11,20,26,.16); }
+.profile-open .view-toggle-mobile{ opacity:0; pointer-events:none; }
+.profile-header{ gap:14px; border-bottom:0; }
+.profile-back{
+  flex:none; width:44px; height:44px; margin:-6px 0 -6px -8px;
+  display:grid; place-items:center;
+  border:0; border-radius:50%; background:transparent;
+  color:var(--icon-muted); cursor:pointer;
+}
+.profile-back:focus-visible{ outline:2px solid var(--wa-accent); outline-offset:-2px; }
+.profile-title{ margin:0; font-size:17px; font-weight:500; color:var(--wa-text); }
+.profile-body{
+  flex:1; overflow-y:auto; overscroll-behavior:contain;
+  display:flex; flex-direction:column; gap:10px; padding-bottom:24px;
+}
+.profile-card{
+  display:flex; flex-direction:column; align-items:center; gap:18px;
+  padding:28px 24px 30px;
+  background:var(--screen-bg); box-shadow:0 1px 3px rgba(11,20,26,.08);
+}
+.profile-photo{
+  display:block; width:200px; height:200px; border-radius:50%;
+  object-fit:cover; background:var(--avatar-grad);
+}
+.profile-name{ margin:0; font-size:24px; font-weight:400; line-height:1.25; color:var(--wa-text); text-align:center; }
+.profile-section{ background:var(--screen-bg); padding:16px 0 6px; box-shadow:0 1px 3px rgba(11,20,26,.08); }
+.profile-section h3{ margin:0 0 4px; padding:0 20px; font-size:14px; font-weight:500; color:var(--wa-muted); }
+.built-list{ list-style:none; margin:0; padding:0; }
+.built-list li{ display:flex; align-items:flex-start; gap:18px; padding:11px 20px; }
+.built-icon{ flex:none; margin-top:1px; color:var(--icon-muted); }
+.built-text{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+.built-name{ font-size:16px; color:var(--wa-text); line-height:1.3; }
+.built-desc{ font-size:13.5px; color:var(--wa-muted); line-height:1.4; }
+
 .proj-body{ flex:1; overflow-y:auto; background:var(--screen-bg); padding:16px 14px 30px; }
 .proj-list{ display:flex; flex-direction:column; gap:20px; }
 .proj-card{ background:var(--proj-card-bg); border-radius:18px; padding:14px 14px 16px; }
@@ -588,7 +687,13 @@ body{
 @media (prefers-reduced-motion:reduce){
   .bubble{ animation:none; }
   .chat-list{ transition:none; }
-  .hint svg,.typing i{ animation:none; }
+  .hint-card,.hint-tap::after,.typing i{ animation:none; }
+  .open-prompt,.open-prompt-arrow{ animation:none; }
+  .suggestions{ animation:none; }
+  /* Sin movimiento: la tira queda quieta y se recorre deslizando a mano. */
+  .suggestions{ overflow-x:auto; -webkit-mask-image:none; mask-image:none; }
+  .suggestions-track{ animation:none; }
+  .suggestion[aria-hidden="true"]{ display:none; }
   .chat > .screen{ transition:none; }
   .proj-track{ transition:none; }
 }

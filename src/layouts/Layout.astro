@@ -31,7 +31,7 @@ const langAutoKey = 'lang-auto';
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="color-scheme" content="light dark" />
+    <meta name="color-scheme" content="light" />
 
     {/*
       Resolves the theme before the first paint so the page never flashes the
@@ -45,14 +45,10 @@ const langAutoKey = 'lang-auto';
         try {
           stored = localStorage.getItem('theme');
         } catch (error) {
-          /* localStorage throws in some privacy modes; fall back to the OS. */
+          /* localStorage throws in some privacy modes; fall back to light. */
         }
-        var theme =
-          stored === 'dark' || stored === 'light'
-            ? stored
-            : window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
-              ? 'dark'
-              : 'light';
+        // Light by default; dark only when the visitor picked it in the menu.
+        var theme = stored === 'dark' ? 'dark' : 'light';
         document.documentElement.setAttribute('data-theme', theme);
       })();
     </script>
@@ -115,6 +111,9 @@ const langAutoKey = 'lang-auto';
           });
       })();
     </script>
+
+    {/* The Turnstile script is injected by src/scripts/landing.ts; warm the connection. */}
+    <link rel="preconnect" href="https://challenges.cloudflare.com" />
 
     <title>{title}</title>
     <meta name="description" content={description} />

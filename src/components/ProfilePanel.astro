@@ -1,0 +1,88 @@
+---
+import { Image } from 'astro:assets';
+import { profile } from '../data/profile';
+import type { Lang } from '../i18n/config';
+import { UI, type BuiltWithIcon } from '../i18n/ui';
+// 480x480, the same crop as the header avatar, so the 200px circle stays
+// sharp on high-density screens. Exported from src/perfil.jpg.
+import perfilLarge from '../assets/perfil-profile.webp';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = UI[lang];
+
+// Generic stroke icons, authored here, never network input.
+const ICONS: Record<BuiltWithIcon, string> = {
+  code: '<path d="M8 6l-6 6 6 6M16 6l6 6-6 6"/>',
+  cloud: '<path d="M7 18h10a4 4 0 0 0 .6-7.96A6 6 0 0 0 6.2 9.2 4.5 4.5 0 0 0 7 18z"/>',
+  model:
+    '<rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v4M15 2v4M9 18v4M15 18v4M2 9h4M2 15h4M18 9h4M18 15h4"/>',
+  assistant: '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 17v4M17 19h4"/>',
+  repo: '<circle cx="6" cy="5" r="2"/><circle cx="6" cy="19" r="2"/><circle cx="18" cy="7" r="2"/><path d="M6 7v10M18 9c0 4-4 5-10 8"/>',
+  audit: '<rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 13l2 2 4-4"/>',
+};
+---
+
+<div class="screen" id="profileScreen" aria-labelledby="profileTitle" inert>
+  <div class="chat-header profile-header">
+    <button type="button" class="profile-back" id="profileBack" aria-label={t.backToChat}>
+      <svg
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"></path></svg
+      >
+    </button>
+    <h2 class="profile-title" id="profileTitle">{t.contactInfoTitle}</h2>
+  </div>
+
+  <div class="profile-body">
+    <div class="profile-card">
+      <Image
+        src={perfilLarge}
+        alt={t.avatarAlt(profile.name)}
+        class="profile-photo"
+        loading="lazy"
+        decoding="async"
+      />
+      <p class="profile-name">{profile.name}</p>
+    </div>
+
+    <section class="profile-section" aria-labelledby="builtWithTitle">
+      <h3 id="builtWithTitle">{t.builtWithTitle}</h3>
+      <ul class="built-list">
+        {
+          t.builtWith.map((item) => (
+            <li>
+              <svg
+                class="built-icon"
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.7"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+                set:html={ICONS[item.icon]}
+              />
+              <span class="built-text">
+                <span class="built-name">{item.name}</span>
+                <span class="built-desc">{item.description}</span>
+              </span>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+  </div>
+</div>

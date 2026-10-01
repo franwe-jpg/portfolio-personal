@@ -1,5 +1,14 @@
 import type { Lang } from './config';
 
+/** Icon keys for the "how this site is built" list; the SVGs live in ProfilePanel. */
+export type BuiltWithIcon = 'code' | 'cloud' | 'model' | 'assistant' | 'repo' | 'audit';
+
+export interface BuiltWithItem {
+  icon: BuiltWithIcon;
+  name: string;
+  description: string;
+}
+
 /**
  * Every UI string that is not content data. Typed as a closed interface so a
  * key missing from one language is a compile error, not a Spanish leak.
@@ -31,10 +40,14 @@ export interface UiCopy {
 
   disclaimer: string;
   todayChip: string;
-  scrollHint: string;
+  /** Shown on touch screens; `clickHint` replaces it with a fine pointer. */
+  tapHint: string;
+  clickHint: string;
+  suggestionsLabel: string;
+  openPromptTitle: string;
+  openPromptText: string;
 
   composerLabel: (name: string) => string;
-  composerPlaceholder: string;
   composerPlaceholderOpen: string;
   emojiButtonLabel: string;
   sendButtonLabel: string;
@@ -49,6 +62,12 @@ export interface UiCopy {
 
   avatarAlt: (name: string) => string;
   emailLink: string;
+
+  openProfileLabel: (name: string) => string;
+  contactInfoTitle: string;
+  backToChat: string;
+  builtWithTitle: string;
+  builtWith: BuiltWithItem[];
 }
 
 export const UI: Record<Lang, UiCopy> = {
@@ -70,10 +89,13 @@ export const UI: Record<Lang, UiCopy> = {
 
     disclaimer: 'Este chat es una simulación. El CV, los links y las ganas de trabajar son reales.',
     todayChip: 'HOY',
-    scrollHint: 'Scrolleá para leer la conversación',
+    tapHint: 'Tocá la pantalla para continuar',
+    clickHint: 'Hacé clic para chatear',
+    suggestionsLabel: 'Preguntas sugeridas',
+    openPromptTitle: 'Ahora te toca a vos',
+    openPromptText: 'Escribime lo que quieras acá abajo y te respondo.',
 
     composerLabel: (name) => `Escribile un mensaje a ${name}`,
-    composerPlaceholder: 'Escribí un mensaje',
     composerPlaceholderOpen: 'Preguntame lo que quieras',
     emojiButtonLabel: 'Elegir un emoji',
     sendButtonLabel: 'Enviar mensaje',
@@ -88,6 +110,44 @@ export const UI: Record<Lang, UiCopy> = {
 
     avatarAlt: (name) => `Foto de ${name}`,
     emailLink: 'Correo',
+
+    openProfileLabel: (name) => `Ver el perfil de ${name}`,
+    contactInfoTitle: 'Info. del contacto',
+    backToChat: 'Volver al chat',
+    builtWithTitle: 'Cómo está hecho este sitio',
+    builtWith: [
+      {
+        icon: 'code',
+        name: 'Astro + TypeScript',
+        description: 'Páginas estáticas, rápidas y con tipado de punta a punta.',
+      },
+      {
+        icon: 'cloud',
+        name: 'Cloudflare',
+        description: 'Hosting en Workers, base de datos D1 y verificación anti-bots con Turnstile.',
+      },
+      {
+        icon: 'model',
+        name: 'Llama 3.1',
+        description: 'El modelo de IA que responde en el chat, corriendo en Workers AI.',
+      },
+      {
+        icon: 'assistant',
+        name: 'Claude',
+        description: 'Mi copiloto para programar, revisar y documentar el código.',
+      },
+      {
+        icon: 'repo',
+        name: 'GitHub',
+        description: 'Repositorio y control de versiones.',
+      },
+      {
+        icon: 'audit',
+        name: 'Auditoría de preguntas y respuestas',
+        description:
+          'Cada pregunta y su respuesta quedan registradas, con la IP anonimizada, para revisar y mejorar el chat.',
+      },
+    ],
   },
 
   en: {
@@ -108,10 +168,13 @@ export const UI: Record<Lang, UiCopy> = {
 
     disclaimer: 'This chat is a simulation. The CV, the links and the willingness to work are real.',
     todayChip: 'TODAY',
-    scrollHint: 'Scroll to read the conversation',
+    tapHint: 'Tap the screen to continue',
+    clickHint: 'Click to chat',
+    suggestionsLabel: 'Suggested questions',
+    openPromptTitle: 'Your turn',
+    openPromptText: 'Ask me anything below and I will reply.',
 
     composerLabel: (name) => `Write a message to ${name}`,
-    composerPlaceholder: 'Type a message',
     composerPlaceholderOpen: 'Ask me anything',
     emojiButtonLabel: 'Pick an emoji',
     sendButtonLabel: 'Send message',
@@ -126,5 +189,43 @@ export const UI: Record<Lang, UiCopy> = {
 
     avatarAlt: (name) => `Photo of ${name}`,
     emailLink: 'Email',
+
+    openProfileLabel: (name) => `View ${name}'s profile`,
+    contactInfoTitle: 'Contact info',
+    backToChat: 'Back to the chat',
+    builtWithTitle: 'How this site is built',
+    builtWith: [
+      {
+        icon: 'code',
+        name: 'Astro + TypeScript',
+        description: 'Static, fast pages, typed end to end.',
+      },
+      {
+        icon: 'cloud',
+        name: 'Cloudflare',
+        description: 'Hosting on Workers, a D1 database and bot checks with Turnstile.',
+      },
+      {
+        icon: 'model',
+        name: 'Llama 3.1',
+        description: 'The AI model that answers in the chat, running on Workers AI.',
+      },
+      {
+        icon: 'assistant',
+        name: 'Claude',
+        description: 'My copilot for writing, reviewing and documenting the code.',
+      },
+      {
+        icon: 'repo',
+        name: 'GitHub',
+        description: 'Repository and version control.',
+      },
+      {
+        icon: 'audit',
+        name: 'Question and answer audit',
+        description:
+          'Every question and its answer are logged, with the IP anonymised, to review and improve the chat.',
+      },
+    ],
   },
 };

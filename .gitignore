@@ -11,3 +11,4 @@ worker-configuration.d.ts
 
 # Local tooling cache
 .atl/
+.gstack/

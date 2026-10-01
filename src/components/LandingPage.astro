@@ -3,6 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import Intro from './Intro.astro';
 import ChatPanel from './ChatPanel.astro';
 import ProjectsPanel from './ProjectsPanel.astro';
+import ProfilePanel from './ProfilePanel.astro';
 import ViewToggleButton from './ViewToggleButton.astro';
 import { PROFILE_COPY } from '../data/profile';
 import type { Lang } from '../i18n/config';
@@ -28,6 +29,7 @@ const description = UI[lang].metaDescription(copy.role);
       <div class="chat">
         <ChatPanel lang={lang} />
         <ProjectsPanel lang={lang} />
+        <ProfilePanel lang={lang} />
       </div>
     </div>
   </div>

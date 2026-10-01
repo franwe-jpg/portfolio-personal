@@ -27,6 +27,50 @@ const PLACEHOLDER_OPEN = t.composerPlaceholderOpen;
 const NETWORK_ERROR = t.networkError;
 
 /**
+ * How long a simulated visitor draft takes to type in the composer: a short
+ * message ("Hola.") takes the minimum, one of DRAFT_LONG_CHARS or more the
+ * maximum, and anything in between scales linearly.
+ */
+const DRAFT_MIN_MS = 1000;
+const DRAFT_MAX_MS = 2000;
+const DRAFT_SHORT_CHARS = 5;
+const DRAFT_LONG_CHARS = 30;
+
+/** How long Franco's typing bubble shows before each scripted reply. */
+const REPLY_MIN_MS = 700;
+const REPLY_MAX_MS = 1400;
+const REPLY_LONG_CHARS = 120;
+/** Share of the chat height the bubbles may fill before the hint goes compact. */
+const HINT_COMPACT_AT = 0.45;
+/** Beat between a typed draft and its bubble, and between consecutive bubbles. */
+const SEND_PAUSE_MS = 250;
+const BETWEEN_MESSAGES_MS = 450;
+/** How long the "your turn" invitation stays before fading on its own. */
+const OPEN_PROMPT_MS = 2000;
+const OPEN_PROMPT_FADE_MS = 400;
+/** Marquee speed of the suggestion strip, in pixels per second. */
+const SUGGESTIONS_SPEED = 40;
+/** Grace period before a blurred composer hides the suggestions. */
+const SUGGESTIONS_HIDE_MS = 200;
+
+function replyDuration(length: number): number {
+  const ratio = Math.min(1, length / REPLY_LONG_CHARS);
+  return REPLY_MIN_MS + ratio * (REPLY_MAX_MS - REPLY_MIN_MS);
+}
+
+function wait(ms: number): Promise<void> {
+  return new Promise(function (resolve) {
+    setTimeout(resolve, ms);
+  });
+}
+
+function draftDuration(length: number): number {
+  const span = DRAFT_LONG_CHARS - DRAFT_SHORT_CHARS;
+  const ratio = Math.min(1, Math.max(0, (length - DRAFT_SHORT_CHARS) / span));
+  return DRAFT_MIN_MS + ratio * (DRAFT_MAX_MS - DRAFT_MIN_MS);
+}
+
+/**
  * Timestamps follow the visitor's own device clock. Argentina is only a
  * fallback for the rare runtime that reports no resolvable time zone, so a
  * visitor abroad still sees a sensible hour instead of a blank meta line.
@@ -87,12 +131,6 @@ function storeTheme(theme: Theme): void {
   }
 }
 
-function systemTheme(): Theme {
-  return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
-    ? 'dark'
-    : 'light';
-}
-
 function initTheme(): ThemeController {
   const root = document.documentElement;
   const listeners: ((theme: Theme) => void)[] = [];
@@ -102,7 +140,7 @@ function initTheme(): ThemeController {
   // single source of truth and never a second paint.
   const stamped = root.getAttribute('data-theme');
   let current: Theme =
-    stamped === 'dark' || stamped === 'light' ? stamped : (readStoredTheme() ?? systemTheme());
+    stamped === 'dark' || stamped === 'light' ? stamped : (readStoredTheme() ?? 'light');
   root.setAttribute('data-theme', current);
 
   function apply(theme: Theme): void {
@@ -110,12 +148,6 @@ function initTheme(): ThemeController {
     root.setAttribute('data-theme', theme);
     for (const listener of listeners) listener(theme);
   }
-
-  // Keep following the OS for as long as the visitor has not chosen.
-  const query = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
-  query?.addEventListener('change', function (event) {
-    if (readStoredTheme() === null) apply(event.matches ? 'dark' : 'light');
-  });
 
   return {
     current: function () {
@@ -250,6 +282,144 @@ function initHeaderMenu(theme: ThemeController): void {
       /* Privacy mode: the switch still works, it just is not remembered. */
     }
   });
+}
+
+// ── Human check (Turnstile) ─────────────────────────────────────
+
+/** The slice of the Turnstile API this page uses. */
+interface TurnstileApi {
+  render(container: HTMLElement, options: Record<string, unknown>): string | undefined;
+  reset(widgetId: string): void;
+}
+
+declare global {
+  interface Window {
+    turnstile?: TurnstileApi;
+  }
+}
+
+const TURNSTILE_SCRIPT = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+/** Cloudflare's always-pass test key in dev; the real invisible widget otherwise. */
+const TURNSTILE_SITE_KEY = import.meta.env.DEV
+  ? '1x00000000000000000000AA'
+  : '0x4AAAAAAFEqtk5L30ks3uzR';
+/** How long a submit waits for a token that is still being solved. */
+const TURNSTILE_WAIT_MS = 5000;
+const TURNSTILE_RETRY_MS = 4000;
+const TURNSTILE_MAX_RETRIES = 3;
+
+interface HumanCheck {
+  /** A single-use token, or null when none is ready within TURNSTILE_WAIT_MS. */
+  takeToken(): Promise<string | null>;
+  /** Starts solving the next token in the background. */
+  renew(): void;
+}
+
+/**
+ * Keeps one Turnstile token solved ahead of time, so a question is sent the
+ * moment it is submitted. Never blocks the chat: if Turnstile is unavailable
+ * the question goes out without a token and the endpoint explains the refusal.
+ */
+function initHumanCheck(): HumanCheck {
+  let api: TurnstileApi | null = null;
+  let widgetId: string | null = null;
+  let token: string | null = null;
+  let unavailable = false;
+  let retries = 0;
+  let waiter: ((value: string | null) => void) | null = null;
+
+  /** Hands a token to a waiting submit, or keeps it for the next one. */
+  function deliver(value: string | null): void {
+    const pending = waiter;
+    waiter = null;
+    if (pending) pending(value);
+    else token = value;
+  }
+
+  function reset(): void {
+    token = null;
+    if (!api || widgetId === null) return;
+    try {
+      api.reset(widgetId);
+    } catch {
+      /* A widget that cannot reset leaves the next submit tokenless. */
+    }
+  }
+
+  function giveUp(): void {
+    unavailable = true;
+    deliver(null);
+  }
+
+  // Invisible widget: the container only has to exist, never to be seen.
+  const container = document.createElement('div');
+  container.hidden = true;
+  document.body.appendChild(container);
+
+  const script = document.createElement('script');
+  script.src = TURNSTILE_SCRIPT;
+  script.async = true;
+  script.addEventListener('error', giveUp);
+  script.addEventListener('load', function () {
+    api = window.turnstile ?? null;
+    if (!api) return giveUp();
+    try {
+      widgetId =
+        api.render(container, {
+          sitekey: TURNSTILE_SITE_KEY,
+          // Retries and refreshes are driven from here, not by the widget.
+          retry: 'never',
+          'refresh-expired': 'manual',
+          callback: function (value: string) {
+            retries = 0;
+            deliver(value);
+          },
+          'expired-callback': reset,
+          'error-callback': function () {
+            token = null;
+            if (retries < TURNSTILE_MAX_RETRIES) {
+              retries += 1;
+              setTimeout(reset, TURNSTILE_RETRY_MS);
+            } else {
+              deliver(null);
+            }
+            return true;
+          },
+          'unsupported-callback': giveUp,
+        }) ?? null;
+      if (widgetId === null) giveUp();
+    } catch {
+      giveUp();
+    }
+  });
+  document.head.appendChild(script);
+
+  return {
+    takeToken(): Promise<string | null> {
+      if (token) {
+        const ready = token;
+        token = null;
+        return Promise.resolve(ready);
+      }
+      if (unavailable) return Promise.resolve(null);
+      return new Promise(function (resolve) {
+        const timer = setTimeout(function () {
+          waiter = null;
+          resolve(null);
+        }, TURNSTILE_WAIT_MS);
+        waiter = function (value) {
+          clearTimeout(timer);
+          resolve(value);
+        };
+      });
+    },
+    renew(): void {
+      // A token that arrived after its submit gave up is still unused: keep it.
+      if (token || unavailable) return;
+      retries = 0;
+      reset();
+    },
+  };
 }
 
 // ── Emoji picker ────────────────────────────────────────────────
@@ -391,18 +561,27 @@ function initConversation(): void {
   const input = byId<HTMLInputElement>('composerInput');
   const send = byId<HTMLButtonElement>('composerSend');
   const emojiButton = byId<HTMLButtonElement>('emojiBtn');
+  const openPrompt = byId<HTMLButtonElement>('openPrompt');
+  const suggestions = byId('suggestions');
+  const suggestionsTrack = byId('suggestionsTrack');
 
   if (!list || !liveList || !body || !stage || !status || !hint || !composer || !input || !send) {
     return;
   }
 
-  stage.style.height = (messages.length + 2) * 55 + 'svh';
+  const humanCheck = initHumanCheck();
+
+  // The page never scrolls: taps drive the scripted intro, and once it ends
+  // the chat body scrolls natively.
+  stage.style.height = '100svh';
 
   const nodes: (HTMLElement | null)[] = [];
   let typingEl: HTMLElement | null = null;
   let liveTypingEl: HTMLElement | null = null;
+  let draftTimer: number | null = null;
+  /** True while a tap-triggered exchange is being played. */
+  let playing = false;
   let shown = -1;
-  let typingFor = -1;
   let composerReady = false;
   let requestInFlight = false;
   /** One-way latch: the scroll-driven intro is a first-visit effect only. */
@@ -443,25 +622,76 @@ function initConversation(): void {
     return row;
   }
 
-  function showTyping(index: number): void {
-    if (typingFor === index) return;
+  /** Authored markup reduced to the text a visitor would actually type. */
+  function plainText(html: string): string {
+    const template = document.createElement('template');
+    template.innerHTML = html;
+    return (template.content.textContent ?? '').trim();
+  }
+
+  /**
+   * Types the visitor's next scripted message into the composer, letter by
+   * letter, and resolves once the whole draft is in place. Rendering the
+   * message afterwards "sends" it: hideTyping() clears the draft.
+   */
+  function typeDraft(index: number): Promise<void> {
+    composer!.classList.add('is-drafting');
+    return typeInto(plainText(messages[index].html));
+  }
+
+  /** Writes `text` into the composer letter by letter; resolves when done. */
+  function typeInto(text: string): Promise<void> {
+    // Array.from splits by code point, so an emoji is never typed in halves.
+    const chars = Array.from(text);
+    if (chars.length === 0 || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      input!.value = chars.join('');
+      return Promise.resolve();
+    }
+    return new Promise(function (resolve) {
+      let typed = 0;
+      draftTimer = window.setInterval(function () {
+        typed++;
+        input!.value = chars.slice(0, typed).join('');
+        input!.scrollLeft = input!.scrollWidth;
+        if (typed >= chars.length) {
+          stopDraftTimer();
+          resolve();
+        }
+      }, draftDuration(chars.length) / chars.length);
+    });
+  }
+
+  function stopDraftTimer(): void {
+    if (draftTimer !== null) {
+      clearInterval(draftTimer);
+      draftTimer = null;
+    }
+  }
+
+  function clearDraft(): void {
+    stopDraftTimer();
+    if (!composer!.classList.contains('is-drafting')) return;
+    composer!.classList.remove('is-drafting');
+    input!.value = '';
+  }
+
+  /** Franco's typing bubble; the visitor types in the composer instead. */
+  function showTyping(): void {
     hideTyping();
-    typingFor = index;
-    const message = messages[index];
     typingEl = document.createElement('div');
-    typingEl.className = 'row ' + (message.from === 'franco' ? 'in' : 'out');
+    typingEl.className = 'row in';
     typingEl.innerHTML = '<div class="bubble"><span class="typing"><i></i><i></i><i></i></span></div>';
     insertScripted(typingEl);
-    if (message.from === 'franco') status!.innerHTML = STATUS_TYPING;
+    status!.innerHTML = STATUS_TYPING;
     reflow();
   }
 
   function hideTyping(): void {
+    clearDraft();
     if (typingEl) {
       typingEl.remove();
       typingEl = null;
     }
-    typingFor = -1;
     // A live request owns the status line while it is pending.
     if (!requestInFlight) status!.textContent = STATUS_ONLINE;
   }
@@ -474,22 +704,26 @@ function initConversation(): void {
     input!.placeholder = PLACEHOLDER_OPEN;
   }
 
+  /** The invitation fades on its own, or with the visitor's first message. */
+  function dismissOpenPrompt(): void {
+    if (!openPrompt || openPrompt.hidden || openPrompt.classList.contains('leaving')) return;
+    openPrompt.classList.add('leaving');
+    setTimeout(function () {
+      openPrompt.hidden = true;
+    }, OPEN_PROMPT_FADE_MS);
+  }
+
   /**
    * Fires once, the moment the last scripted message has been shown, and
-   * never unwinds. It turns the scroll-driven intro into an ordinary chat:
+   * never unwinds. It turns the tap-driven intro into an ordinary chat:
    * every scripted message stays in the DOM, the typing indicator is gone
    * for good, and `.chat-body` takes over with native scrolling so the
    * visitor can read up and down at their own pace.
-   *
-   * It also collapses `#stage` back to one viewport. The long scroll track
-   * only ever existed to drive the animation, and the page must not keep
-   * scrolling past the end of the conversation.
    */
   function completeConversation(): void {
     if (conversationComplete) return;
     conversationComplete = true;
 
-    window.removeEventListener('scroll', onScroll);
     hideTyping();
 
     // Make sure the whole script is rendered, permanently.
@@ -509,12 +743,14 @@ function initConversation(): void {
     list!.style.transform = '';
     body!.scrollTop = body!.scrollHeight;
 
-    // `#sticky` is pinned at the top of the viewport at any scroll offset,
-    // so collapsing the stage does not move anything on screen.
-    stage!.style.height = '100svh';
     hint!.classList.add('gone');
+    if (openPrompt) {
+      openPrompt.hidden = false;
+      setTimeout(dismissOpenPrompt, OPEN_PROMPT_MS);
+    }
   }
 
+  /** Appends scripted messages up to `target`; the intro never rewinds. */
   function render(target: number): void {
     if (conversationComplete) return;
     while (shown < target) {
@@ -524,13 +760,6 @@ function initConversation(): void {
       nodes[shown] = node;
       insertScripted(node);
     }
-    while (shown > target) {
-      const node = nodes[shown];
-      if (node) node.remove();
-      nodes[shown] = null;
-      shown--;
-      hideTyping();
-    }
     if (shown >= messages.length - 1) {
       completeConversation();
       return;
@@ -538,32 +767,69 @@ function initConversation(): void {
     reflow();
   }
 
-  let ticking = false;
-  function onScroll(): void {
-    if (conversationComplete || ticking) return;
-    ticking = true;
-    requestAnimationFrame(function () {
-      ticking = false;
-      if (conversationComplete) return;
-      const max = stage!.offsetHeight - window.innerHeight;
-      const p = Math.min(1, Math.max(0, (window.scrollY - stage!.offsetTop) / max));
-      const raw = p * (messages.length + 0.25);
-      const target = Math.min(messages.length - 1, Math.floor(raw) - 1);
-      const frac = raw - Math.floor(raw);
-      render(target);
-      if (conversationComplete) return;
-      const next = target + 1;
-      if (next < messages.length && frac > 0.45) showTyping(next);
-      else if (typingFor !== -1) hideTyping();
-      hint!.classList.toggle('gone', p > 0.02);
-    });
+  /**
+   * Shows the "tap to continue" hint: big and centred while the bubbles leave
+   * room for it, compact near the bottom once they would sit underneath.
+   */
+  function setHint(visible: boolean): void {
+    hint!.classList.toggle('gone', !visible);
+    if (!visible || hint!.classList.contains('compact')) return;
+    if (list!.scrollHeight > body!.clientHeight * HINT_COMPACT_AT) {
+      // One-way: from here on the list keeps a strip free under the last
+      // bubble, so the background-less hint never sits on top of text.
+      hint!.classList.add('compact');
+      body!.classList.add('hint-space');
+      reflow();
+    }
   }
 
-  window.addEventListener('scroll', onScroll, { passive: true });
-  window.addEventListener('resize', function () {
+  /**
+   * Plays the next exchange: the visitor's question is typed and sent, then
+   * Franco types and answers, until the next visitor message is up. The
+   * opening greeting, which has no question before it, plays on its own.
+   */
+  async function playStep(): Promise<void> {
+    if (playing || conversationComplete) return;
+    playing = true;
+    setHint(false);
+    do {
+      const index = shown + 1;
+      const message = messages[index];
+      if (message.from === 'visitor') {
+        await typeDraft(index);
+        await wait(SEND_PAUSE_MS);
+      } else {
+        showTyping();
+        await wait(replyDuration(plainText(message.html).length));
+      }
+      render(index);
+      if (conversationComplete) break;
+      await wait(BETWEEN_MESSAGES_MS);
+    } while (messages[shown + 1].from !== 'visitor');
+    playing = false;
+    if (!conversationComplete) setHint(true);
+  }
+
+  // A tap anywhere on the chat advances it, except on links inside bubbles.
+  body.addEventListener('click', function (event) {
     if (conversationComplete) return;
-    reflow();
-    onScroll();
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('a, button')) return;
+    void playStep();
+  });
+
+  // Keyboard equivalent, ignored while focus is on a control of its own.
+  document.addEventListener('keydown', function (event) {
+    if (conversationComplete || event.defaultPrevented) return;
+    if (event.key !== 'Enter' && event.key !== ' ' && event.key !== 'ArrowDown') return;
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('a, button, input, textarea, [role="menu"], #emojiPopover')) return;
+    event.preventDefault();
+    void playStep();
+  });
+
+  window.addEventListener('resize', function () {
+    if (!conversationComplete) reflow();
   });
 
   // ── Live chat ─────────────────────────────────────────────────
@@ -613,13 +879,14 @@ function initConversation(): void {
     }
   }
 
-  async function ask(question: string): Promise<string> {
+  async function ask(question: string, turnstileToken: string | null): Promise<string> {
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         // `lang` only picks which language the endpoint's own messages use.
-        body: JSON.stringify({ question, lang }),
+        // A missing token is sent anyway: the endpoint replies with its refusal.
+        body: JSON.stringify({ question, lang, turnstileToken: turnstileToken ?? undefined }),
       });
       const data = (await response.json().catch(() => null)) as
         | { answer?: unknown; error?: unknown }
@@ -636,16 +903,21 @@ function initConversation(): void {
   composer.addEventListener('submit', async function (event) {
     event.preventDefault();
     const question = input!.value.trim();
-    if (!composerReady || requestInFlight || question.length === 0) return;
+    // A suggestion still being typed is not a question yet.
+    if (!composerReady || requestInFlight || draftTimer !== null || question.length === 0) return;
 
     requestInFlight = true;
+    dismissOpenPrompt();
     input!.value = '';
     input!.disabled = true;
     send!.disabled = true;
     appendLive('out', question);
     showLiveTyping();
 
-    const answer = await ask(question);
+    const turnstileToken = await humanCheck.takeToken();
+    const answer = await ask(question, turnstileToken);
+    // Tokens are single-use: start solving the next one right away.
+    humanCheck.renew();
 
     requestInFlight = false;
     hideLiveTyping();
@@ -656,8 +928,105 @@ function initConversation(): void {
     input!.focus();
   });
 
+  openPrompt?.addEventListener('click', function () {
+    input!.focus();
+  });
+
+  // ── Suggested questions ───────────────────────────────────────
+
+  let suggestionsHideTimer: number | null = null;
+
+  function remainingSuggestions(): HTMLButtonElement[] {
+    return Array.from(suggestionsTrack?.querySelectorAll<HTMLButtonElement>('.suggestion') ?? []);
+  }
+
+  /** Keeps the marquee speed constant however many chips are left. */
+  function syncMarqueeDuration(): void {
+    if (!suggestionsTrack) return;
+    const loopWidth = suggestionsTrack.scrollWidth / 2;
+    suggestionsTrack.style.setProperty(
+      '--suggestions-duration',
+      Math.max(6, loopWidth / SUGGESTIONS_SPEED) + 's',
+    );
+  }
+
+  function showSuggestions(): void {
+    if (suggestionsHideTimer !== null) {
+      clearTimeout(suggestionsHideTimer);
+      suggestionsHideTimer = null;
+    }
+    if (!suggestions || !composerReady || remainingSuggestions().length === 0) return;
+    if (!suggestions.hidden) return;
+    // The strip takes room from the chat: keep the latest bubble in view.
+    const atBottom = body!.scrollHeight - body!.scrollTop - body!.clientHeight < 40;
+    suggestions.hidden = false;
+    syncMarqueeDuration();
+    if (atBottom) body!.scrollTop = body!.scrollHeight;
+  }
+
+  function hideSuggestionsSoon(): void {
+    if (!suggestions || suggestionsHideTimer !== null) return;
+    suggestionsHideTimer = window.setTimeout(function () {
+      suggestionsHideTimer = null;
+      // Focus moved onto a chip (keyboard navigation): keep the strip.
+      if (suggestions.contains(document.activeElement)) return;
+      suggestions.hidden = true;
+    }, SUGGESTIONS_HIDE_MS);
+  }
+
+  async function useSuggestion(chip: HTMLButtonElement): Promise<void> {
+    if (!composerReady || requestInFlight || draftTimer !== null) return;
+    const id = chip.dataset.suggestion;
+    const question = chip.textContent?.trim() ?? '';
+    // A suggestion is offered once: drop both marquee copies.
+    for (const twin of remainingSuggestions()) {
+      if (twin.dataset.suggestion === id) twin.remove();
+    }
+    syncMarqueeDuration();
+    input!.focus();
+    input!.value = '';
+    await typeInto(question);
+    input!.focus();
+    input!.setSelectionRange(input!.value.length, input!.value.length);
+    if (remainingSuggestions().length === 0 && suggestions) suggestions.hidden = true;
+  }
+
+  if (suggestions && suggestionsTrack) {
+    input.addEventListener('focus', function () {
+      document.documentElement.classList.add('composer-focused');
+      showSuggestions();
+    });
+    input.addEventListener('blur', function () {
+      document.documentElement.classList.remove('composer-focused');
+      hideSuggestionsSoon();
+    });
+    suggestions.addEventListener('focusout', function (event) {
+      if (event.relatedTarget !== input) hideSuggestionsSoon();
+    });
+
+    // With a mouse, keep focus (and the strip) on the composer.
+    suggestions.addEventListener('mousedown', function (event) {
+      event.preventDefault();
+    });
+    // Hold the marquee still under a finger so the chip can be picked.
+    suggestions.addEventListener('pointerdown', function () {
+      suggestions.classList.add('is-held');
+    });
+    for (const type of ['pointerup', 'pointercancel', 'pointerleave']) {
+      suggestions.addEventListener(type, function () {
+        suggestions.classList.remove('is-held');
+      });
+    }
+
+    suggestionsTrack.addEventListener('click', function (event) {
+      const chip = (event.target as HTMLElement | null)?.closest<HTMLButtonElement>('.suggestion');
+      if (chip) void useSuggestion(chip);
+    });
+  }
+
   render(-1);
-  onScroll();
+  setHint(false);
+  void playStep();
 }
 
 function initPanels(): void {
@@ -691,7 +1060,66 @@ function initPanels(): void {
     });
   }
 
+  // ── Contact info ──────────────────────────────────────────────
+
+  const profileScreen = byId('profileScreen');
+  const contactButton = byId<HTMLButtonElement>('contactBtn');
+  const profileBack = byId<HTMLButtonElement>('profileBack');
+  let profileOpen = false;
+  /** True while the open profile owns a history entry of its own. */
+  let profileInHistory = false;
+
+  function onProfileKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'Escape') return;
+    event.preventDefault();
+    closeProfile();
+  }
+
+  function openProfile(): void {
+    if (profileOpen || !profileScreen) return;
+    profileOpen = true;
+    profileScreen.inert = false;
+    chatScreen!.inert = true;
+    profileScreen.classList.add('is-open');
+    contactButton?.setAttribute('aria-expanded', 'true');
+    document.documentElement.classList.add('profile-open');
+    document.addEventListener('keydown', onProfileKeydown);
+    // The phone's back button should close the profile, not leave the site.
+    try {
+      history.pushState({ profile: true }, '');
+      profileInHistory = true;
+    } catch {
+      profileInHistory = false;
+    }
+    profileBack?.focus({ preventScroll: true });
+  }
+
+  /** `viaHistory` means the browser already popped the profile's entry. */
+  function closeProfile(viaHistory = false): void {
+    if (!profileOpen || !profileScreen) return;
+    profileOpen = false;
+    profileScreen.classList.remove('is-open');
+    profileScreen.inert = true;
+    chatScreen!.inert = false;
+    contactButton?.setAttribute('aria-expanded', 'false');
+    document.documentElement.classList.remove('profile-open');
+    document.removeEventListener('keydown', onProfileKeydown);
+    contactButton?.focus({ preventScroll: true });
+    if (profileInHistory && !viaHistory) history.back();
+    profileInHistory = false;
+  }
+
+  contactButton?.addEventListener('click', openProfile);
+  profileBack?.addEventListener('click', function () {
+    closeProfile();
+  });
+  window.addEventListener('popstate', function () {
+    closeProfile(true);
+  });
+
   function toggleView(): void {
+    // The projects swap happens under the profile, so close it first.
+    closeProfile();
     if (currentView === 'chat') {
       slideSwap(projectsScreen!, chatScreen!);
       currentView = 'projects';

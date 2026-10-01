@@ -10,6 +10,11 @@ const MODEL = '@cf/meta/llama-3.1-8b-instruct-fp8';
 /** Used only when the IP_SALT secret is not configured. */
 const FALLBACK_SALT = 'portfolio-personal-fallback-salt';
 
+const SITEVERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
+/** Turnstile tokens are at most 2048 characters; anything longer is not one. */
+const MAX_TURNSTILE_TOKEN_CHARS = 2048;
+const SITEVERIFY_TIMEOUT_MS = 5000;
+
 // Visitor-facing copy, in the language of the page the visitor is reading.
 // The machine-facing 400-level errors below stay English on purpose.
 const QUOTA_MESSAGE: Record<Lang, string> = {
@@ -30,6 +35,33 @@ const UNAVAILABLE_MESSAGE: Record<Lang, string> = {
     'The assistant is unavailable right now. ' +
     'Drop me an email and I will answer you personally.',
 };
+
+const HUMAN_CHECK_MESSAGE: Record<Lang, string> = {
+  es: 'No pude verificar que seas una persona. Recargá la página y probá de nuevo.',
+  en: "I couldn't verify that you're a person. Reload the page and try again.",
+};
+
+const LANG_NAME: Record<Lang, string> = { es: 'Spanish', en: 'English' };
+
+// Emoji-only messages are answered in code, not by the model: the 8B model does
+// not follow this rule reliably and, with no words to go on, drifts into English.
+const EMOJI_ONLY = /^(?:\p{Extended_Pictographic}|\p{Emoji_Modifier}|\p{Regional_Indicator}|[\u200d\ufe0f\u20e3]|\s)+$/u;
+const TECH_EMOJI = ['💻', '🖥️', '⌨️', '🖱️', '🧠', '⚙️', '🚀', '📦', '🐛', '🔧', '🛰️', '🤖', '💾', '📡', '🔌', '🧑‍💻'];
+const EMOJI_REPLY_SIZE = 3;
+
+function isEmojiOnly(text: string): boolean {
+  return EMOJI_ONLY.test(text) && /\p{Extended_Pictographic}|\p{Regional_Indicator}/u.test(text);
+}
+
+/** A few distinct computing emoji, in random order. */
+function techEmojiReply(): string {
+  const pool = [...TECH_EMOJI];
+  const picked: string[] = [];
+  while (picked.length < EMOJI_REPLY_SIZE) {
+    picked.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+  }
+  return picked.join(' ');
+}
 
 /** Falls back to the default rather than rejecting an unexpected value. */
 function resolveLang(value: unknown): Lang {
@@ -55,6 +87,45 @@ async function hashIp(ip: string): Promise<string> {
     .join('');
 }
 
+type HumanCheck = 'passed' | 'rejected' | 'unavailable';
+
+/**
+ * Verifies the Turnstile token sent by the page. `unavailable` means the check
+ * itself could not run (missing secret, siteverify down), not that the visitor
+ * failed it.
+ */
+async function verifyHuman(token: unknown, ip: string | null): Promise<HumanCheck> {
+  // There is no widget secret in `astro dev`, so skip the check there. Guarded
+  // by DEV: a production deploy with a missing secret must fail closed below.
+  if (import.meta.env.DEV && !env.TURNSTILE_SECRET) return 'passed';
+  if (!env.TURNSTILE_SECRET) return 'unavailable';
+
+  if (typeof token !== 'string' || token.length === 0 || token.length > MAX_TURNSTILE_TOKEN_CHARS) {
+    return 'rejected';
+  }
+
+  const form = new FormData();
+  form.append('secret', env.TURNSTILE_SECRET);
+  form.append('response', token);
+  if (ip) form.append('remoteip', ip);
+
+  try {
+    const response = await fetch(SITEVERIFY_URL, {
+      method: 'POST',
+      body: form,
+      signal: AbortSignal.timeout(SITEVERIFY_TIMEOUT_MS),
+    });
+    if (!response.ok) return 'unavailable';
+    const outcome = (await response.json()) as { success?: unknown; 'error-codes'?: unknown };
+    if (outcome.success === true) return 'passed';
+    // A failure on Cloudflare's side is not the visitor's fault.
+    const codes = Array.isArray(outcome['error-codes']) ? outcome['error-codes'] : [];
+    return codes.includes('internal-error') ? 'unavailable' : 'rejected';
+  } catch {
+    return 'unavailable';
+  }
+}
+
 function stripHtml(text: string): string {
   return text.replace(/<[^>]*>/g, '').trim();
 }
@@ -67,7 +138,7 @@ export const POST: APIRoute = async ({ request }) => {
     return json({ error: 'Invalid JSON body.' }, 400);
   }
 
-  const body = payload as { question?: unknown; lang?: unknown } | null;
+  const body = payload as { question?: unknown; lang?: unknown; turnstileToken?: unknown } | null;
   const lang = resolveLang(body?.lang);
 
   const question = body?.question;
@@ -83,8 +154,19 @@ export const POST: APIRoute = async ({ request }) => {
     return json({ error: `Question exceeds ${MAX_QUESTION_CHARS} characters.` }, 400);
   }
 
-  const ip = request.headers.get('CF-Connecting-IP') ?? 'unknown';
-  const ipHash = await hashIp(ip);
+  const clientIp = request.headers.get('CF-Connecting-IP');
+
+  // Before the quota write: a request that fails the check must not spend
+  // the visitor's allowance, and must not reach the emoji shortcut either.
+  const human = await verifyHuman(body?.turnstileToken, clientIp);
+  if (human === 'unavailable') {
+    return json({ error: UNAVAILABLE_MESSAGE[lang] }, 503);
+  }
+  if (human === 'rejected') {
+    return json({ error: HUMAN_CHECK_MESSAGE[lang] }, 403);
+  }
+
+  const ipHash = await hashIp(clientIp ?? 'unknown');
   const day = new Date().toISOString().slice(0, 10);
 
   let quota: { count: number } | null;
@@ -112,11 +194,23 @@ export const POST: APIRoute = async ({ request }) => {
     return json({ answer: `[STUB LOCAL — sin Workers AI] Recibí: "${trimmed}"` }, 200);
   }
 
+  if (isEmojiOnly(trimmed)) {
+    const answer = techEmojiReply();
+    await logExchange(ipHash, trimmed, answer, 'emoji-rule');
+    return json({ answer }, 200);
+  }
+
+  // Tells the model which language to fall back to when the question itself
+  // does not make it clear (e.g. "ok", "jaja").
+  const systemPrompt =
+    `${SYSTEM_PROMPT}\n\nThe visitor is reading the ${LANG_NAME[lang]} version of the site. ` +
+    `When the question gives no clear language, reply in ${LANG_NAME[lang]}.`;
+
   let answer: string;
   try {
     const result = await env.AI.run(MODEL, {
       messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'system', content: systemPrompt },
         {
           role: 'user',
           // Delimited so the model treats the question as data, not instructions.
@@ -134,21 +228,26 @@ export const POST: APIRoute = async ({ request }) => {
     return json({ error: UNAVAILABLE_MESSAGE[lang] }, 503);
   }
 
-  // Best-effort transcript. A logging failure must never cost the visitor an
-  // answer the model already produced, so this error is deliberately swallowed.
+  await logExchange(ipHash, trimmed, answer, MODEL);
+  return json({ answer }, 200);
+};
+
+/**
+ * Best-effort transcript. A logging failure must never cost the visitor an
+ * answer already produced, so this error is deliberately swallowed.
+ */
+async function logExchange(ipHash: string, question: string, answer: string, source: string) {
   try {
     await env.DB.prepare(
       `INSERT INTO chat_log (created_at, ip_hash, question, answer, model)
        VALUES (?1, ?2, ?3, ?4, ?5)`,
     )
-      .bind(new Date().toISOString(), ipHash, trimmed, answer, MODEL)
+      .bind(new Date().toISOString(), ipHash, question, answer, source)
       .run();
   } catch {
     // Ignored on purpose: the visitor already has their answer.
   }
-
-  return json({ answer }, 200);
-};
+}
 
 export const ALL: APIRoute = () =>
   new Response(JSON.stringify({ error: 'Method not allowed.' }), {
