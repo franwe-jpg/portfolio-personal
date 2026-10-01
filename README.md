@@ -38,7 +38,7 @@ ends, the chat scrolls natively and opens up to real questions.
 | `[ boot ]` | `[ typing… ]` | `[ your turn ]` |
 | :---: | :---: | :---: |
 | <img src="docs/readme/screen-tap-hint.png" width="230" alt="Pulsing tap hint centered on the chat"> | <img src="docs/readme/screen-typing.png" width="230" alt="Visitor message being typed in the composer"> | <img src="docs/readme/screen-your-turn.png" width="230" alt="Invitation to write once the script ends"> |
-| A pulsing hint asks for a tap | The draft takes 1–2 s, then it is sent | Ask anything, and the AI persona replies |
+| A pulsing hint asks for a tap | The draft takes 1–2 s, then it is sent | Ask anything or pick a suggested question |
 
 </div>
 

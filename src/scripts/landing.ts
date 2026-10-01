@@ -45,6 +45,13 @@ const HINT_COMPACT_AT = 0.45;
 /** Beat between a typed draft and its bubble, and between consecutive bubbles. */
 const SEND_PAUSE_MS = 250;
 const BETWEEN_MESSAGES_MS = 450;
+/** How long the "your turn" invitation stays before fading on its own. */
+const OPEN_PROMPT_MS = 2000;
+const OPEN_PROMPT_FADE_MS = 400;
+/** Marquee speed of the suggestion strip, in pixels per second. */
+const SUGGESTIONS_SPEED = 40;
+/** Grace period before a blurred composer hides the suggestions. */
+const SUGGESTIONS_HIDE_MS = 200;
 
 function replyDuration(length: number): number {
   const ratio = Math.min(1, length / REPLY_LONG_CHARS);
@@ -567,6 +574,8 @@ function initConversation(): void {
   const send = byId<HTMLButtonElement>('composerSend');
   const emojiButton = byId<HTMLButtonElement>('emojiBtn');
   const openPrompt = byId<HTMLButtonElement>('openPrompt');
+  const suggestions = byId('suggestions');
+  const suggestionsTrack = byId('suggestionsTrack');
 
   if (!list || !liveList || !body || !stage || !status || !hint || !composer || !input || !send) {
     return;
@@ -638,10 +647,14 @@ function initConversation(): void {
    * message afterwards "sends" it: hideTyping() clears the draft.
    */
   function typeDraft(index: number): Promise<void> {
-    // Array.from splits by code point, so an emoji is never typed in halves.
-    const chars = Array.from(plainText(messages[index].html));
     composer!.classList.add('is-drafting');
+    return typeInto(plainText(messages[index].html));
+  }
 
+  /** Writes `text` into the composer letter by letter; resolves when done. */
+  function typeInto(text: string): Promise<void> {
+    // Array.from splits by code point, so an emoji is never typed in halves.
+    const chars = Array.from(text);
     if (chars.length === 0 || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
       input!.value = chars.join('');
       return Promise.resolve();
@@ -703,9 +716,13 @@ function initConversation(): void {
     input!.placeholder = PLACEHOLDER_OPEN;
   }
 
-  /** The invitation leaves for good with the visitor's first message. */
+  /** The invitation fades on its own, or with the visitor's first message. */
   function dismissOpenPrompt(): void {
-    if (openPrompt) openPrompt.hidden = true;
+    if (!openPrompt || openPrompt.hidden || openPrompt.classList.contains('leaving')) return;
+    openPrompt.classList.add('leaving');
+    setTimeout(function () {
+      openPrompt.hidden = true;
+    }, OPEN_PROMPT_FADE_MS);
   }
 
   /**
@@ -739,7 +756,10 @@ function initConversation(): void {
     body!.scrollTop = body!.scrollHeight;
 
     hint!.classList.add('gone');
-    if (openPrompt) openPrompt.hidden = false;
+    if (openPrompt) {
+      openPrompt.hidden = false;
+      setTimeout(dismissOpenPrompt, OPEN_PROMPT_MS);
+    }
   }
 
   /** Appends scripted messages up to `target`; the intro never rewinds. */
@@ -895,7 +915,8 @@ function initConversation(): void {
   composer.addEventListener('submit', async function (event) {
     event.preventDefault();
     const question = input!.value.trim();
-    if (!composerReady || requestInFlight || question.length === 0) return;
+    // A suggestion still being typed is not a question yet.
+    if (!composerReady || requestInFlight || draftTimer !== null || question.length === 0) return;
 
     requestInFlight = true;
     dismissOpenPrompt();
@@ -922,6 +943,98 @@ function initConversation(): void {
   openPrompt?.addEventListener('click', function () {
     input!.focus();
   });
+
+  // ── Suggested questions ───────────────────────────────────────
+
+  let suggestionsHideTimer: number | null = null;
+
+  function remainingSuggestions(): HTMLButtonElement[] {
+    return Array.from(suggestionsTrack?.querySelectorAll<HTMLButtonElement>('.suggestion') ?? []);
+  }
+
+  /** Keeps the marquee speed constant however many chips are left. */
+  function syncMarqueeDuration(): void {
+    if (!suggestionsTrack) return;
+    const loopWidth = suggestionsTrack.scrollWidth / 2;
+    suggestionsTrack.style.setProperty(
+      '--suggestions-duration',
+      Math.max(6, loopWidth / SUGGESTIONS_SPEED) + 's',
+    );
+  }
+
+  function showSuggestions(): void {
+    if (suggestionsHideTimer !== null) {
+      clearTimeout(suggestionsHideTimer);
+      suggestionsHideTimer = null;
+    }
+    if (!suggestions || !composerReady || remainingSuggestions().length === 0) return;
+    if (!suggestions.hidden) return;
+    // The strip takes room from the chat: keep the latest bubble in view.
+    const atBottom = body!.scrollHeight - body!.scrollTop - body!.clientHeight < 40;
+    suggestions.hidden = false;
+    syncMarqueeDuration();
+    if (atBottom) body!.scrollTop = body!.scrollHeight;
+  }
+
+  function hideSuggestionsSoon(): void {
+    if (!suggestions || suggestionsHideTimer !== null) return;
+    suggestionsHideTimer = window.setTimeout(function () {
+      suggestionsHideTimer = null;
+      // Focus moved onto a chip (keyboard navigation): keep the strip.
+      if (suggestions.contains(document.activeElement)) return;
+      suggestions.hidden = true;
+    }, SUGGESTIONS_HIDE_MS);
+  }
+
+  async function useSuggestion(chip: HTMLButtonElement): Promise<void> {
+    if (!composerReady || requestInFlight || draftTimer !== null) return;
+    const id = chip.dataset.suggestion;
+    const question = chip.textContent?.trim() ?? '';
+    // A suggestion is offered once: drop both marquee copies.
+    for (const twin of remainingSuggestions()) {
+      if (twin.dataset.suggestion === id) twin.remove();
+    }
+    syncMarqueeDuration();
+    input!.focus();
+    input!.value = '';
+    await typeInto(question);
+    input!.focus();
+    input!.setSelectionRange(input!.value.length, input!.value.length);
+    if (remainingSuggestions().length === 0 && suggestions) suggestions.hidden = true;
+  }
+
+  if (suggestions && suggestionsTrack) {
+    input.addEventListener('focus', function () {
+      document.documentElement.classList.add('composer-focused');
+      showSuggestions();
+    });
+    input.addEventListener('blur', function () {
+      document.documentElement.classList.remove('composer-focused');
+      hideSuggestionsSoon();
+    });
+    suggestions.addEventListener('focusout', function (event) {
+      if (event.relatedTarget !== input) hideSuggestionsSoon();
+    });
+
+    // With a mouse, keep focus (and the strip) on the composer.
+    suggestions.addEventListener('mousedown', function (event) {
+      event.preventDefault();
+    });
+    // Hold the marquee still under a finger so the chip can be picked.
+    suggestions.addEventListener('pointerdown', function () {
+      suggestions.classList.add('is-held');
+    });
+    for (const type of ['pointerup', 'pointercancel', 'pointerleave']) {
+      suggestions.addEventListener(type, function () {
+        suggestions.classList.remove('is-held');
+      });
+    }
+
+    suggestionsTrack.addEventListener('click', function (event) {
+      const chip = (event.target as HTMLElement | null)?.closest<HTMLButtonElement>('.suggestion');
+      if (chip) void useSuggestion(chip);
+    });
+  }
 
   render(-1);
   setHint(false);

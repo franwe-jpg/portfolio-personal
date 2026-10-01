@@ -1,5 +1,6 @@
 ---
 import { profile } from '../data/profile';
+import { SUGGESTIONS } from '../data/messages';
 import { MAX_QUESTION_CHARS } from '../lib/persona';
 import { otherLang, pathForLang, type Lang } from '../i18n/config';
 import { UI } from '../i18n/ui';
@@ -13,6 +14,9 @@ const { lang } = Astro.props;
 const t = UI[lang];
 // A real href, so the switch works without JS and both routes stay crawlable.
 const otherHref = pathForLang(otherLang(lang));
+// Rendered twice: the second, inert copy makes the marquee loop seamless.
+const suggestions = SUGGESTIONS[lang];
+const marqueeCopies = [false, true];
 ---
 
 <div class="screen" id="chatScreen">
@@ -99,6 +103,27 @@ const otherHref = pathForLang(otherLang(lang));
     <span class="open-prompt-text">{t.openPromptText}</span>
     <span class="open-prompt-arrow" aria-hidden="true">👇</span>
   </button>
+
+  <!-- Suggested questions, shown above the keyboard once the live chat opens. -->
+  <div class="suggestions" id="suggestions" role="group" aria-label={t.suggestionsLabel} hidden>
+    <div class="suggestions-track" id="suggestionsTrack">
+      {
+        marqueeCopies.map((inert) =>
+          suggestions.map((question, index) => (
+            <button
+              type="button"
+              class="suggestion"
+              data-suggestion={index}
+              aria-hidden={inert ? 'true' : undefined}
+              tabindex={inert ? -1 : undefined}
+            >
+              {question}
+            </button>
+          )),
+        )
+      }
+    </div>
+  </div>
 
   <form class="composer" id="composer" autocomplete="off">
     <label class="sr-only" for="composerInput">{t.composerLabel(profile.name)}</label>

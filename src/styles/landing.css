@@ -502,6 +502,44 @@ body{
 /* Mientras dura el guion, toda el área del chat es un botón de "seguir". */
 .chat-body:not(.is-complete){ cursor:pointer; -webkit-tap-highlight-color:transparent; }
 
+/* ── Preguntas sugeridas ─────────────────────────────────────
+   Tira tipo "sugerencias del teclado" sobre el composer. Los chips se
+   deslizan en loop de derecha a izquierda; el set está duplicado, así que
+   correrlo exactamente la mitad del ancho empalma sin salto. Se frena
+   mientras el puntero o el dedo están encima, para poder elegir. */
+.suggestions{
+  flex:none; overflow:hidden;
+  padding:8px 0;
+  background:var(--wa-panel);
+  border-top:1px solid var(--wa-border);
+  -webkit-mask-image:linear-gradient(to right, transparent, #000 24px, #000 calc(100% - 24px), transparent);
+          mask-image:linear-gradient(to right, transparent, #000 24px, #000 calc(100% - 24px), transparent);
+  animation:suggestions-in .3s cubic-bezier(.22,.61,.36,1);
+}
+.suggestions[hidden]{ display:none; }
+.suggestions-track{
+  display:flex; width:max-content;
+  animation:suggestions-marquee var(--suggestions-duration, 22s) linear infinite;
+}
+.suggestions:hover .suggestions-track,
+.suggestions.is-held .suggestions-track,
+.suggestions:focus-within .suggestions-track{ animation-play-state:paused; }
+/* Margen y no gap: así cada mitad del track mide exactamente lo mismo. */
+.suggestion{
+  flex:none; margin-right:8px;
+  padding:7px 14px; border-radius:18px;
+  border:1px solid var(--menu-border); background:var(--input-bg);
+  color:var(--wa-text); font:inherit; font-size:14px; white-space:nowrap;
+  cursor:pointer; -webkit-tap-highlight-color:transparent;
+}
+.suggestion:hover{ background:var(--menu-hover); }
+.suggestion:focus-visible{ outline:2px solid var(--wa-accent); outline-offset:1px; }
+@keyframes suggestions-marquee{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
+@keyframes suggestions-in{ from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:none; } }
+
+/* Con el teclado abierto el botón flotante solo estorba. */
+.composer-focused .view-toggle-mobile{ opacity:0; pointer-events:none; }
+
 /* Mientras el visitante "escribe" un mensaje del guion. */
 .composer.is-drafting .input{ box-shadow:0 0 0 2px var(--focus-ring); }
 .composer.is-drafting .send{ opacity:1; color:var(--wa-accent); }
@@ -520,6 +558,7 @@ body{
   animation:open-prompt-in .45s cubic-bezier(.22,.61,.36,1);
 }
 .open-prompt[hidden]{ display:none; }
+.open-prompt.leaving{ opacity:0; transition:opacity .4s ease; }
 .open-prompt:focus-visible{ outline:2px solid var(--wa-accent); outline-offset:3px; }
 .open-prompt-title{ font-size:19px; font-weight:700; }
 .open-prompt-text{ font-size:15px; line-height:1.4; color:var(--wa-muted); }
@@ -656,6 +695,11 @@ body{
   .chat-list{ transition:none; }
   .hint-card,.hint-tap::after,.typing i{ animation:none; }
   .open-prompt,.open-prompt-arrow{ animation:none; }
+  .suggestions{ animation:none; }
+  /* Sin movimiento: la tira queda quieta y se recorre deslizando a mano. */
+  .suggestions{ overflow-x:auto; -webkit-mask-image:none; mask-image:none; }
+  .suggestions-track{ animation:none; }
+  .suggestion[aria-hidden="true"]{ display:none; }
   .chat > .screen{ transition:none; }
   .proj-track{ transition:none; }
 }
