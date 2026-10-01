@@ -210,17 +210,8 @@ export const MESSAGES: Record<Lang, ChatMessage[]> = {
     },
     {
       from: 'franco',
-      html: 'There’s my final project from the degree, and the landing pages I build for local businesses.',
+      html: 'There’s my final project from the degree, and the landing pages I build for institutions and businesses.',
     },
-
-    { from: 'visitor', html: 'Do you have a CV?' },
-    {
-      from: 'franco',
-      // Only a Spanish PDF exists; the label says so rather than implying an
-      // English one.
-      html: '📄 <a href="/cv-franco-soler.pdf" target="_blank" rel="noopener">CV — Franco Soler.pdf (in Spanish)</a>',
-    },
-
     { from: 'visitor', html: 'How do I reach you?' },
     {
       from: 'franco',

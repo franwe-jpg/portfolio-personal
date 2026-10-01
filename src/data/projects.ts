@@ -118,7 +118,7 @@ const PROJECT_COPY: Record<Lang, Record<string, ProjectCopy>> = {
       title: 'Sitio del Aeroclub Trelew',
       badge: 'Cliente real',
       description:
-        'Sitio institucional para el Aeroclub Trelew, Centro de Instrucción de Aeronáutica Civil habilitado por ANAC desde 1938. Presenta las carreras y cursos que dicta, la flota, la galería y un formulario de contacto con el tipo de consulta ya clasificado. Un caso claro de página pensada alrededor de una necesidad real: que el interesado encuentre la carrera y consulte facilmente.',
+        'Sitio institucional para el Aeroclub Trelew, Centro de Instrucción de Aeronáutica Civil habilitado por ANAC desde 1938. Presenta las carreras y cursos que dicta, la flota, la galería y un formulario de contacto con el tipo de consulta ya clasificado. Un caso claro de página pensada alrededor de una necesidad real: que el interesado encuentre la carrera y consulte fácilmente.',
       imageAlts: [
         'Portada del sitio del Aeroclub Trelew: avión en vuelo, los logos del club y de ANAC, y los botones para ver cursos o conocer la institución',
         'Sección de carreras y cursos, con una tarjeta por formación: tripulante de cabina, piloto privado y el resto de los programas',
@@ -158,7 +158,7 @@ const PROJECT_COPY: Record<Lang, Record<string, ProjectCopy>> = {
       title: 'Academic Feedback Management',
       badge: 'Final project · APU 2025',
       description:
-        'Web system for the Facultad de Ingeniería, Sede Trelew. Students answer course surveys, the system consolidates the responses on its own and generates the reports that teachers and the Department use to make decisions. A team of 4, 12 weeks, Python, FastAPI and React on a layered architecture. The hard part was not writing it: it was understanding the rules it had to respect (anonymity, one response per term, reports that become immutable once closed).',
+        'Centralised Academic Management web system that digitalises the full cycle of institutional feedback. In a single flow it brings together the collection of student surveys, the automatic generation of reports for teachers, and the Department’s Curricular Activity Reports and Degree Summary Reports, in compliance with the current regulations (CDFI No. 005/2014 and No. 283/2015). This integration makes it possible to complete every task of the academic evaluation circuit within the same environment.',
       imageAlts: [
         'Welcome screen of the Academic Analysis System, with the cards to enter as Student, Teacher or Department',
         'Student view: list of pending surveys, with the course, the teacher, the closing date and the button to answer',
@@ -172,9 +172,9 @@ const PROJECT_COPY: Record<Lang, Record<string, ProjectCopy>> = {
     },
     'aeroclub-trelew': {
       title: 'Aeroclub Trelew website',
-      badge: 'Real client · Live',
+      badge: 'Real client',
       description:
-        'Institutional site for Aeroclub Trelew, an ANAC-approved Civil Aviation Instruction Centre running since 1938. It presents the programmes it teaches (cabin crew, private and commercial pilot, dispatcher, check-in and ramp, languages), the fleet, the gallery and a contact form where the type of enquiry is already classified. A clear case of a page built around a real need: that a prospective student finds the programme and asks about it without friction.',
+        'Institutional site for Aeroclub Trelew, a Civil Aviation Instruction Centre approved by ANAC since 1938. It presents the programmes and courses it teaches, the fleet, the gallery and a contact form where the type of enquiry is already classified. A clear case of a page built around a real need: that a prospective student finds the programme and gets in touch easily.',
       imageAlts: [
         'Home page of the Aeroclub Trelew site: an aircraft in flight, the club and ANAC logos, and the buttons to see the programmes or learn about the institution',
         'Programmes and courses section, one card per training path: cabin crew, private pilot and the remaining programmes',
