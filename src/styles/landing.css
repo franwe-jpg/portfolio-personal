@@ -442,7 +442,11 @@ body{
   font:inherit; font-size:14.5px; line-height:1.4; color:var(--wa-text);
 }
 .input input::placeholder{ color:var(--wa-muted); opacity:1; }
-.input input:disabled{ cursor:default; }
+.input input:disabled{
+  cursor:default; opacity:1;
+  /* Safari atenúa el texto de un input deshabilitado; el borrador del guion debe leerse. */
+  color:var(--wa-text); -webkit-text-fill-color:var(--wa-text);
+}
 .input:focus-within{ box-shadow:0 0 0 2px var(--focus-ring); }
 .send{
   flex:none; color:var(--icon-muted); display:grid; place-items:center;
@@ -451,17 +455,56 @@ body{
 .send:disabled{ opacity:.45; cursor:default; }
 .send:focus-visible{ outline:2px solid var(--wa-accent); outline-offset:2px; border-radius:6px; }
 
+/* Aviso de scroll: centrado y grande para que se vea en móvil. El
+   contenedor solo posiciona; la tarjeta late y la flecha baja. */
 .hint{
-  position:absolute; left:50%; bottom:22px; transform:translateX(-50%);
-  display:flex; flex-direction:column; align-items:center; gap:6px;
-  color:var(--wa-muted); font-size:12.5px;
-  background:var(--hint-bg); backdrop-filter:blur(3px);
-  padding:8px 14px; border-radius:20px;
+  position:absolute; inset:0; z-index:4;
+  display:grid; place-items:center;
   transition:opacity .4s ease; pointer-events:none;
 }
 .hint.gone{ opacity:0; }
-.hint svg{ animation:nudge 1.6s infinite ease-in-out; }
-@keyframes nudge{ 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(5px);} }
+.hint-card{
+  display:flex; flex-direction:column; align-items:center; gap:10px;
+  max-width:min(280px, calc(100% - 48px));
+  color:var(--wa-text); font-size:17px; font-weight:600; line-height:1.3; text-align:center;
+  background:var(--hint-bg); backdrop-filter:blur(6px);
+  padding:18px 24px 16px; border-radius:22px;
+  box-shadow:0 10px 30px -12px var(--menu-shadow);
+  animation:hint-pulse 1.8s infinite ease-in-out;
+}
+.hint-arrow{ animation:hint-nudge 1.8s infinite ease-in-out; }
+@keyframes hint-pulse{
+  0%,100%{ transform:translateY(0) scale(1); box-shadow:0 10px 30px -12px var(--menu-shadow), 0 0 0 0 var(--focus-ring); }
+  50%{ transform:translateY(-6px) scale(1.04); box-shadow:0 16px 34px -12px var(--menu-shadow), 0 0 0 12px transparent; }
+}
+@keyframes hint-nudge{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(9px); } }
+
+/* Mientras el visitante "escribe" un mensaje del guion. */
+.composer.is-drafting .input{ box-shadow:0 0 0 2px var(--focus-ring); }
+.composer.is-drafting .send{ opacity:1; color:var(--wa-accent); }
+
+/* Invitación a escribir al terminar el guion. Vive en .screen y no en
+   .chat-body, porque ahí el scroll nativo la arrastraría. */
+.open-prompt{
+  position:absolute; left:50%; top:50%; z-index:5;
+  transform:translate(-50%, -50%);
+  width:min(300px, calc(100% - 48px));
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+  padding:20px 22px 16px; border:1px solid var(--menu-border); border-radius:22px;
+  background:var(--float-bg); backdrop-filter:blur(6px);
+  color:var(--wa-text); font:inherit; text-align:center; cursor:pointer;
+  box-shadow:0 14px 40px -14px var(--menu-shadow);
+  animation:open-prompt-in .45s cubic-bezier(.22,.61,.36,1);
+}
+.open-prompt[hidden]{ display:none; }
+.open-prompt:focus-visible{ outline:2px solid var(--wa-accent); outline-offset:3px; }
+.open-prompt-title{ font-size:19px; font-weight:700; }
+.open-prompt-text{ font-size:15px; line-height:1.4; color:var(--wa-muted); }
+.open-prompt-arrow{ font-size:24px; animation:hint-nudge 1.6s infinite ease-in-out; }
+@keyframes open-prompt-in{
+  from{ opacity:0; transform:translate(-50%, -50%) scale(.92); }
+  to{ opacity:1; transform:translate(-50%, -50%); }
+}
 
 /* ── Presentación ───────────────────────────────────────────── */
 .intro{
@@ -588,7 +631,8 @@ body{
 @media (prefers-reduced-motion:reduce){
   .bubble{ animation:none; }
   .chat-list{ transition:none; }
-  .hint svg,.typing i{ animation:none; }
+  .hint-card,.hint-arrow,.typing i{ animation:none; }
+  .open-prompt,.open-prompt-arrow{ animation:none; }
   .chat > .screen{ transition:none; }
   .proj-track{ transition:none; }
 }

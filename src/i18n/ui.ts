@@ -32,9 +32,10 @@ export interface UiCopy {
   disclaimer: string;
   todayChip: string;
   scrollHint: string;
+  openPromptTitle: string;
+  openPromptText: string;
 
   composerLabel: (name: string) => string;
-  composerPlaceholder: string;
   composerPlaceholderOpen: string;
   emojiButtonLabel: string;
   sendButtonLabel: string;
@@ -71,9 +72,10 @@ export const UI: Record<Lang, UiCopy> = {
     disclaimer: 'Este chat es una simulación. El CV, los links y las ganas de trabajar son reales.',
     todayChip: 'HOY',
     scrollHint: 'Scrolleá para leer la conversación',
+    openPromptTitle: 'Ahora te toca a vos',
+    openPromptText: 'Escribime lo que quieras acá abajo y te respondo.',
 
     composerLabel: (name) => `Escribile un mensaje a ${name}`,
-    composerPlaceholder: 'Escribí un mensaje',
     composerPlaceholderOpen: 'Preguntame lo que quieras',
     emojiButtonLabel: 'Elegir un emoji',
     sendButtonLabel: 'Enviar mensaje',
@@ -109,9 +111,10 @@ export const UI: Record<Lang, UiCopy> = {
     disclaimer: 'This chat is a simulation. The CV, the links and the willingness to work are real.',
     todayChip: 'TODAY',
     scrollHint: 'Scroll to read the conversation',
+    openPromptTitle: 'Your turn',
+    openPromptText: 'Ask me anything below and I will reply.',
 
     composerLabel: (name) => `Write a message to ${name}`,
-    composerPlaceholder: 'Type a message',
     composerPlaceholderOpen: 'Ask me anything',
     emojiButtonLabel: 'Pick an emoji',
     sendButtonLabel: 'Send message',

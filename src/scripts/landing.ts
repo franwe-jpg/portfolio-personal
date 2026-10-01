@@ -26,6 +26,9 @@ const STATUS_TYPING = t.statusTyping;
 const PLACEHOLDER_OPEN = t.composerPlaceholderOpen;
 const NETWORK_ERROR = t.networkError;
 
+/** Typing speed of the simulated visitor drafts in the composer. */
+const DRAFT_CHAR_MS = 45;
+
 /**
  * Timestamps follow the visitor's own device clock. Argentina is only a
  * fallback for the rare runtime that reports no resolvable time zone, so a
@@ -529,6 +532,7 @@ function initConversation(): void {
   const input = byId<HTMLInputElement>('composerInput');
   const send = byId<HTMLButtonElement>('composerSend');
   const emojiButton = byId<HTMLButtonElement>('emojiBtn');
+  const openPrompt = byId<HTMLButtonElement>('openPrompt');
 
   if (!list || !liveList || !body || !stage || !status || !hint || !composer || !input || !send) {
     return;
@@ -541,6 +545,7 @@ function initConversation(): void {
   const nodes: (HTMLElement | null)[] = [];
   let typingEl: HTMLElement | null = null;
   let liveTypingEl: HTMLElement | null = null;
+  let draftTimer: number | null = null;
   let shown = -1;
   let typingFor = -1;
   let composerReady = false;
@@ -583,11 +588,59 @@ function initConversation(): void {
     return row;
   }
 
+  /** Authored markup reduced to the text a visitor would actually type. */
+  function plainText(html: string): string {
+    const template = document.createElement('template');
+    template.innerHTML = html;
+    return (template.content.textContent ?? '').trim();
+  }
+
+  /**
+   * Types the visitor's next scripted message into the composer, letter by
+   * letter. Scrolling on to the message "sends" it: render() inserts the
+   * bubble and hideTyping() clears the draft.
+   */
+  function startDraft(html: string): void {
+    // Array.from splits by code point, so an emoji is never typed in halves.
+    const chars = Array.from(plainText(html));
+    composer!.classList.add('is-drafting');
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      input!.value = chars.join('');
+      return;
+    }
+    let typed = 0;
+    draftTimer = window.setInterval(function () {
+      typed++;
+      input!.value = chars.slice(0, typed).join('');
+      input!.scrollLeft = input!.scrollWidth;
+      if (typed >= chars.length) stopDraftTimer();
+    }, DRAFT_CHAR_MS);
+  }
+
+  function stopDraftTimer(): void {
+    if (draftTimer !== null) {
+      clearInterval(draftTimer);
+      draftTimer = null;
+    }
+  }
+
+  function clearDraft(): void {
+    stopDraftTimer();
+    if (!composer!.classList.contains('is-drafting')) return;
+    composer!.classList.remove('is-drafting');
+    input!.value = '';
+  }
+
   function showTyping(index: number): void {
     if (typingFor === index) return;
     hideTyping();
     typingFor = index;
     const message = messages[index];
+    // The visitor "types" in the composer; only Franco gets a typing bubble.
+    if (message.from === 'visitor') {
+      startDraft(message.html);
+      return;
+    }
     typingEl = document.createElement('div');
     typingEl.className = 'row ' + (message.from === 'franco' ? 'in' : 'out');
     typingEl.innerHTML = '<div class="bubble"><span class="typing"><i></i><i></i><i></i></span></div>';
@@ -597,6 +650,7 @@ function initConversation(): void {
   }
 
   function hideTyping(): void {
+    clearDraft();
     if (typingEl) {
       typingEl.remove();
       typingEl = null;
@@ -612,6 +666,11 @@ function initConversation(): void {
     send!.disabled = false;
     if (emojiButton) emojiButton.disabled = false;
     input!.placeholder = PLACEHOLDER_OPEN;
+  }
+
+  /** The invitation leaves for good with the visitor's first message. */
+  function dismissOpenPrompt(): void {
+    if (openPrompt) openPrompt.hidden = true;
   }
 
   /**
@@ -653,6 +712,7 @@ function initConversation(): void {
     // so collapsing the stage does not move anything on screen.
     stage!.style.height = '100svh';
     hint!.classList.add('gone');
+    if (openPrompt) openPrompt.hidden = false;
   }
 
   function render(target: number): void {
@@ -780,6 +840,7 @@ function initConversation(): void {
     if (!composerReady || requestInFlight || question.length === 0) return;
 
     requestInFlight = true;
+    dismissOpenPrompt();
     input!.value = '';
     input!.disabled = true;
     send!.disabled = true;
@@ -797,6 +858,10 @@ function initConversation(): void {
     appendLive('in', answer);
     input!.disabled = false;
     send!.disabled = false;
+    input!.focus();
+  });
+
+  openPrompt?.addEventListener('click', function () {
     input!.focus();
   });
 

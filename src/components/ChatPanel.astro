@@ -84,20 +84,30 @@ const otherHref = pathForLang(otherLang(lang));
       <!-- Live chat bubbles; the scroll-driven render never touches them. -->
       <div class="live-list" id="liveList" aria-live="polite"></div>
     </div>
-    <div class="hint" id="hint">
-      <span>{t.scrollHint}</span>
-      <svg
-        width="20"
-        height="20"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"></path></svg
-      >
+    <div class="hint" id="hint" aria-hidden="true">
+      <div class="hint-card">
+        <span class="hint-text">{t.scrollHint}</span>
+        <svg
+          class="hint-arrow"
+          width="28"
+          height="28"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.2"
+          stroke-linecap="round"
+          stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7"></path></svg
+        >
+      </div>
     </div>
   </div>
+
+  <!-- Shown once the scripted conversation ends; gone after the first message. -->
+  <button type="button" class="open-prompt" id="openPrompt" hidden>
+    <span class="open-prompt-title">{t.openPromptTitle}</span>
+    <span class="open-prompt-text">{t.openPromptText}</span>
+    <span class="open-prompt-arrow" aria-hidden="true">👇</span>
+  </button>
 
   <form class="composer" id="composer" autocomplete="off">
     <label class="sr-only" for="composerInput">{t.composerLabel(profile.name)}</label>
@@ -137,7 +147,6 @@ const otherHref = pathForLang(otherLang(lang));
         type="text"
         id="composerInput"
         name="question"
-        placeholder={t.composerPlaceholder}
         maxlength={MAX_QUESTION_CHARS}
         disabled
       />
