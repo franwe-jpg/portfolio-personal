@@ -131,12 +131,6 @@ function storeTheme(theme: Theme): void {
   }
 }
 
-function systemTheme(): Theme {
-  return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
-    ? 'dark'
-    : 'light';
-}
-
 function initTheme(): ThemeController {
   const root = document.documentElement;
   const listeners: ((theme: Theme) => void)[] = [];
@@ -146,7 +140,7 @@ function initTheme(): ThemeController {
   // single source of truth and never a second paint.
   const stamped = root.getAttribute('data-theme');
   let current: Theme =
-    stamped === 'dark' || stamped === 'light' ? stamped : (readStoredTheme() ?? systemTheme());
+    stamped === 'dark' || stamped === 'light' ? stamped : (readStoredTheme() ?? 'light');
   root.setAttribute('data-theme', current);
 
   function apply(theme: Theme): void {
@@ -154,12 +148,6 @@ function initTheme(): ThemeController {
     root.setAttribute('data-theme', theme);
     for (const listener of listeners) listener(theme);
   }
-
-  // Keep following the OS for as long as the visitor has not chosen.
-  const query = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
-  query?.addEventListener('change', function (event) {
-    if (readStoredTheme() === null) apply(event.matches ? 'dark' : 'light');
-  });
 
   return {
     current: function () {

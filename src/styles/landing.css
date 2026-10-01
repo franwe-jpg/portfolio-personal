@@ -7,9 +7,9 @@
    for byte; the dark palette only re-declares the same names.
 
    `data-theme` is stamped on <html> before the first paint by the
-   inline script in src/layouts/Layout.astro. The media query is the
-   no-JavaScript fallback and is scoped with :not([data-theme="light"])
-   so an explicit light choice always wins.
+   inline script in src/layouts/Layout.astro. Light is the default,
+   whatever the OS prefers; dark applies only after the visitor picks
+   it in the header menu.
    ════════════════════════════════════════════════════════════════ */
 :root{
   color-scheme: light;
@@ -81,65 +81,8 @@
   --font: "Segoe UI", "Helvetica Neue", Helvetica, -apple-system, BlinkMacSystemFont, Roboto, Arial, sans-serif;
 }
 
-/* Paleta oscura. Sólo redefine tokens: ninguna regla de abajo cambia. */
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    color-scheme: dark;
-
-    --wa-wall:      #0b141a;
-    --wa-wall-fade: rgba(11,20,26,0);
-    --wa-panel:     #202c33;
-    --wa-in:        #202c33;
-    --wa-out:       #005c4b;
-    --wa-text:      #e9edef;
-    --wa-muted:     #aebac1;
-    --wa-meta:      #bfcad1;
-    --wa-link:      #53bdeb;
-    --wa-link-underline: rgba(83,189,235,.35);
-    --wa-tick:      #53bdeb;
-    --wa-accent:    #ffffff;
-    --wa-border:    #2a3942;
-    --wa-chip:      #182229;
-    --wa-chip-warn: #182229;
-    --wa-chip-warn-text: #ffd279;
-
-    --wa-pattern: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='0.04' stroke-width='1.5' stroke-linecap='round'%3E%3Ccircle cx='22' cy='24' r='8'/%3E%3Cpath d='M60 16h20v15H70l-6 7v-7h-4z'/%3E%3Cpath d='M108 34l7-13 7 13z'/%3E%3Cpath d='M14 80q10-13 20 0t20 0'/%3E%3Crect x='90' y='70' width='18' height='18' rx='4'/%3E%3Cpath d='M28 116l9 9 16-18'/%3E%3Ccircle cx='116' cy='112' r='6'/%3E%3Cpath d='M64 96v18M55 105h18'/%3E%3C/g%3E%3C/svg%3E");
-
-    --page-bg:      #0b141a;
-    --screen-bg:    #111b21;
-    --icon-muted:   #aebac1;
-    --typing-dot:   #8696a0;
-    --input-bg:     #2a3942;
-    --focus-ring:   rgba(255,255,255,.18);
-    --hint-bg:      rgba(32,44,51,.82);
-    --avatar-grad:  linear-gradient(145deg,#3b4a54,#202c33);
-    --menu-bg:      #233138;
-    --menu-border:  #2a3942;
-    --menu-hover:   #2a3942;
-    --menu-shadow:  rgba(0,0,0,.5);
-
-    --intro-text:       #aebac1;
-    --btn-bg:           #202c33;
-    --btn-border:       #2a3942;
-    --btn-hover-bg:     #2a3942;
-    --cta-bg:           #182229;
-    --cta-text:         #53bdeb;
-    --cta-border:       #53bdeb;
-    --cta-hover-bg:     #1f2f38;
-    --float-bg:         rgba(32,44,51,.94);
-    --float-border:     #2a3942;
-
-    --proj-card-bg:      #182229;
-    --proj-carousel-bg:  #202c33;
-    --proj-text-muted:   #aebac1;
-    --proj-chip-bg:      #202c33;
-    --proj-chip-border:  #2a3942;
-    --proj-link-text:    #e9edef;
-    --proj-link-hover:   #8696a0;
-  }
-}
-
-/* Elección explícita del menú: gana sobre prefers-color-scheme. */
+/* Paleta oscura, sólo si se elige en el menú. Sólo redefine tokens:
+   ninguna regla de abajo cambia. */
 :root[data-theme="dark"]{
   color-scheme: dark;
 
