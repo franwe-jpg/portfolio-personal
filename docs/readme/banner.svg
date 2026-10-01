@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="300" viewBox="0 0 1000 300" role="img" aria-label="Franco Martin Soler — Software Analyst. Terminal boot sequence of the portfolio chat.">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#05090c"/>
+      <stop offset="1" stop-color="#0b141a"/>
+    </linearGradient>
+    <pattern id="grid" width="28" height="28" patternUnits="userSpaceOnUse">
+      <path d="M28 0H0V28" fill="none" stroke="#25d366" stroke-opacity=".07" stroke-width="1"/>
+    </pattern>
+    <linearGradient id="scan" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#53bdeb" stop-opacity="0"/>
+      <stop offset=".5" stop-color="#53bdeb" stop-opacity=".18"/>
+      <stop offset="1" stop-color="#53bdeb" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-50%" width="140%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <!-- One clip per terminal line: its width grows to "type" the line. -->
+    <clipPath id="l1"><rect x="560" y="96" height="24" width="0"><animate attributeName="width" from="0" to="420" begin="0.4s" dur="1.1s" fill="freeze"/></rect></clipPath>
+    <clipPath id="l2"><rect x="560" y="126" height="24" width="0"><animate attributeName="width" from="0" to="420" begin="1.7s" dur="0.9s" fill="freeze"/></rect></clipPath>
+    <clipPath id="l3"><rect x="560" y="156" height="24" width="0"><animate attributeName="width" from="0" to="420" begin="2.7s" dur="0.9s" fill="freeze"/></rect></clipPath>
+    <clipPath id="l4"><rect x="560" y="186" height="24" width="0"><animate attributeName="width" from="0" to="420" begin="3.7s" dur="0.9s" fill="freeze"/></rect></clipPath>
+    <clipPath id="l5"><rect x="560" y="216" height="24" width="0"><animate attributeName="width" from="0" to="420" begin="4.7s" dur="0.7s" fill="freeze"/></rect></clipPath>
+  </defs>
+
+  <rect width="1000" height="300" rx="18" fill="url(#bg)"/>
+  <rect width="1000" height="300" rx="18" fill="url(#grid)"/>
+
+  <!-- Corner brackets -->
+  <g fill="none" stroke="#25d366" stroke-width="2" stroke-opacity=".7">
+    <path d="M16 46V16h30"/><path d="M954 16h30v30"/><path d="M984 254v30h-30"/><path d="M46 284H16v-30"/>
+  </g>
+
+  <!-- Title with an RGB-split glitch -->
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace" font-weight="700" font-size="40">
+    <text x="48" y="118" fill="#ff2e88" fill-opacity=".75">FRANCO MARTIN<animate attributeName="x" values="48;48;45;51;48;48" keyTimes="0;.86;.89;.92;.95;1" dur="4s" repeatCount="indefinite"/></text>
+    <text x="48" y="118" fill="#53bdeb" fill-opacity=".75">FRANCO MARTIN<animate attributeName="x" values="48;48;51;45;48;48" keyTimes="0;.86;.89;.92;.95;1" dur="4s" repeatCount="indefinite"/></text>
+    <text x="48" y="118" fill="#e9edef" filter="url(#glow)">FRANCO MARTIN</text>
+    <text x="48" y="166" fill="#25d366" filter="url(#glow)">SOLER_</text>
+  </g>
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="15" fill="#aebac1">
+    <text x="50" y="206">// Software Analyst · Full stack, front-end focus</text>
+    <text x="50" y="232">// Trelew, Chubut · AR</text>
+  </g>
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#25d366" fill-opacity=".8">
+    <text x="50" y="268">[ ONLINE ]<animate attributeName="fill-opacity" values=".8;.25;.8" dur="1.6s" repeatCount="indefinite"/></text>
+    <text x="150" y="268" fill="#5b6b75">francosolersistemas.com</text>
+  </g>
+
+  <!-- Terminal window -->
+  <rect x="540" y="44" width="430" height="216" rx="10" fill="#020507" fill-opacity=".85" stroke="#2a3942"/>
+  <circle cx="560" cy="62" r="5" fill="#ff5f57"/><circle cx="578" cy="62" r="5" fill="#febc2e"/><circle cx="596" cy="62" r="5" fill="#28c840"/>
+  <text x="755" y="66" text-anchor="middle" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="11" fill="#5b6b75">franco@trelew: ~/portfolio</text>
+
+  <g font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="13.5">
+    <text x="560" y="113" clip-path="url(#l1)"><tspan fill="#25d366">$</tspan><tspan fill="#e9edef"> ./boot --mode=chat</tspan></text>
+    <text x="560" y="143" clip-path="url(#l2)" fill="#aebac1">&gt; astro build ........... <tspan fill="#25d366">OK</tspan></text>
+    <text x="560" y="173" clip-path="url(#l3)" fill="#aebac1">&gt; d1 + turnstile ........ <tspan fill="#25d366">OK</tspan></text>
+    <text x="560" y="203" clip-path="url(#l4)" fill="#aebac1">&gt; workers ai · llama 3.1 <tspan fill="#25d366">OK</tspan></text>
+    <text x="560" y="233" clip-path="url(#l5)" fill="#53bdeb">&gt; ask me anything</text>
+  </g>
+  <rect x="703" y="221" width="9" height="16" fill="#53bdeb" opacity="0">
+    <animate attributeName="opacity" values="0;1;1;0;0" keyTimes="0;.01;.5;.51;1" dur="1s" begin="5.4s" repeatCount="indefinite"/>
+  </rect>
+
+  <!-- Sweeping scanline -->
+  <rect x="0" y="-60" width="1000" height="60" fill="url(#scan)">
+    <animate attributeName="y" from="-60" to="300" dur="5s" repeatCount="indefinite"/>
+  </rect>
+</svg>
