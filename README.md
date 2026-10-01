@@ -89,7 +89,7 @@ sequenceDiagram
 
 ```text
 src/
-├── components/     ▸ ChatPanel, ProjectsPanel, Intro, Avatar …
+├── components/     ▸ ChatPanel, ProjectsPanel, ProfilePanel, Avatar …
 ├── data/           ▸ scripted messages, profile, projects (ES / EN)
 ├── i18n/           ▸ UI copy and language routing
 ├── lib/persona.ts  ▸ the system prompt and the daily limit

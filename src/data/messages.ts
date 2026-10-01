@@ -41,10 +41,6 @@ export const MESSAGES: Record<Lang, ChatMessage[]> = {
       from: 'franco',
       html: 'Sí, mirá: <a href="#" data-action="proyectos">abrir mis proyectos</a>',
     },
-    {
-      from: 'franco',
-      html: 'Está mi proyecto final de la tecnicatura, y las landings que hago para instituciones/negocios.',
-    },
     { from: 'visitor', html: '¿Cómo te contacto?' },
     {
       from: 'franco',

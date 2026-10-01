@@ -1060,7 +1060,66 @@ function initPanels(): void {
     });
   }
 
+  // ── Contact info ──────────────────────────────────────────────
+
+  const profileScreen = byId('profileScreen');
+  const contactButton = byId<HTMLButtonElement>('contactBtn');
+  const profileBack = byId<HTMLButtonElement>('profileBack');
+  let profileOpen = false;
+  /** True while the open profile owns a history entry of its own. */
+  let profileInHistory = false;
+
+  function onProfileKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'Escape') return;
+    event.preventDefault();
+    closeProfile();
+  }
+
+  function openProfile(): void {
+    if (profileOpen || !profileScreen) return;
+    profileOpen = true;
+    profileScreen.inert = false;
+    chatScreen!.inert = true;
+    profileScreen.classList.add('is-open');
+    contactButton?.setAttribute('aria-expanded', 'true');
+    document.documentElement.classList.add('profile-open');
+    document.addEventListener('keydown', onProfileKeydown);
+    // The phone's back button should close the profile, not leave the site.
+    try {
+      history.pushState({ profile: true }, '');
+      profileInHistory = true;
+    } catch {
+      profileInHistory = false;
+    }
+    profileBack?.focus({ preventScroll: true });
+  }
+
+  /** `viaHistory` means the browser already popped the profile's entry. */
+  function closeProfile(viaHistory = false): void {
+    if (!profileOpen || !profileScreen) return;
+    profileOpen = false;
+    profileScreen.classList.remove('is-open');
+    profileScreen.inert = true;
+    chatScreen!.inert = false;
+    contactButton?.setAttribute('aria-expanded', 'false');
+    document.documentElement.classList.remove('profile-open');
+    document.removeEventListener('keydown', onProfileKeydown);
+    contactButton?.focus({ preventScroll: true });
+    if (profileInHistory && !viaHistory) history.back();
+    profileInHistory = false;
+  }
+
+  contactButton?.addEventListener('click', openProfile);
+  profileBack?.addEventListener('click', function () {
+    closeProfile();
+  });
+  window.addEventListener('popstate', function () {
+    closeProfile(true);
+  });
+
   function toggleView(): void {
+    // The projects swap happens under the profile, so close it first.
+    closeProfile();
     if (currentView === 'chat') {
       slideSwap(projectsScreen!, chatScreen!);
       currentView = 'projects';

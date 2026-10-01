@@ -18,6 +18,6 @@ const { lang, size = 40 } = Astro.props;
 const t = UI[lang];
 ---
 
-<div class="avatar" style={`--avatar-size:${size}px`}>
+<span class="avatar" style={`--avatar-size:${size}px`}>
   <Image src={perfil} alt={t.avatarAlt(profile.name)} loading="eager" />
-</div>
+</span>
