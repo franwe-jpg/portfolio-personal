@@ -116,6 +116,9 @@ const langAutoKey = 'lang-auto';
       })();
     </script>
 
+    {/* The Turnstile script is injected by src/scripts/landing.ts; warm the connection. */}
+    <link rel="preconnect" href="https://challenges.cloudflare.com" />
+
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />

@@ -252,6 +252,144 @@ function initHeaderMenu(theme: ThemeController): void {
   });
 }
 
+// ── Human check (Turnstile) ─────────────────────────────────────
+
+/** The slice of the Turnstile API this page uses. */
+interface TurnstileApi {
+  render(container: HTMLElement, options: Record<string, unknown>): string | undefined;
+  reset(widgetId: string): void;
+}
+
+declare global {
+  interface Window {
+    turnstile?: TurnstileApi;
+  }
+}
+
+const TURNSTILE_SCRIPT = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+/** Cloudflare's always-pass test key in dev; the real invisible widget otherwise. */
+const TURNSTILE_SITE_KEY = import.meta.env.DEV
+  ? '1x00000000000000000000AA'
+  : '0x4AAAAAAFEqtk5L30ks3uzR';
+/** How long a submit waits for a token that is still being solved. */
+const TURNSTILE_WAIT_MS = 5000;
+const TURNSTILE_RETRY_MS = 4000;
+const TURNSTILE_MAX_RETRIES = 3;
+
+interface HumanCheck {
+  /** A single-use token, or null when none is ready within TURNSTILE_WAIT_MS. */
+  takeToken(): Promise<string | null>;
+  /** Starts solving the next token in the background. */
+  renew(): void;
+}
+
+/**
+ * Keeps one Turnstile token solved ahead of time, so a question is sent the
+ * moment it is submitted. Never blocks the chat: if Turnstile is unavailable
+ * the question goes out without a token and the endpoint explains the refusal.
+ */
+function initHumanCheck(): HumanCheck {
+  let api: TurnstileApi | null = null;
+  let widgetId: string | null = null;
+  let token: string | null = null;
+  let unavailable = false;
+  let retries = 0;
+  let waiter: ((value: string | null) => void) | null = null;
+
+  /** Hands a token to a waiting submit, or keeps it for the next one. */
+  function deliver(value: string | null): void {
+    const pending = waiter;
+    waiter = null;
+    if (pending) pending(value);
+    else token = value;
+  }
+
+  function reset(): void {
+    token = null;
+    if (!api || widgetId === null) return;
+    try {
+      api.reset(widgetId);
+    } catch {
+      /* A widget that cannot reset leaves the next submit tokenless. */
+    }
+  }
+
+  function giveUp(): void {
+    unavailable = true;
+    deliver(null);
+  }
+
+  // Invisible widget: the container only has to exist, never to be seen.
+  const container = document.createElement('div');
+  container.hidden = true;
+  document.body.appendChild(container);
+
+  const script = document.createElement('script');
+  script.src = TURNSTILE_SCRIPT;
+  script.async = true;
+  script.addEventListener('error', giveUp);
+  script.addEventListener('load', function () {
+    api = window.turnstile ?? null;
+    if (!api) return giveUp();
+    try {
+      widgetId =
+        api.render(container, {
+          sitekey: TURNSTILE_SITE_KEY,
+          // Retries and refreshes are driven from here, not by the widget.
+          retry: 'never',
+          'refresh-expired': 'manual',
+          callback: function (value: string) {
+            retries = 0;
+            deliver(value);
+          },
+          'expired-callback': reset,
+          'error-callback': function () {
+            token = null;
+            if (retries < TURNSTILE_MAX_RETRIES) {
+              retries += 1;
+              setTimeout(reset, TURNSTILE_RETRY_MS);
+            } else {
+              deliver(null);
+            }
+            return true;
+          },
+          'unsupported-callback': giveUp,
+        }) ?? null;
+      if (widgetId === null) giveUp();
+    } catch {
+      giveUp();
+    }
+  });
+  document.head.appendChild(script);
+
+  return {
+    takeToken(): Promise<string | null> {
+      if (token) {
+        const ready = token;
+        token = null;
+        return Promise.resolve(ready);
+      }
+      if (unavailable) return Promise.resolve(null);
+      return new Promise(function (resolve) {
+        const timer = setTimeout(function () {
+          waiter = null;
+          resolve(null);
+        }, TURNSTILE_WAIT_MS);
+        waiter = function (value) {
+          clearTimeout(timer);
+          resolve(value);
+        };
+      });
+    },
+    renew(): void {
+      // A token that arrived after its submit gave up is still unused: keep it.
+      if (token || unavailable) return;
+      retries = 0;
+      reset();
+    },
+  };
+}
+
 // ── Emoji picker ────────────────────────────────────────────────
 
 function initEmojiPicker(theme: ThemeController): void {
@@ -395,6 +533,8 @@ function initConversation(): void {
   if (!list || !liveList || !body || !stage || !status || !hint || !composer || !input || !send) {
     return;
   }
+
+  const humanCheck = initHumanCheck();
 
   stage.style.height = (messages.length + 2) * 55 + 'svh';
 
@@ -613,13 +753,14 @@ function initConversation(): void {
     }
   }
 
-  async function ask(question: string): Promise<string> {
+  async function ask(question: string, turnstileToken: string | null): Promise<string> {
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         // `lang` only picks which language the endpoint's own messages use.
-        body: JSON.stringify({ question, lang }),
+        // A missing token is sent anyway: the endpoint replies with its refusal.
+        body: JSON.stringify({ question, lang, turnstileToken: turnstileToken ?? undefined }),
       });
       const data = (await response.json().catch(() => null)) as
         | { answer?: unknown; error?: unknown }
@@ -645,7 +786,10 @@ function initConversation(): void {
     appendLive('out', question);
     showLiveTyping();
 
-    const answer = await ask(question);
+    const turnstileToken = await humanCheck.takeToken();
+    const answer = await ask(question, turnstileToken);
+    // Tokens are single-use: start solving the next one right away.
+    humanCheck.renew();
 
     requestInFlight = false;
     hideLiveTyping();

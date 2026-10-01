@@ -8,5 +8,7 @@ declare namespace Cloudflare {
   interface Env {
     /** Secret used to salt IP hashes. Set with `wrangler secret put IP_SALT`. */
     IP_SALT?: string;
+    /** Turnstile widget secret for siteverify. Set with `wrangler secret put TURNSTILE_SECRET`. */
+    TURNSTILE_SECRET?: string;
   }
 }
