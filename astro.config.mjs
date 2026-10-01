@@ -6,10 +6,8 @@ import cloudflare from '@astrojs/cloudflare';
 // Only routes that opt out with `export const prerender = false`
 // (currently just /api/chat) are bundled into the Worker.
 export default defineConfig({
-  // Base URL used for canonical/Open Graph tags. Replace with the real domain.
-  // Absolute base for canonical and Open Graph URLs. Change this the day a
-  // custom domain is pointed at the Worker.
-  site: 'https://portfolio-personal.unpsjb.workers.dev',
+  // Absolute base for canonical and Open Graph URLs.
+  site: 'https://francosolersistemas.com',
   output: 'static',
   // `prerenderEnvironment: 'node'` prerenders in Node instead of a workerd
   // worker. The workerd path needs a remote proxy session (and Cloudflare
