@@ -76,8 +76,7 @@ const PROJECT_BASE: ProjectBase[] = [
   {
     id: 'atmos',
     media: [
-      // TODO: swap this placeholder for the team photo the owner will send.
-      { kind: 'image', src: '/proyectos/atmos-placeholder.webp' },
+      { kind: 'image', src: '/proyectos/atmos-equipo.webp' },
       { kind: 'video', youtubeId: 'TdlaQjNjynM' },
       { kind: 'image', src: '/proyectos/atmos-mencion.webp' },
     ],
@@ -134,7 +133,7 @@ const PROJECT_COPY: Record<Lang, Record<string, ProjectCopy>> = {
       description:
         'App web hecha en 48 horas en la sede Puerto Madryn del NASA Space Apps Challenge 2025. Con mi equipo cruzamos datos satelitales y de calidad del aire para evaluar su impacto en la salud. Nos valió una mención honorable y la nominación global. El aprendizaje real fue sintetizar información y priorizar con el reloj en contra.',
       imageAlts: [
-        'Espacio reservado para una foto del equipo durante el NASA Space Apps Challenge',
+        'El equipo de AtmOS posando junto a los banners de NASA Space Apps Puerto Madryn y FAND durante el NASA Space Apps Challenge 2025',
         'Video demo de AtmOS, reproducible acá mismo',
         'Tarjeta de la mención honorable de AtmOS en el NASA Space Apps Challenge 2025, sede Puerto Madryn',
       ],
@@ -190,7 +189,7 @@ const PROJECT_COPY: Record<Lang, Record<string, ProjectCopy>> = {
       description:
         'Web app built in 48 hours at the Puerto Madryn venue of the NASA Space Apps Challenge 2025. With my team we crossed satellite and air quality data to assess its impact on health. It earned us an honorable mention and the global nomination. The real lesson was synthesising information and setting priorities with the clock against us.',
       imageAlts: [
-        'Space reserved for a photo of the team during the NASA Space Apps Challenge',
+        'The AtmOS team posing next to the NASA Space Apps Puerto Madryn and FAND banners during the NASA Space Apps Challenge 2025',
         'AtmOS demo video, playable right here',
         'Honorable mention card for AtmOS at the NASA Space Apps Challenge 2025, Puerto Madryn venue',
       ],
