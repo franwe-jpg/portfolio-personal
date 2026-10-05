@@ -1,0 +1,35 @@
+name: Deploy
+
+# Every merge into main ships to production. `workflow_dispatch` allows a
+# manual re-run, e.g. after adding the API token secret.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Never run two deploys at once; a newer merge waits for the running one.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          # Not a secret: it only identifies the account the token acts on.
+          CLOUDFLARE_ACCOUNT_ID: 968dc7dda3ef7e9dda724eae71d8bd24
