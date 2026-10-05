@@ -584,6 +584,8 @@ function initConversation(): void {
   let shown = -1;
   let composerReady = false;
   let requestInFlight = false;
+  /** Answered exchanges, sent along so the model can follow up on them. */
+  const liveHistory: { question: string; answer: string }[] = [];
   /** One-way latch: the scroll-driven intro is a first-visit effect only. */
   let conversationComplete = false;
 
@@ -879,24 +881,34 @@ function initConversation(): void {
     }
   }
 
-  async function ask(question: string, turnstileToken: string | null): Promise<string> {
+  /** `answered` is false when `text` is an error to show, not a model answer. */
+  async function ask(
+    question: string,
+    turnstileToken: string | null,
+  ): Promise<{ text: string; answered: boolean }> {
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         // `lang` only picks which language the endpoint's own messages use.
         // A missing token is sent anyway: the endpoint replies with its refusal.
-        body: JSON.stringify({ question, lang, turnstileToken: turnstileToken ?? undefined }),
+        // The endpoint keeps only the latest turns; send no more than it reads.
+        body: JSON.stringify({
+          question,
+          lang,
+          turnstileToken: turnstileToken ?? undefined,
+          history: liveHistory.slice(-4),
+        }),
       });
       const data = (await response.json().catch(() => null)) as
         | { answer?: unknown; error?: unknown }
         | null;
 
-      if (response.ok && typeof data?.answer === 'string') return data.answer;
-      if (typeof data?.error === 'string') return data.error;
-      return NETWORK_ERROR;
+      if (response.ok && typeof data?.answer === 'string') return { text: data.answer, answered: true };
+      if (typeof data?.error === 'string') return { text: data.error, answered: false };
+      return { text: NETWORK_ERROR, answered: false };
     } catch {
-      return NETWORK_ERROR;
+      return { text: NETWORK_ERROR, answered: false };
     }
   }
 
@@ -915,7 +927,8 @@ function initConversation(): void {
     showLiveTyping();
 
     const turnstileToken = await humanCheck.takeToken();
-    const answer = await ask(question, turnstileToken);
+    const { text: answer, answered } = await ask(question, turnstileToken);
+    if (answered) liveHistory.push({ question, answer });
     // Tokens are single-use: start solving the next one right away.
     humanCheck.renew();
 
