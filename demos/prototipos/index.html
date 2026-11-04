@@ -4,20 +4,20 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Franco Soler · Mundo</title>
-<meta name="description" content="Prototipo del portfolio de Franco Soler: entrada con partículas, mundo isométrico en 3D y secciones.">
+<meta name="description" content="Prototipo del portfolio de Franco Soler: entrada con partículas, mundo isométrico en 3D y páginas con transición orgánica.">
 <meta name="theme-color" content="#e7eaee">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2310120d'/%3E%3Ctext x='31' y='42' font-family='Instrument Sans,Inter,Arial,sans-serif' font-weight='700' font-size='30' fill='%23fff' text-anchor='middle'%3EFS%3C/text%3E%3Ccircle cx='52' cy='12' r='6' fill='%231fbf75'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-<link rel="preconnect" href="https://unpkg.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
 <style>
 /* ===== tokens ===== */
 :root {
   --paper: #e7eaee; --paper-2: #dde1e7; --paper-3: #f3f5f7;
   --ink: #15181d; --muted: #5b6370; --signal: #1fbf75; --signal-dim: #17955b;
-  --g0: #0e1013; --g1: #15181d; --s1: #1c2027; --s2: #252a32; --s3: #2f3540; --line: #3a4250;
+  --inicio-bg: #20252d; --g0: #0e1013; --g1: #15181d; --s1: #1c2027; --s2: #252a32; --s3: #2f3540; --line: #3a4250;
   --text: #e6e9ee; --tmuted: #8a94a3;
   --font-body: "Instrument Sans", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
@@ -32,12 +32,13 @@
 *, *::before, *::after { box-sizing: border-box; }
 [hidden] { display: none !important; }
 html { background: var(--paper); -webkit-text-size-adjust: 100%; }
+/* The document never scrolls: pages are states and only some of them scroll inside. */
 body {
-  margin: 0; min-height: 100%; background: var(--paper); color: var(--ink);
-  font: 400 16px/1.5 var(--font-body); overflow-x: clip;
+  margin: 0; height: 100vh; height: 100svh; overflow: hidden; background: var(--paper); color: var(--ink);
+  font: 400 16px/1.5 var(--font-body);
   -webkit-font-smoothing: antialiased;
 }
-body.is-gate { overflow: hidden; height: 100vh; height: 100svh; }
+body.entered { background: var(--g0); }
 img { max-width: 100%; display: block; }
 a { color: inherit; }
 button, input, textarea { font: inherit; color: inherit; }
@@ -47,13 +48,8 @@ button { cursor: pointer; }
 .mono { font-family: var(--font-mono); }
 .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--signal); flex: none; animation: pulse 2s infinite; }
 @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(31,191,117,.45); } 70% { box-shadow: 0 0 0 9px rgba(31,191,117,0); } 100% { box-shadow: 0 0 0 0 rgba(31,191,117,0); } }
-
-/* Lenis recommended rules */
-html.lenis, html.lenis body { height: auto; }
-.lenis.lenis-smooth { scroll-behavior: auto !important; }
-.lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
-.lenis.lenis-stopped { overflow: clip; }
-.lenis.lenis-smooth iframe { pointer-events: none; }
+/* Pointer parallax writes the `translate` property so GSAP keeps `transform` for itself. */
+[data-depth] { will-change: translate; }
 
 /* ===== loader ===== */
 .loadbar { position: fixed; z-index: 80; left: 0; right: 0; top: 0; height: 2px; pointer-events: none; }
@@ -64,6 +60,7 @@ html.lenis, html.lenis body { height: auto; }
 /* ===== A) entrance gate ===== */
 .gate-screen { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; background: var(--paper); padding: 0 var(--gr) 0 var(--gl); }
 .gate { text-align: center; display: grid; justify-items: center; gap: 18px; max-width: 520px; }
+.gate-copy { display: grid; justify-items: center; gap: 18px; transform-origin: 50% 40%; will-change: transform, filter, opacity; }
 #mark { width: min(78vw, 380px); aspect-ratio: 19 / 11; display: block; cursor: crosshair; touch-action: none; }
 .name { font: 500 22px/1.1 var(--font-body); letter-spacing: .01em; margin: 0; }
 .name span { color: var(--muted); }
@@ -84,6 +81,27 @@ html.lenis, html.lenis body { height: auto; }
 .mute { position: fixed; z-index: 51; left: 50%; transform: translateX(-50%); bottom: calc(36px + var(--sb)); font: 500 12px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink); background: none; border: 0; border-bottom: 1px solid var(--ink); padding: 6px 0 2px; }
 .blackout { position: fixed; inset: 0; z-index: 60; background: var(--g0); opacity: 0; pointer-events: none; }
 
+/* ===== B) 3D stage: one fixed canvas behind every page ===== */
+#stage3d { position: fixed; inset: 0; z-index: 0; background: var(--g0); overflow: hidden; visibility: hidden; transition: opacity .5s var(--e-out); }
+body.entered #stage3d { visibility: visible; }
+#stage3d.is-off { opacity: 0; }
+#world-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; outline: none; }
+.fallback-bg { position: absolute; inset: -40px; background: center / contain no-repeat; filter: blur(12px) brightness(.45) saturate(.8); opacity: .9; pointer-events: none; }
+.vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(120% 90% at 50% 45%, transparent 55%, rgba(5,6,8,.6) 100%); }
+/* Film grain: an SVG noise tile whose position jumps 8 times per second. */
+.grain {
+  position: absolute; inset: -160px; pointer-events: none; opacity: .07;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 320px 320px; animation: grain .8s steps(1) infinite;
+}
+@keyframes grain {
+  0% { background-position: 0 0; } 12.5% { background-position: -90px 40px; } 25% { background-position: 60px -110px; } 37.5% { background-position: -140px -70px; }
+  50% { background-position: 110px 90px; } 62.5% { background-position: -30px 150px; } 75% { background-position: 150px -40px; } 87.5% { background-position: -120px 120px; }
+}
+.inicio-shade { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .7s var(--e-out); background: linear-gradient(90deg, rgba(14,16,19,.9) 0%, rgba(14,16,19,.58) 42%, rgba(14,16,19,0) 80%), linear-gradient(180deg, rgba(14,16,19,.45), transparent 28%, transparent 72%, rgba(14,16,19,.55)); }
+#stage3d.is-inicio .inicio-shade { opacity: 1; }
+.focus-vig { position: absolute; inset: 0; pointer-events: none; opacity: 0; --fx: 50%; --fy: 50%; background: radial-gradient(42% 52% at var(--fx) var(--fy), transparent 35%, rgba(5,6,8,.72) 100%); }
+
 /* ===== app shell ===== */
 #app { visibility: hidden; }
 body.entered #app { visibility: visible; }
@@ -95,26 +113,87 @@ body.entered #app { visibility: visible; }
   border-bottom: 1px solid transparent;
 }
 body.on-paper .hud-top { background: rgba(231,234,238,.86); color: var(--ink); border-bottom-color: rgba(21,24,29,.08); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); }
-.brand { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; font: 500 15px var(--font-body); white-space: nowrap; }
+.brand { display: inline-flex; align-items: center; text-decoration: none; font: 600 clamp(17px, 1.6vw, 22px)/1 var(--font-body); letter-spacing: -.03em; white-space: nowrap; }
+/* The sheen is a gradient clipped to the letters that slides across them. */
+.brand-name {
+  --b1: var(--text); --b2: var(--signal); --b3: #a9ffd8;
+  background-image: linear-gradient(100deg, var(--b1) 0%, var(--b1) 32%, var(--b2) 48%, var(--b3) 54%, var(--b2) 60%, var(--b1) 76%, var(--b1) 100%);
+  background-size: 260% 100%; background-position: 130% 0;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: brand-sheen 4.2s linear infinite;
+  filter: drop-shadow(0 0 8px rgba(31,191,117,.35));
+  transition: filter .25s;
+}
+.brand:hover .brand-name { filter: drop-shadow(0 0 12px rgba(31,191,117,.7)); }
+@keyframes brand-sheen { to { background-position: -130% 0; } }
+body.on-paper .brand-name { --b1: var(--ink); --b2: var(--signal-dim); --b3: var(--signal); filter: none; }
+@media (prefers-reduced-motion: reduce) { .brand-name { animation: none; background-position: 50% 0; } }
 .brand-mark { display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid currentColor; border-radius: 8px; font: 500 12px var(--font-mono); letter-spacing: .02em; }
 .nav { display: flex; gap: 4px; }
-.nav a { font: 500 11px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; text-decoration: none; padding: 8px 8px; border-radius: 6px; white-space: nowrap; }
+.nav a { position: relative; font: 500 11px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; text-decoration: none; padding: 8px 8px; border-radius: 6px; white-space: nowrap; }
 .nav a:hover { color: var(--signal); }
-@media (max-width: 640px) { .brand-name { display: none; } .nav a { padding: 8px 5px; letter-spacing: .06em; font-size: 10.5px; } }
+.nav a::after { content: ""; position: absolute; left: 8px; right: 8px; bottom: 4px; height: 1px; background: currentColor; transform: scaleX(0); transform-origin: 0 50%; transition: transform .4s var(--e-out); }
+.nav a[aria-current="page"]::after { transform: scaleX(1); }
+@media (max-width: 640px) { .brand { font-size: 15px; } .nav a { padding: 8px 5px; letter-spacing: .06em; font-size: 10.5px; } .nav a::after { left: 5px; right: 5px; } }
 
-/* ===== B) world ===== */
-.world { position: relative; height: 100vh; height: 100svh; min-height: 520px; overflow: hidden; background: var(--g0); color: var(--text); isolation: isolate; }
-.world-stage { position: absolute; inset: 0; transform-origin: 50% 40%; will-change: transform; }
-#world-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: pan-y; outline: none; }
-.vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(120% 90% at 50% 45%, transparent 55%, rgba(5,6,8,.6) 100%); }
-.focus-vig { position: absolute; inset: 0; pointer-events: none; opacity: 0; --fx: 50%; --fy: 50%; background: radial-gradient(42% 52% at var(--fx) var(--fy), transparent 35%, rgba(5,6,8,.72) 100%); }
-.scroll-dim { position: absolute; inset: 0; pointer-events: none; background: var(--g0); opacity: 0; }
+/* ===== pages (state machine, one active at a time) ===== */
+.pages { position: fixed; inset: 0; z-index: 1; }
+.page { position: absolute; inset: 0; visibility: hidden; pointer-events: none; }
+.page.is-active { visibility: visible; pointer-events: auto; }
+.page-inicio, .page-mundo { color: var(--text); }
+/* The world page lets pointer events fall through to the canvas; only its widgets catch them. */
+.page-mundo.is-active { pointer-events: none; }
+.page-mundo.is-active > .fallback { pointer-events: auto; }
+.page-paper { background: var(--paper); color: var(--ink); }
+.page-scroll { position: absolute; inset: 0; overflow-y: auto; overflow-x: clip; overscroll-behavior: contain; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
+[data-glitch]:focus { outline: none; }
+
+/* ----- inicio ----- */
+.hero { position: absolute; z-index: 1; left: 50%; top: 50%; transform: translate(-50%, -52%); width: min(880px, calc(100% - var(--gl) - var(--gr))); display: grid; gap: 26px; justify-items: center; text-align: center; }
+/* Matrix rain behind the hero: the canvas draws the glyphs, the shade keeps the name readable. */
+.page-inicio { background: var(--inicio-bg); }
+#rain { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: .9; pointer-events: none; }
+.rain-shade { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(62% 56% at 50% 50%, rgba(32,37,45,.86) 0%, rgba(32,37,45,.45) 60%, rgba(32,37,45,0) 100%); }
+.w { display: inline-block; white-space: pre; transition: transform .3s var(--e-out), color .2s, text-shadow .2s; will-change: transform; }
+.w.is-hot { color: #fff; transform: translateY(-4px) skewX(-4deg); text-shadow: -2px 0 rgba(255,60,90,.55), 2px 0 rgba(31,191,117,.75); }
+.spark { position: absolute; z-index: 2; width: 4px; height: 4px; border-radius: 50%; background: var(--signal); box-shadow: 0 0 8px rgba(31,191,117,.9); pointer-events: none; }
+.hero-actions { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 14px; margin-top: 6px; }
+.pill-world { --fg: var(--signal); --bg: var(--g0); min-height: 62px; padding: 16px 34px; font-size: clamp(17px, 1.7vw, 21px); font-weight: 600; letter-spacing: -.01em; box-shadow: 0 0 0 0 rgba(31,191,117,.35); }
+.pill-world:hover { color: var(--g0); box-shadow: 0 0 0 10px rgba(31,191,117,.12), 0 18px 40px -18px rgba(31,191,117,.7); }
+.pill-world .ws-mini { position: relative; width: 34px; height: 18px; border-radius: 999px; border: 1px solid currentColor; }
+.pill-world .ws-mini::after { content: ""; position: absolute; top: 3px; left: 3px; width: 10px; height: 10px; border-radius: 50%; background: currentColor; transition: transform .35s var(--e-out); }
+.pill-world:hover .ws-mini::after { transform: translateX(16px); }
+.hero-eyebrow { display: inline-flex; align-items: center; gap: 10px; font: 500 11px var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--tmuted); }
+.hero-eyebrow::before { content: ""; width: 6px; height: 6px; background: var(--signal); }
+.hero-title { margin: 0; font: 500 clamp(46px, 9.5vw, 124px)/.96 var(--font-body); letter-spacing: -.035em; }
+.hero-title > span { display: block; }
+.hero-title .l2 { font-weight: 400; color: #aeb6c2; }
+.hero-desc { margin: 0 auto; max-width: 46ch; font-size: clamp(16px, 1.5vw, 19px); line-height: 1.5; color: #c3cad4; text-wrap: pretty; }
+.pill-btn {
+  --fg: var(--text); --bg: var(--g0);
+  display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 12px 24px; border-radius: 999px;
+  border: 1px solid var(--fg); background: transparent; color: var(--fg); font: 500 16px var(--font-body); text-decoration: none;
+  transition: background-color .18s, color .18s, transform .18s var(--e-out), box-shadow .18s;
+}
+.pill-btn:hover { background: var(--fg); color: var(--bg); transform: translateY(-2px); box-shadow: 0 12px 26px -16px rgba(0,0,0,.7); }
+.pill-btn svg { transition: transform .18s; }
+.pill-btn:hover svg { transform: translate(2px, 2px); }
+.page-paper .pill-btn { --fg: var(--ink); --bg: var(--paper); }
+.world-switch { position: absolute; left: var(--gl); bottom: calc(72px + var(--sb)); display: grid; gap: 8px; }
+.ws-label { font: 400 10px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--tmuted); }
+.ws-toggle { display: inline-flex; align-items: center; gap: 10px; min-height: 40px; padding: 6px 12px 6px 14px; border-radius: 999px; border: 1px solid var(--line); background: rgba(14,16,19,.55); color: var(--tmuted); font: 500 11px var(--font-mono); letter-spacing: .14em; text-transform: uppercase; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); transition: border-color .2s, color .2s; }
+.ws-toggle .on { color: var(--text); }
+.ws-toggle i { position: relative; width: 34px; height: 18px; border-radius: 999px; border: 1px solid var(--line); }
+.ws-toggle i::after { content: ""; position: absolute; top: 3px; left: 3px; width: 10px; height: 10px; border-radius: 50%; background: var(--text); transition: transform .35s var(--e-out), background-color .2s; }
+.ws-toggle:hover { border-color: var(--signal); color: var(--text); }
+.ws-toggle:hover i::after { transform: translateX(16px); background: var(--signal); }
+@media (max-width: 767px) { .hero { gap: 18px; transform: translate(-50%, -54%); } .pill-world { width: 100%; justify-content: center; } .hero-actions { width: 100%; } }
+
+/* ----- mundo ----- */
 .fallback { position: absolute; inset: 0; display: grid; place-items: center; padding: 180px var(--gr) 96px var(--gl); }
 @media (max-width: 767px) {
   .fallback { padding-top: 270px; padding-bottom: 120px; }
   .fallback .fallback-inner img { max-height: max(140px, calc(100svh - 540px)); }
-  /* The fallback already has its own call to action; the scroll hint would collide with it. */
-  .world:has(.fallback:not([hidden])) .scroll-hint { display: none; }
   /* Over long paper text the clock pill only gets in the way; the status line lives in the footer. */
   body.on-paper .hud-bottom.right { opacity: 0; pointer-events: none; }
 }
@@ -158,22 +237,18 @@ body.on-paper .hud-top { background: rgba(231,234,238,.86); color: var(--ink); b
   .hide-sm { display: none; }
   .seg button { padding: 8px 7px; letter-spacing: .04em; }
 }
-.wtop, .drag-hint, .scroll-hint { transition: opacity .5s var(--e-out); }
-body.panel-open .wtop, body.panel-open .drag-hint, body.panel-open .scroll-hint { opacity: .12; }
-@media (max-width: 767px) { body.panel-open .wtop, body.panel-open .scroll-hint { opacity: 0; } }
+.wtop, .drag-hint { transition: opacity .5s var(--e-out); }
+body.panel-open .wtop, body.panel-open .drag-hint { opacity: .12; }
+@media (max-width: 767px) { body.panel-open .wtop { opacity: 0; } }
 .drag-hint { position: absolute; z-index: 3; right: var(--gr); bottom: calc(86px + var(--sb)); font: 400 10px var(--font-mono); letter-spacing: .12em; color: var(--tmuted); text-transform: uppercase; pointer-events: none; text-align: right; }
 @media (max-width: 767px) { .drag-hint { display: none; } }
-.scroll-hint { position: absolute; z-index: 3; left: 50%; bottom: calc(22px + var(--sb)); transform: translateX(-50%); display: grid; justify-items: center; gap: 8px; font: 500 10.5px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--tmuted); text-decoration: none; white-space: nowrap; }
-.scroll-hint i { position: relative; display: block; width: 1px; height: 28px; background: rgba(138,148,163,.25); overflow: hidden; }
-.scroll-hint i::after { content: ""; position: absolute; left: 0; top: -40%; width: 1px; height: 40%; background: var(--signal); animation: drip 1.8s cubic-bezier(.7,0,.3,1) infinite; }
-@keyframes drip { to { top: 100%; } }
 
 /* cell mask for scene switches */
 .cellmask { position: absolute; inset: 0; z-index: 4; display: grid; pointer-events: none; }
 .cellmask span { background: var(--g0); transform: scale(0); box-shadow: inset 0 0 0 1px rgba(31,191,117,.12); }
 .cellmask.is-fade span { transform: none; opacity: 0; }
 
-/* fixed bottom HUD: audio + clock (persist over every section) */
+/* fixed bottom HUD: audio + clock (persist over every page) */
 .hud-bottom { position: fixed; z-index: 41; bottom: calc(16px + var(--sb)); display: flex; align-items: center; gap: 10px; font: 500 11px var(--font-mono); letter-spacing: .08em; color: var(--text); transition: color .4s; }
 .hud-bottom.left { left: var(--gl); }
 .hud-bottom.right { right: var(--gr); font-variant-numeric: tabular-nums; }
@@ -190,6 +265,30 @@ body.on-paper .pill { background: rgba(243,245,247,.85); border-color: rgba(21,2
 @keyframes eq { from { height: 3px; } to { height: 12px; } }
 @media (max-width: 420px) { .audio-label { display: none; } }
 
+/* ===== "mancha": organic blob that covers the screen between pages ===== */
+.mancha { position: fixed; inset: 0; z-index: 45; width: 100%; height: 100%; pointer-events: none; visibility: hidden; }
+.mancha.is-on { visibility: visible; pointer-events: auto; }
+
+/* ===== title glitch (two cloned layers, sliced with clip-path) ===== */
+[data-glitch] { position: relative; }
+.glitch-layer { position: absolute; inset: 0; pointer-events: none; color: inherit; will-change: clip-path, transform; animation: .5s steps(1, end) 1 both; }
+.glitch-layer.a { text-shadow: 2px 0 #ff2a5f; animation-name: glitchA; }
+.glitch-layer.b { text-shadow: -2px 0 #22e0ff; animation-name: glitchB; }
+@keyframes glitchA {
+  0% { clip-path: inset(8% 0 76% 0); transform: translate(-4px, 0); }
+  25% { clip-path: inset(52% 0 22% 0); transform: translate(-5px, -2px); }
+  50% { clip-path: inset(28% 0 50% 0); transform: translate(-3px, 1px); }
+  75% { clip-path: inset(78% 0 4% 0); transform: translate(-4px, 0); }
+  100% { clip-path: inset(50% 0 50% 0); transform: none; }
+}
+@keyframes glitchB {
+  0% { clip-path: inset(60% 0 18% 0); transform: translate(4px, 0); }
+  25% { clip-path: inset(12% 0 70% 0); transform: translate(5px, 2px); }
+  50% { clip-path: inset(70% 0 10% 0); transform: translate(3px, -1px); }
+  75% { clip-path: inset(36% 0 44% 0); transform: translate(4px, 0); }
+  100% { clip-path: inset(50% 0 50% 0); transform: none; }
+}
+
 /* custom cursor (pointer: fine only) */
 .cursor { position: fixed; left: 0; top: 0; z-index: 100; width: 26px; height: 26px; margin: -13px 0 0 -13px; border-radius: 50%; border: 1.5px solid #fff; mix-blend-mode: difference; pointer-events: none; opacity: 0; transition: width .25s var(--e-out), height .25s var(--e-out), margin .25s var(--e-out), background-color .2s, border-color .2s, opacity .3s; }
 .cursor.is-on { opacity: 1; }
@@ -203,7 +302,11 @@ body.on-paper .pill { background: rgba(243,245,247,.85); border-color: rgba(21,2
 .cursor.is-hot { width: 44px; height: 44px; margin: -22px 0 0 -22px; mix-blend-mode: normal; border-color: var(--signal); background: rgba(31,191,117,.14); }
 .cursor.is-hot::before, .cursor.is-hot::after { opacity: 0; }
 .cursor.is-link { width: 40px; height: 40px; margin: -20px 0 0 -20px; }
-@media (pointer: fine) { .world.has-3d #world-canvas { cursor: none; } }
+/* Lagging ring behind the dot; it lags more on the home page. */
+.cursor-ring { position: fixed; left: 0; top: 0; z-index: 99; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%; border: 1px solid rgba(255,255,255,.5); mix-blend-mode: difference; pointer-events: none; opacity: 0; transition: opacity .3s, width .3s var(--e-out), height .3s var(--e-out), margin .3s var(--e-out); }
+.cursor-ring.is-on { opacity: 1; }
+.cursor-ring.is-link { width: 60px; height: 60px; margin: -30px 0 0 -30px; }
+@media (pointer: fine) { #stage3d.has-3d #world-canvas { cursor: none; } }
 @media (pointer: coarse) { .kbd-hint { visibility: hidden; } }
 
 /* ===== panel (chat / contact) ===== */
@@ -270,8 +373,7 @@ body.on-paper .pill { background: rgba(243,245,247,.85); border-color: rgba(21,2
 .btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; padding: 10px 20px; border-radius: 999px; border: 0; background: var(--signal); color: var(--g0); font: 500 15px var(--font-body); }
 .btn-primary:hover { background: #29d184; }
 
-/* ===== C) paper sections ===== */
-.paper { position: relative; background: var(--paper); color: var(--ink); }
+/* ===== C) paper pages ===== */
 .sec { padding: clamp(88px, 12vw, 150px) var(--gr) clamp(64px, 9vw, 110px) var(--gl); }
 .wrap { max-width: 1120px; margin: 0 auto; }
 .eyebrow { display: block; font: 500 11px var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin-bottom: 20px; }
@@ -281,6 +383,9 @@ body.on-paper .pill { background: rgba(243,245,247,.85); border-color: rgba(21,2
 .split .w { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: .1em; margin-bottom: -.1em; }
 .split .wi { display: inline-block; will-change: transform; }
 .about-grid { display: grid; gap: 48px; margin-top: 48px; }
+.about-photo { margin: 0 0 32px; width: min(260px, 100%); aspect-ratio: 1; border-radius: 28px; overflow: hidden; box-shadow: 0 24px 50px -28px rgba(21,24,29,.55); border: 1px solid rgba(21,24,29,.08); }
+.about-photo img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .6s var(--e-out); }
+.about-photo:hover img { transform: scale(1.04); }
 @media (min-width: 900px) { .about-grid { grid-template-columns: 1.1fr 1fr; gap: 72px; } }
 .quote { margin: 18px 0 0; font: 400 18px var(--font-body); color: var(--muted); }
 .facts { display: grid; gap: 0; margin: 28px 0 0; border-top: 1px solid rgba(21,24,29,.12); }
@@ -308,12 +413,15 @@ body.on-paper .pill { background: rgba(243,245,247,.85); border-color: rgba(21,2
 .chips { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin: 0; padding: 0; }
 .chip { font: 500 13px var(--font-mono); padding: 8px 14px; border-radius: 999px; border: 1px solid rgba(21,24,29,.16); background: transparent; }
 
-.projects { display: grid; gap: 22px; margin-top: 48px; }
+.projects { display: grid; gap: 22px; margin-top: 48px; perspective: 900px; }
 @media (min-width: 860px) { .projects { grid-template-columns: 1fr 1fr; gap: 26px; } }
-.card { display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; background: var(--paper-3); border: 1px solid rgba(21,24,29,.08); }
+.card { display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; background: var(--paper-3); border: 1px solid rgba(21,24,29,.08); transition: box-shadow .4s var(--e-out); }
+.card.is-tilt { will-change: transform; }
+.card.is-tilt:hover { box-shadow: 0 34px 60px -34px rgba(21,24,29,.5); }
 .card-media { position: relative; aspect-ratio: 16 / 10; background: var(--s2); overflow: hidden; }
 .card-media img { width: 100%; height: 100%; object-fit: cover; transition: transform 1.2s var(--e-out); }
 .card:hover .card-media img { transform: scale(1.03); }
+.card.is-tilt .card-media img, .card.is-tilt .card-media .ph { transition: none; will-change: transform; }
 .ph { position: absolute; inset: 0; display: grid; place-items: center; background: linear-gradient(135deg, var(--s2), var(--g0)); color: var(--tmuted); font: 500 clamp(36px, 6vw, 56px) var(--font-mono); letter-spacing: .06em; }
 .ph::after { content: "IMAGEN NO DISPONIBLE"; position: absolute; bottom: 14px; left: 16px; font: 400 10px var(--font-mono); letter-spacing: .12em; color: var(--line); }
 .badge { position: absolute; left: 14px; top: 14px; z-index: 2; font: 500 10.5px var(--font-mono); letter-spacing: .06em; padding: 6px 10px; border-radius: 999px; background: rgba(14,16,19,.78); color: var(--text); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
@@ -326,26 +434,27 @@ body.on-paper .pill { background: rgba(243,245,247,.85); border-color: rgba(21,2
 .card-links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
 .lnk { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 8px 14px; border-radius: 999px; border: 1px solid rgba(21,24,29,.18); text-decoration: none; font: 500 14px var(--font-body); transition: background-color .2s, color .2s, border-color .2s; }
 .lnk:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.page-next { margin-top: 64px; display: flex; }
 
 .contact { padding-bottom: 40px; }
-.contact-big { margin-top: 36px; display: grid; gap: 28px; }
+.contact-big { margin-top: 36px; display: grid; gap: 28px; justify-items: start; }
 .mail { display: inline-block; font: 500 clamp(20px, 4.2vw, 46px)/1.1 var(--font-body); letter-spacing: -.02em; text-decoration: none; overflow-wrap: anywhere; border-bottom: 2px solid var(--signal); padding-bottom: 4px; justify-self: start; }
 .mail:hover { color: var(--signal-dim); }
 .socials { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 0; }
-.back-btn { justify-self: start; display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 12px 22px; border-radius: 999px; border: 0; background: var(--ink); color: var(--paper); font: 500 16px var(--font-body); }
-.back-btn:hover { background: #000; }
 .footer { margin-top: 96px; padding: 22px 0 calc(72px + var(--sb)); border-top: 1px solid rgba(21,24,29,.12); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 24px; font: 400 11px var(--font-mono); letter-spacing: .06em; color: var(--muted); }
 .footer .status-line { display: inline-flex; align-items: center; gap: 8px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .dot, .audio-btn[aria-pressed="true"] .eq i, .scroll-hint i::after, .msg.typing span { animation: none !important; }
+  .dot, .audio-btn[aria-pressed="true"] .eq i, .msg.typing span, .grain, .glitch-layer { animation: none !important; }
+  .glitch-layer { display: none; }
   .enter, .enter svg, .card-media img { transition: none !important; }
+  .page-scroll { scroll-behavior: auto; }
   .panel, .panel.is-open { transition: opacity .2s linear !important; transform: none !important; opacity: 0; }
   .panel.is-open { opacity: 1; }
 }
 </style>
 </head>
-<body class="is-gate">
+<body>
 <div class="loadbar" id="loadbar" aria-hidden="true"><b id="bar"></b></div>
 <div class="loadtxt" id="loadtxt" role="status" aria-live="polite">CARGANDO MUNDO 0%</div>
 
@@ -353,51 +462,74 @@ body.on-paper .pill { background: rgba(243,245,247,.85); border-color: rgba(21,2
 <section class="gate-screen" id="gate" aria-label="Entrada">
   <div class="gate">
     <canvas id="mark" role="img" aria-label="Iniciales FS hechas de partículas que reaccionan al cursor"></canvas>
-    <p class="name">FRANCO SOLER <span>/ Analista Programador</span></p>
-    <p class="desc">Desarrollo software y estudio sistemas en Chubut. Entrá a mi mundo: vas a ver dónde estoy ahora y podés hablar conmigo.</p>
-    <div class="status"><i class="dot" aria-hidden="true"></i><span id="statusTxt">AHORA</span></div>
-    <button class="enter" id="enter" type="button"><span id="enterTxt">Ingresar</span>
-      <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2l9 9M11 4v7H4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </button>
+    <div class="gate-copy" id="gateCopy">
+      <p class="name" data-depth="0.3">FRANCO SOLER <span>/ Analista Programador</span></p>
+      <p class="desc" data-depth="0.3">Desarrollo software y estudio sistemas en Chubut. Entrá a mi mundo: vas a ver dónde estoy ahora y podés hablar conmigo.</p>
+      <div class="status"><i class="dot" aria-hidden="true"></i><span id="statusTxt">AHORA</span></div>
+      <button class="enter" id="enter" type="button"><span id="enterTxt">Ingresar</span>
+        <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2l9 9M11 4v7H4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
   </div>
 </section>
 <button class="mute" id="mute" type="button">Entrar sin audio</button>
 <div class="blackout" id="blackout" aria-hidden="true"></div>
 
+<!-- ===== B) 3D stage (behind every page) ===== -->
+<div id="stage3d" class="is-off" aria-hidden="true">
+  <canvas id="world-canvas"></canvas>
+  <div class="fallback-bg" id="fallbackBg" hidden></div>
+  <div class="vignette"></div>
+  <div class="grain"></div>
+  <div class="inicio-shade"></div>
+  <div class="focus-vig" id="focusVig"></div>
+</div>
+
 <!-- ===== app ===== -->
 <div id="app">
   <header class="hud-top">
-    <a class="brand" href="#mundo" data-nav><span class="brand-mark" aria-hidden="true">FS</span><span class="brand-name">Franco Soler</span><span class="sr-only">Franco Soler, volver al mundo</span></a>
-    <nav class="nav" aria-label="Secciones">
-      <a href="#mundo" data-nav data-scr>Mundo</a>
-      <a href="#sobre" data-nav data-scr>Sobre mí</a>
-      <a href="#proyectos" data-nav data-scr>Proyectos</a>
-      <a href="#contacto" data-nav data-scr>Contacto</a>
+    <a class="brand" href="#inicio" data-go="inicio"><span class="brand-name" id="brandName" aria-hidden="true">FrancoSolerSistemas</span><span class="sr-only">FrancoSolerSistemas, volver al inicio</span></a>
+    <nav class="nav" aria-label="Páginas">
+      <a href="#mundo" data-go="mundo" data-scr>Mundo</a>
+      <a href="#proyectos" data-go="proyectos" data-scr>Proyectos</a>
+      <a href="#sobre" data-go="sobre" data-scr>Sobre mí</a>
     </nav>
   </header>
 
-  <main>
-    <section class="world" id="mundo" aria-label="Mundo: dónde está Franco ahora">
-      <div class="world-stage" id="worldStage">
-        <canvas id="world-canvas" aria-hidden="true"></canvas>
-        <div class="fallback" id="fallback" hidden>
-          <div class="fallback-inner">
-            <img data-src="fallback-mundo.svg" alt="Ilustración isométrica de la oficina de Franco: escritorio con monitor, rack de servidores y Franco trabajando." width="960" height="580">
-            <p id="fallbackNote">Tu navegador no muestra el mundo 3D. Igual podés hablar conmigo.</p>
-            <button class="talk" type="button" id="fallbackTalk"><span class="dot" aria-hidden="true"></span>Hablar con Franco</button>
-          </div>
+  <main class="pages" id="pages">
+    <section class="page page-inicio" data-page="inicio" id="inicio" aria-label="Inicio">
+      <canvas id="rain" aria-hidden="true"></canvas>
+      <div class="rain-shade" aria-hidden="true"></div>
+      <div class="hero">
+        <span class="hero-eyebrow" data-depth="-0.3">Analista Programador · Trelew, Chubut</span>
+        <h1 class="hero-title" id="heroTitle" data-glitch data-depth="0.5" tabindex="-1"><span class="l1">Franco Martin</span><span class="l2">Soler</span></h1>
+        <p class="hero-desc" data-depth="0.3">Desarrollo software y estudio sistemas en Chubut. Entrá a mi mundo: vas a ver dónde estoy ahora y podés hablar conmigo.</p>
+        <div class="hero-actions" data-depth="0.6">
+          <button class="pill-btn pill-world" type="button" data-go="mundo"><span class="ws-mini" aria-hidden="true"></span>Explorar mi mundo
+            <svg width="16" height="16" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2l9 9M11 4v7H4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="pill-btn" type="button" data-go="proyectos">Ver proyectos
+            <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2l9 9M11 4v7H4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
         </div>
-        <div class="vignette" aria-hidden="true"></div>
-        <div class="focus-vig" id="focusVig" aria-hidden="true"></div>
-        <div class="franco-label" id="francoLabel" aria-hidden="true"><b>●</b> Franco · tocá para hablar</div>
-        <div class="scroll-dim" id="scrollDim" aria-hidden="true"></div>
       </div>
+    </section>
+
+    <section class="page page-mundo" data-page="mundo" id="mundo" aria-label="Mundo: dónde está Franco ahora">
+      <div class="fallback" id="fallback" hidden>
+        <div class="fallback-inner">
+          <img data-src="fallback-mundo.svg" alt="Ilustración isométrica de la oficina de Franco: escritorio con monitor, rack de servidores y Franco trabajando." width="960" height="580">
+          <p id="fallbackNote">Tu navegador no muestra el mundo 3D. Igual podés hablar conmigo.</p>
+          <button class="talk" type="button" id="fallbackTalk"><span class="dot" aria-hidden="true"></span>Hablar con Franco</button>
+        </div>
+      </div>
+      <div class="franco-label" id="francoLabel" aria-hidden="true"><b>●</b> Franco · tocá para hablar</div>
       <div class="cellmask" id="cellmask" aria-hidden="true"></div>
 
       <div class="wtop">
         <div class="scene-info">
           <span class="scene-tag" id="sceneTag" aria-hidden="true">ESCENA 01 · OFICINA</span>
-          <h1 class="scene-title" id="sceneTitle">Franco está en la oficina</h1>
+          <h1 class="scene-title" id="sceneTitle" data-glitch tabindex="-1">Franco está en la oficina</h1>
           <span class="scene-sub" id="sceneSub">Auto · según la hora en Argentina</span>
           <button class="talk" type="button" id="talk"><span class="dot" aria-hidden="true"></span>Hablar con Franco</button>
         </div>
@@ -412,79 +544,84 @@ body.on-paper .pill { background: rgba(243,245,247,.85); border-color: rgba(21,2
         </fieldset>
       </div>
       <p class="drag-hint" id="dragHint">Arrastrá para girar<br>Ctrl + rueda para acercar</p>
-      <a class="scroll-hint" href="#sobre" data-nav>Bajá para conocerme<i aria-hidden="true"></i></a>
     </section>
 
-    <section class="paper sec" id="sobre" aria-labelledby="sobreH">
-      <div class="wrap">
-        <span class="eyebrow" data-scramble>01 · Sobre mí</span>
-        <h2 class="h2 split" id="sobreH">Analista Programador y estudiante avanzado de Licenciatura en Sistemas.</h2>
-        <p class="quote">Haciendo del mundo un lugar mejor, pero no tanto...</p>
-        <div class="about-grid">
-          <div>
-            <p class="lead reveal">Soy Franco Martin Soler, tengo 22 años y vivo en Trelew, Chubut. Me recibí de Analista Programador en 2025 y estoy cursando 4.º año de la Licenciatura en Sistemas en la UNPSJB.</p>
-            <dl class="facts reveal">
-              <div><dt>Título</dt><dd>Analista Programador · 2025</dd></div>
-              <div><dt>Cursando</dt><dd>Licenciatura en Sistemas · UNPSJB · 4.º año</dd></div>
-              <div><dt>Secundario</dt><dd>Técnico en Informática · ESETP N.º 724 · 2022</dd></div>
-              <div><dt>Base</dt><dd>Trelew, Chubut, Argentina</dd></div>
-            </dl>
+    <section class="page page-paper" data-page="proyectos" id="proyectos" aria-labelledby="proyH">
+      <div class="page-scroll">
+        <div class="sec"><div class="wrap">
+          <span class="eyebrow" data-scramble>01 · Proyectos</span>
+          <h2 class="h2" id="proyH" data-glitch data-depth="0.3" tabindex="-1">Proyectos con gente y problemas reales.</h2>
+          <div class="projects" id="projects"></div>
+          <div class="page-next reveal">
+            <button class="pill-btn" type="button" data-go="sobre">Sobre mí
+              <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 7h10M7.5 2.5L12 7l-4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
           </div>
-          <div>
-            <p class="subhead" data-scramble>Experiencia</p>
-            <ol class="timeline">
-              <li class="reveal"><span class="when now">Ahora</span><div><h3>Legislatura de Chubut</h3><p>Trabajando en lo mío. Es mi primer año ahí.</p></div></li>
-              <li class="reveal"><span class="when">1 año</span><div><h3>Oficina de Desarrollo de Software</h3><p>Subsecretaría de Innovación de Chubut.</p></div></li>
-              <li class="reveal"><span class="when">2 años y medio</span><div><h3>Empleado administrativo</h3><p>En una empresa comercial. Mi primer trabajo.</p></div></li>
-              <li class="reveal"><span class="when">2026</span><div><h3>Universidad Abierta UNPSJB</h3><p>Organizador: acerco la carrera de Sistemas a quienes están por empezar.</p></div></li>
-            </ol>
-          </div>
-        </div>
+        </div></div>
       </div>
     </section>
 
-    <section class="paper sec" id="stack" aria-labelledby="stackH">
-      <div class="wrap">
-        <span class="eyebrow" data-scramble>02 · Qué hago</span>
-        <h2 class="h2 split" id="stackH">Construyo lo que el problema necesita.</h2>
-        <div class="services" id="services"></div>
-        <div class="tools">
-          <div class="tools-head">
-            <p class="subhead" data-scramble>Herramientas usadas en proyectos</p>
-            <span class="tools-note">No hay un stack fijo: elijo según lo que haya que construir</span>
+    <section class="page page-paper" data-page="sobre" id="sobre" aria-labelledby="sobreH">
+      <div class="page-scroll">
+        <div class="sec"><div class="wrap">
+          <span class="eyebrow" data-scramble>02 · Sobre mí</span>
+          <h2 class="h2" id="sobreH" data-glitch data-depth="0.3" tabindex="-1">Analista Programador y estudiante avanzado de Licenciatura en Sistemas.</h2>
+          <p class="quote">Haciendo del mundo un lugar mejor, pero no tanto...</p>
+          <div class="about-grid">
+            <div>
+              <p class="lead reveal">Soy Franco Martin Soler, tengo 22 años y vivo en Trelew, Chubut. Me recibí de Analista Programador en 2025 y estoy cursando 4.º año de la Licenciatura en Sistemas en la UNPSJB.</p>
+              <dl class="facts reveal">
+                <div><dt>Título</dt><dd>Analista Programador · 2025</dd></div>
+                <div><dt>Cursando</dt><dd>Licenciatura en Sistemas · UNPSJB · 4.º año</dd></div>
+                <div><dt>Secundario</dt><dd>Técnico en Informática · ESETP N.º 724 · 2022</dd></div>
+                <div><dt>Base</dt><dd>Trelew, Chubut, Argentina</dd></div>
+              </dl>
+            </div>
+            <div>
+              <figure class="about-photo reveal"><img src="perfil.webp" alt="Franco Martin Soler, de perfil, con gorra, en la montaña." width="480" height="480" loading="lazy"></figure>
+              <p class="subhead" data-scramble>Experiencia</p>
+              <ol class="timeline">
+                <li class="reveal"><span class="when now">Ahora</span><div><h3>Legislatura de Chubut</h3><p>Trabajando en lo mío. Es mi primer año ahí.</p></div></li>
+                <li class="reveal"><span class="when">1 año</span><div><h3>Oficina de Desarrollo de Software</h3><p>Subsecretaría de Innovación de Chubut.</p></div></li>
+                <li class="reveal"><span class="when">2 años y medio</span><div><h3>Empleado administrativo</h3><p>En una empresa comercial. Mi primer trabajo.</p></div></li>
+                <li class="reveal"><span class="when">2026</span><div><h3>Universidad Abierta UNPSJB</h3><p>Organizador: acerco la carrera de Sistemas a quienes están por empezar.</p></div></li>
+              </ol>
+            </div>
           </div>
-          <ul class="chips" id="chips"></ul>
-        </div>
-      </div>
-    </section>
+        </div></div>
 
-    <section class="paper sec" id="proyectos" aria-labelledby="proyH">
-      <div class="wrap">
-        <span class="eyebrow" data-scramble>03 · Proyectos</span>
-        <h2 class="h2 split" id="proyH">Proyectos con gente y problemas reales.</h2>
-        <div class="projects" id="projects"></div>
-      </div>
-    </section>
+        <div class="sec"><div class="wrap">
+          <span class="eyebrow" data-scramble>03 · Qué hago</span>
+          <h2 class="h2 split" id="stackH">Construyo lo que el problema necesita.</h2>
+          <div class="services" id="services"></div>
+          <div class="tools">
+            <div class="tools-head">
+              <p class="subhead" data-scramble>Herramientas usadas en proyectos</p>
+              <span class="tools-note">No hay un stack fijo: elijo según lo que haya que construir</span>
+            </div>
+            <ul class="chips" id="chips"></ul>
+          </div>
+        </div></div>
 
-    <section class="paper sec contact" id="contacto" aria-labelledby="contH">
-      <div class="wrap">
-        <span class="eyebrow" data-scramble>04 · Contacto</span>
-        <h2 class="h2 split" id="contH">Escribime</h2>
-        <div class="contact-big">
-          <a class="mail" href="mailto:francomartin2012@hotmail.com">francomartin2012@hotmail.com</a>
-          <ul class="socials">
-            <li><a class="lnk" href="https://github.com/franwe-jpg" target="_blank" rel="noopener noreferrer">GitHub</a></li>
-            <li><a class="lnk" href="https://www.linkedin.com/in/franco-martin-soler-19745a346" target="_blank" rel="noopener noreferrer">LinkedIn</a></li>
-            <li><a class="lnk" href="https://www.instagram.com/fr4ncosoler/" target="_blank" rel="noopener noreferrer">Instagram</a></li>
-          </ul>
-          <button class="back-btn" type="button" id="backTop">Volver al mundo
-            <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 12V2M2.5 6.5L7 2l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-        </div>
-        <footer class="footer">
-          <span class="status-line"><i class="dot" aria-hidden="true"></i><span id="footStatus">AHORA</span></span>
-          <span id="copy">© Franco Martin Soler</span>
-        </footer>
+        <div class="sec contact"><div class="wrap">
+          <span class="eyebrow" data-scramble>04 · Contacto</span>
+          <h2 class="h2 split" id="contH">Escribime</h2>
+          <div class="contact-big">
+            <a class="mail" href="mailto:francomartin2012@hotmail.com">francomartin2012@hotmail.com</a>
+            <ul class="socials">
+              <li><a class="lnk" href="https://github.com/franwe-jpg" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+              <li><a class="lnk" href="https://www.linkedin.com/in/franco-martin-soler-19745a346" target="_blank" rel="noopener noreferrer">LinkedIn</a></li>
+              <li><a class="lnk" href="https://www.instagram.com/fr4ncosoler/" target="_blank" rel="noopener noreferrer">Instagram</a></li>
+            </ul>
+            <button class="pill-btn" type="button" data-go="inicio">Volver al inicio
+              <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M12 12L3 3M3 10V3h7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+          <footer class="footer">
+            <span class="status-line"><i class="dot" aria-hidden="true"></i><span id="footStatus">AHORA</span></span>
+            <span id="copy">© Franco Martin Soler</span>
+          </footer>
+        </div></div>
       </div>
     </section>
   </main>
@@ -496,6 +633,20 @@ body.on-paper .pill { background: rgba(243,245,247,.85); border-color: rgba(21,2
   </div>
   <div class="hud-bottom right"><span class="pill" id="clock" aria-label="Hora en Argentina">--:-- ART</span></div>
 </div>
+
+<!-- ===== "mancha": page transition layer ===== -->
+<svg class="mancha" id="mancha" aria-hidden="true" focusable="false">
+  <defs>
+    <filter id="manchaFilter" filterUnits="userSpaceOnUse" x="-300" y="-300" width="2600" height="1800" color-interpolation-filters="sRGB">
+      <feTurbulence id="manchaTurb" type="fractalNoise" baseFrequency="0.012" numOctaves="3" seed="2" result="ruido"/>
+      <feDisplacementMap id="manchaDisp" in="SourceGraphic" in2="ruido" scale="140" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </defs>
+  <g filter="url(#manchaFilter)">
+    <circle id="manchaRim" cx="0" cy="0" r="0" fill="#dfe6ef"/>
+    <circle id="manchaBlob" cx="0" cy="0" r="0" fill="#10120d"/>
+  </g>
+</svg>
 
 <!-- ===== panel ===== -->
 <div class="panel-backdrop" id="panelBackdrop" hidden></div>
@@ -511,7 +662,7 @@ body.on-paper .pill { background: rgba(243,245,247,.85); border-color: rgba(21,2
     </button>
     <span class="conn" id="conn">○ verificando /api/chat…</span>
   </header>
-  <div class="panel-body" id="panelBody" data-lenis-prevent>
+  <div class="panel-body" id="panelBody">
     <ol class="msgs" id="msgs" aria-live="polite" aria-relevant="additions"></ol>
     <form class="cform" id="contactForm" novalidate hidden>
       <div class="field">
@@ -551,6 +702,7 @@ body.on-paper .pill { background: rgba(243,245,247,.85); border-color: rgba(21,2
   </form>
 </aside>
 
+<div class="cursor-ring" id="cursorRing" aria-hidden="true"></div>
 <div class="cursor" id="cursor" aria-hidden="true"></div>
 <script type="module">
 // =====================================================================
@@ -570,8 +722,6 @@ const nextFrame = () => new Promise((r) => requestAnimationFrame(() => r()));
 const CDN = {
   three: { url: 'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.min.js', expected: 691648 },
   gsap: { url: 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js', expected: 72214 },
-  st: { url: 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js', expected: 43380 },
-  lenis: { url: 'https://unpkg.com/lenis@1.1.13/dist/lenis.min.js', expected: 13485 },
 };
 
 const TZ = 'America/Argentina/Buenos_Aires';
@@ -610,6 +760,7 @@ function sceneFor(t) {
 const state = {
   mode: PARAM_TO_SCENE[params.get('escena')] ?? 'auto',
   scene: null,
+  page: null, // inicio | mundo | proyectos | sobre (null until entered)
   entered: false,
   panelOpen: false,
   busy: false,
@@ -640,6 +791,46 @@ function scramble(el, text, dur = 0.5) {
 }
 
 // =====================================================================
+// Global pointer: nx/ny in [-1, 1], eased every frame; DOM parallax
+// =====================================================================
+// Mouse on fine pointers, device tilt (±20°) on coarse ones, zero otherwise.
+const pointer = { nx: 0, ny: 0, tx: 0, ty: 0, x: innerWidth / 2, y: innerHeight / 2 };
+addEventListener('mousemove', (e) => {
+  pointer.x = e.clientX; pointer.y = e.clientY;
+  pointer.tx = (e.clientX / innerWidth) * 2 - 1;
+  pointer.ty = (e.clientY / innerHeight) * 2 - 1;
+}, { passive: true });
+addEventListener('pointerdown', (e) => { pointer.x = e.clientX; pointer.y = e.clientY; }, { passive: true });
+if (COARSE && 'DeviceOrientationEvent' in window) {
+  let beta0 = null;
+  addEventListener('deviceorientation', (e) => {
+    if (e.gamma == null || e.beta == null) return;
+    if (beta0 === null) beta0 = e.beta; // the holding angle at first reading is "neutral"
+    const unit = (v) => Math.max(-20, Math.min(20, v)) / 20;
+    pointer.tx = unit(e.gamma); pointer.ty = unit(e.beta - beta0);
+  }, { passive: true });
+}
+const parallaxEls = $$('[data-depth]');
+const tickers = new Set(); // (dtSeconds, now) callbacks on the shared frame loop
+let lastTick = performance.now();
+function tickLoop(now) {
+  requestAnimationFrame(tickLoop);
+  const dt = Math.min(50, now - lastTick); lastTick = now;
+  // 0.08 per frame at 60 fps, made frame-rate independent.
+  const k = 1 - Math.pow(0.92, dt / 16.667);
+  pointer.nx += (pointer.tx - pointer.nx) * k;
+  pointer.ny += (pointer.ty - pointer.ny) * k;
+  if (!REDUCE) {
+    for (const el of parallaxEls) {
+      const d = +el.dataset.depth || 0;
+      el.style.translate = `${(pointer.nx * d * 24).toFixed(2)}px ${(pointer.ny * d * 24).toFixed(2)}px`;
+    }
+  }
+  for (const fn of tickers) fn(dt / 1000, now);
+}
+requestAnimationFrame(tickLoop);
+
+// =====================================================================
 // Live status + clock
 // =====================================================================
 function tickStatus() {
@@ -658,7 +849,7 @@ const particles = (() => {
   const cv = $('#mark');
   const ctx = cv.getContext('2d');
   let W = 0, H = 0, pts = [], raf = 0, running = true;
-  const mouse = { x: -1e4, y: -1e4, nx: 0, ny: 0 };
+  const mouse = { x: -1e4, y: -1e4 };
   const rot = { x: 0, y: 0 };
   let leaving = false, leaveT = 0;
   let painted = null;
@@ -680,13 +871,13 @@ const particles = (() => {
     o.fillText('FS', ow / 2, oh / 2 + 8);
     const data = o.getImageData(0, 0, ow, oh).data;
     pts = [];
-    const step = 4;
+    const step = 5;
     for (let y = 0; y < oh; y += step) for (let x = 0; x < ow; x += step) {
       if (data[(y * ow + x) * 4 + 3] > 128) {
         pts.push({
           hx: (x - ow / 2) / ow, hy: (y - oh / 2) / ow, hz: (Math.random() - 0.5) * 0.08,
-          ox: 0, oy: 0, vx: 0, vy: 0, ph: Math.random() * 6.28,
-          big: Math.random() < 0.06, ex: (Math.random() - 0.5) * 2, ey: (Math.random() - 0.5) * 2,
+          ox: 0, oy: 0, vx: 0, vy: 0, ph: Math.random() * 6.28, ph2: Math.random() * 6.28,
+          big: Math.random() < 0.06, ex: 0, ey: 0,
         });
       }
     }
@@ -694,34 +885,39 @@ const particles = (() => {
   function frame(t) {
     if (!running) return;
     ctx.clearRect(0, 0, W, H);
-    rot.y += ((REDUCE ? 0 : mouse.nx * 0.5) - rot.y) * 0.06;
-    rot.x += ((REDUCE ? 0 : -mouse.ny * 0.35) - rot.x) * 0.06;
+    // Tilt and shift the whole cloud with the global pointer.
+    rot.y += ((REDUCE ? 0 : pointer.nx * 0.9) - rot.y) * 0.06;
+    rot.x += ((REDUCE ? 0 : -pointer.ny * 0.6) - rot.x) * 0.06;
+    const shiftX = REDUCE ? 0 : pointer.nx * W * 0.03, shiftY = REDUCE ? 0 : pointer.ny * H * 0.03;
     const cy = Math.cos(rot.y), sy = Math.sin(rot.y), cx = Math.cos(rot.x), sx = Math.sin(rot.x);
     const scale = W * 0.95, f = 2.2;
     const lt = leaving ? Math.min(1, (t - leaveT) / 900) : 0;
-    const R = COARSE ? 64 : 46;
+    const R = COARSE ? 110 : 90;
     for (const p of pts) {
-      const n = REDUCE ? 0 : Math.sin(t / 900 + p.ph) * 0.004;
-      const x = p.hx, y = p.hy + n, z = p.hz;
+      // Idle drift plus a slow two-frequency wander so the cloud never sits still.
+      const n = REDUCE ? 0 : Math.sin(t / 900 + p.ph) * 0.016;
+      const wx = REDUCE ? 0 : Math.sin(t / 1300 + p.ph2) * Math.cos(t / 2300 + p.ph) * 0.012;
+      const wy = REDUCE ? 0 : Math.cos(t / 1700 + p.ph) * Math.sin(t / 1100 + p.ph2) * 0.012;
+      const x = p.hx + wx, y = p.hy + n + wy, z = p.hz;
       const x1 = x * cy - z * sy, z1 = x * sy + z * cy;
       const y1 = y * cx - z1 * sx, z2 = y * sx + z1 * cx;
       const k = f / (f + z2);
-      let px = W / 2 + x1 * scale * k, py = H / 2 + y1 * scale * k;
+      let px = W / 2 + shiftX + x1 * scale * k, py = H / 2 + shiftY + y1 * scale * k;
       // Cursor/finger repulsion with a spring back to the home position.
       const dx = px + p.ox - mouse.x, dy = py + p.oy - mouse.y, d2 = dx * dx + dy * dy;
       if (d2 < R * R && !REDUCE) {
-        const d = Math.sqrt(d2) || 1, push = (1 - d / R) * 2.4;
+        const d = Math.sqrt(d2) || 1, push = (1 - d / R) * 3.2;
         p.vx += (dx / d) * push; p.vy += (dy / d) * push;
       }
-      p.vx += -p.ox * 0.06; p.vy += -p.oy * 0.06; p.vx *= 0.82; p.vy *= 0.82;
+      p.vx += -p.ox * 0.06; p.vy += -p.oy * 0.06; p.vx *= 0.86; p.vy *= 0.86;
       p.ox += p.vx; p.oy += p.vy;
       if (leaving) {
         const e = REDUCE ? 0 : lt * lt;
-        px += p.ex * W * e; py += p.ey * H * 1.6 * e;
+        px += p.ex * W * e; py += p.ey * H * e;
       }
       const a = (leaving ? 1 - lt : 1) * (0.55 + (1 - z2 * 6) * 0.35);
       ctx.fillStyle = p.big ? `rgba(31,191,117,${a})` : `rgba(21,24,29,${a})`;
-      const s = (p.big ? 2.6 : 1.7) * k;
+      const s = (p.big ? 5.2 : 3.4) * k;
       ctx.fillRect(px + p.ox - s / 2, py + p.oy - s / 2, s, s);
     }
     painted();
@@ -737,7 +933,7 @@ const particles = (() => {
       for (const p of pts) {
         const px = W / 2 + p.hx * W * 0.95 + p.ox, py = H / 2 + p.hy * W * 0.95 + p.oy;
         const dx = px - mouse.x, dy = py - mouse.y, d = Math.hypot(dx, dy) || 1;
-        if (d < 90) { const push = (1 - d / 90) * 9; p.vx += (dx / d) * push; p.vy += (dy / d) * push; }
+        if (d < 140) { const push = (1 - d / 140) * 12; p.vx += (dx / d) * push; p.vy += (dy / d) * push; }
       }
     }
   });
@@ -745,7 +941,6 @@ const particles = (() => {
   cv.addEventListener('pointerleave', clear);
   cv.addEventListener('pointerup', (e) => { if (e.pointerType !== 'mouse') setTimeout(clear, 120); });
   cv.addEventListener('pointercancel', clear);
-  addEventListener('pointermove', (e) => { mouse.nx = e.clientX / innerWidth - 0.5; mouse.ny = e.clientY / innerHeight - 0.5; });
   addEventListener('resize', () => { if (running) resize(); });
 
   const ready = (document.fonts?.load?.('700 200px "Instrument Sans"') ?? Promise.resolve())
@@ -753,7 +948,14 @@ const particles = (() => {
     .then(() => { resize(); build(); raf = requestAnimationFrame(frame); });
   return {
     firstPaint: ready.then(() => firstPaint),
-    leave() { leaving = true; leaveT = performance.now(); },
+    leave() {
+      // Radial burst: every particle flies away from the centre of the mark.
+      for (const p of pts) {
+        const d = Math.hypot(p.hx, p.hy) || 1, s = 1.2 + Math.random() * 1.4;
+        p.ex = (p.hx / d) * s; p.ey = (p.hy / d) * s * 1.3;
+      }
+      leaving = true; leaveT = performance.now();
+    },
     stop() { running = false; cancelAnimationFrame(raf); },
   };
 })();
@@ -933,23 +1135,19 @@ async function startLoading() {
   try {
     const jobs = {
       gsap: fetchProgress('gsap', CDN.gsap),
-      st: fetchProgress('st', CDN.st),
-      lenis: fetchProgress('lenis', CDN.lenis),
       three: WEBGL ? fetchProgress('three', CDN.three) : null,
       f1: fontProgress('f1', '500 16px "Instrument Sans"'),
       f2: fontProgress('f2', '400 12px "JetBrains Mono"'),
     };
-    // Execute in dependency order as soon as each piece is in.
+    // Execute as soon as each piece is in.
     await execScript(await jobs.gsap);
-    await execScript(await jobs.st);
-    await execScript(await jobs.lenis);
     let THREE = null;
     if (jobs.three) {
       const url = URL.createObjectURL(new Blob([await jobs.three], { type: 'text/javascript' }));
       try { THREE = await import(url); } finally { URL.revokeObjectURL(url); }
     }
     await Promise.all([jobs.f1, jobs.f2]);
-    loader.libs = { gsap: window.gsap, ScrollTrigger: window.ScrollTrigger, Lenis: window.Lenis, THREE };
+    loader.libs = { gsap: window.gsap, THREE };
     if (!loader.libs.gsap) throw new Error('gsap missing');
     // Final ~10%: build the world (geometry, textures, shader compile, first render).
     await initWorld(THREE, (f) => { loader.build = f; renderProgress(); });
@@ -974,7 +1172,7 @@ particles.firstPaint.then(() => {
 });
 
 // =====================================================================
-// Enter: gate → world
+// Enter: gate → inicio ("efecto sumergible")
 // =====================================================================
 let pending = null;
 const enterBtn = $('#enter'), muteBtn = $('#mute');
@@ -996,11 +1194,10 @@ function doEnter() {
   enterBtn.removeAttribute('aria-busy');
   audio.set(pending.audio);
   const { gsap } = loader.libs;
-  const gate = $('#gate'), blackout = $('#blackout');
+  const gate = $('#gate'), blackout = $('#blackout'), copy = $('#gateCopy');
   particles.leave();
 
   const reveal = () => {
-    document.body.classList.remove('is-gate');
     document.body.classList.add('entered');
     gate.hidden = true; muteBtn.hidden = true;
     particles.stop();
@@ -1008,32 +1205,36 @@ function doEnter() {
     $('#loadbar').style.opacity = '0';
     document.querySelector('meta[name="theme-color"]').content = '#0e1013';
     afterEnter();
-    $('#talk').focus({ preventScroll: true });
+    // First entry always lands on inicio; the hash only matters for back/forward afterwards.
+    router.go('inicio', { instant: true, replace: true });
+    $('#heroTitle').focus({ preventScroll: true });
   };
 
   if (!gsap) {
     // Lite mode (libraries unavailable): CSS-only crossfade.
     blackout.style.transition = 'opacity .4s';
     blackout.style.opacity = '1';
-    setTimeout(() => { reveal(); blackout.style.transition = 'opacity .9s'; blackout.style.opacity = '0'; }, REDUCE ? 50 : 700);
+    setTimeout(() => { reveal(); world?.intro(true); blackout.style.transition = 'opacity .9s'; blackout.style.opacity = '0'; }, REDUCE ? 50 : 700);
     return;
   }
-  const gateBits = $$('.gate > :not(canvas)');
   if (REDUCE) {
     gsap.to([gate, muteBtn], { opacity: 0, duration: 0.25, ease: 'none' });
     gsap.set(blackout, { opacity: 1, delay: 0.25 });
-    gsap.delayedCall(0.3, () => { reveal(); world?.intro(true); gsap.to(blackout, { opacity: 0, duration: 0.3, ease: 'none' }); });
+    gsap.delayedCall(0.3, () => { reveal(); world?.intro(true); heroIntro(); gsap.to(blackout, { opacity: 0, duration: 0.3, ease: 'none' }); });
     return;
   }
+  // The gate copy "sinks" (grows, blurs, fades) while the particles burst outwards;
+  // the world then dollies in from far away behind a short blackout.
   const tl = gsap.timeline();
-  tl.to([...gateBits, muteBtn], { opacity: 0, y: -8, duration: 0.35, ease: 'power2.in', stagger: 0.03 }, 0)
-    .to(blackout, { opacity: 1, duration: 0.4, ease: 'expo.in' }, 0.5)
-    .add(() => { reveal(); world?.intro(false); }, 0.92)
-    .to(blackout, { opacity: 0, duration: 0.9, ease: 'expo.out' }, 0.95);
+  tl.fromTo(copy, { scale: 1, filter: 'blur(0px)', opacity: 1 }, { scale: 1.35, filter: 'blur(14px)', opacity: 0, duration: 0.6, ease: 'power3.in' }, 0)
+    .to(muteBtn, { opacity: 0, duration: 0.3, ease: 'power2.in' }, 0)
+    .to(blackout, { opacity: 1, duration: 0.35, ease: 'power2.in' }, 0.45)
+    .add(() => { reveal(); world?.intro(true); heroIntro(); }, 0.9)
+    .to(blackout, { opacity: 0, duration: 1.0, ease: 'expo.out' }, 0.9);
 }
 
 // =====================================================================
-// B) World: three isometric dioramas (Three.js, orthographic)
+// B) World: three isometric dioramas (Three.js, perspective on an iso rig)
 // =====================================================================
 let world = null; // API once built; null in fallback / lite mode
 const SCENE_X = { office: -18, uni: 0, home: 18 };
@@ -1055,11 +1256,16 @@ function showFallback(offline = false) {
   $('#fallback').hidden = false;
   $('#world-canvas').hidden = true;
   $('#dragHint').hidden = true;
+  // inicio keeps a blurred, dimmed copy of the same illustration as its backdrop.
+  const bg = $('#fallbackBg');
+  bg.style.backgroundImage = `url("${img.dataset.src}")`;
+  bg.hidden = false;
+  $('#stage3d').classList.remove('is-off');
 }
 
 async function createWorld(T, progress) {
   const canvas = $('#world-canvas');
-  const section = $('#mundo');
+  const stage = $('#stage3d');
   const MOBILE = COARSE || innerWidth < 768;
   const renderer = new T.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
   if (!renderer.getContext()) throw new Error('no context');
@@ -1067,11 +1273,12 @@ async function createWorld(T, progress) {
   renderer.setClearColor(0x0e1013, 1);
   renderer.shadowMap.enabled = !MOBILE;
   renderer.shadowMap.type = T.PCFSoftShadowMap;
-  section.classList.add('has-3d');
+  stage.classList.add('has-3d');
 
   const scene = new T.Scene();
   scene.fog = new T.Fog(0x0e1013, 40, 74);
-  const camera = new T.OrthographicCamera(-1, 1, 1, -1, 0.1, 200);
+  const FOV = 24;
+  const camera = new T.PerspectiveCamera(FOV, 1, 0.1, 400);
 
   // ---------- lights (constant count so shaders never recompile) ----------
   const hemi = new T.HemisphereLight(0xdfe6ef, 0x14171c, 1.5);
@@ -1089,7 +1296,11 @@ async function createWorld(T, progress) {
     slab: M(0x1c2027), floor: M(0x2a2f38), wall: M(0x252a32), wall2: M(0x2f3540), trim: M(0x3a4250),
     furn: M(0x434b58), furnL: M(0x5a6372), pale: M(0x9aa3b0), paper: M(0xc9cfd8), dark: M(0x15181d), black: M(0x0f1114),
     metal: M(0x6b7482, { roughness: 0.45, metalness: 0.35 }), plant: M(0x3d6b57), plant2: M(0x335a49), pot: M(0x5b6370),
-    sofa: M(0x4a5361), cushion: M(0x5a6372),
+    sofa: M(0x4a5361), cushion: M(0x5a6372), rug: M(0x333a46), rug2: M(0x3f3a40), plum: M(0x5a4458),
+    screen: M(0x27313a, { emissive: 0x6f8aa0, emissiveIntensity: 0.55, roughness: 0.4 }),
+    screen2: M(0x1f2a24, { emissive: 0x3fa883, emissiveIntensity: 0.5, roughness: 0.4 }),
+    dogA: M(0xd8b48e), dogB: M(0xe9d9bf), catG: M(0x7d8390), catB: M(0x22252c),
+    red: new T.MeshBasicMaterial({ color: 0xe25544 }), eye: new T.MeshBasicMaterial({ color: 0xf0d060 }),
     glassDay: M(0x34465a, { emissive: 0x1a2a3a, emissiveIntensity: 1, roughness: 0.3 }),
     glassNight: M(0x0f1824, { emissive: 0x0a121d, emissiveIntensity: 1, roughness: 0.3 }),
     shade: M(0xd9c7a8, { emissive: 0xffc98a, emissiveIntensity: 0.55 }),
@@ -1222,7 +1433,7 @@ async function createWorld(T, progress) {
   const gridMat = new T.LineBasicMaterial({ color: 0x3a4250, transparent: true, opacity: 0.45 });
   const edgeMat = new T.LineBasicMaterial({ color: 0x1fbf75, transparent: true, opacity: 0.75 });
 
-  // ---------- Franco ----------
+  // ---------- Franco y las demás figuras ----------
   const G = {
     torso: new T.CylinderGeometry(0.19, 0.16, 0.5, 6),
     pelvis: new T.BoxGeometry(0.34, 0.16, 0.21),
@@ -1235,46 +1446,53 @@ async function createWorld(T, progress) {
     shin: new T.CylinderGeometry(0.062, 0.05, 0.42, 6).translate(0, -0.21, 0),
     foot: new T.BoxGeometry(0.1, 0.07, 0.22).translate(0, -0.455, 0.05),
   };
-  function makeFranco(pose) {
+  // Poses: las sentadas tienen la cadera en y≈0.52 (asiento a 0.47); de pie, en y=0.93.
+  const POSES = {
+    typing: { lean: 0.12, sh: [-0.38, 0.1], el: -1.18, head: 0.12, seated: true },
+    writing: { lean: 0.18, sh: [-0.42, 0.06], el: -1.12, head: 0.3, seated: true },
+    phone: { lean: -0.08, sh: [-0.32, 0.2], el: -1.45, head: 0.38, seated: true },
+    standing: { lean: 0.02, sh: [0.06, 0.08], el: -0.22, head: 0.04, seated: false },
+    relaxed: { lean: -0.22, sh: [-0.12, 0.22], el: -0.75, head: -0.04, seated: true, legs: 0.25 },
+  };
+  // Figura base compartida por Franco y la gente secundaria. `m` trae los materiales,
+  // `ph` desfasa el idle para que no se muevan todos al unísono.
+  function figure(m, pose, ph = 0) {
     const root = new T.Group();
-    const body = new T.Group(); root.add(body); // hip pivot at y=0
-    mesh(G.pelvis, fr.pants, body, 0, 0.02, 0);
+    const body = new T.Group(); root.add(body); // pivote de cadera en y=0
+    mesh(G.pelvis, m.pants, body, 0, 0.02, 0);
     const spine = new T.Group(); spine.position.y = 0.08; body.add(spine);
-    const torso = mesh(G.torso, fr.shirt, spine, 0, 0.25, 0); torso.scale.z = 0.68;
-    mesh(UNIT_BOX, fr.shirt, spine, 0, 0.47, 0).scale.set(0.44, 0.08, 0.2);
-    const badge = mesh(UNIT_BOX, mat.signal, spine, 0.085, 0.36, 0.125); badge.scale.set(0.05, 0.034, 0.012); badge.castShadow = false;
-    mesh(G.neck, fr.skin, spine, 0, 0.55, 0);
+    const torso = mesh(G.torso, m.shirt, spine, 0, 0.25, 0); torso.scale.z = 0.68;
+    mesh(UNIT_BOX, m.shirt, spine, 0, 0.47, 0).scale.set(0.44, 0.08, 0.2);
+    mesh(G.neck, m.skin, spine, 0, 0.55, 0);
     const head = new T.Group(); head.position.y = 0.58; spine.add(head);
-    const skull = mesh(G.head, fr.skin, head, 0, 0.13, 0.005); skull.scale.set(0.95, 1.12, 1.02);
-    mesh(UNIT_BOX, fr.hair, head, 0, 0.245, -0.015).scale.set(0.235, 0.075, 0.25);
-    mesh(UNIT_BOX, fr.hair, head, 0, 0.17, -0.1).scale.set(0.23, 0.16, 0.07);
-    mesh(UNIT_BOX, fr.hair, head, 0.112, 0.2, -0.03).scale.set(0.02, 0.1, 0.18);
-    mesh(UNIT_BOX, fr.hair, head, -0.112, 0.2, -0.03).scale.set(0.02, 0.1, 0.18);
+    const skull = mesh(G.head, m.skin, head, 0, 0.13, 0.005); skull.scale.set(0.95, 1.12, 1.02);
+    mesh(UNIT_BOX, m.hair, head, 0, 0.245, -0.015).scale.set(0.235, 0.075, 0.25);
+    mesh(UNIT_BOX, m.hair, head, 0, 0.17, -0.1).scale.set(0.23, 0.16, 0.07);
+    mesh(UNIT_BOX, m.hair, head, 0.112, 0.2, -0.03).scale.set(0.02, 0.1, 0.18);
+    mesh(UNIT_BOX, m.hair, head, -0.112, 0.2, -0.03).scale.set(0.02, 0.1, 0.18);
     const arm = (side) => {
       const shoulder = new T.Group(); shoulder.position.set(0.235 * side, 0.46, 0); spine.add(shoulder);
-      mesh(G.upper, fr.shirt, shoulder);
+      mesh(G.upper, m.shirt, shoulder);
       const elbow = new T.Group(); elbow.position.y = -0.28; shoulder.add(elbow);
-      mesh(G.fore, fr.shirt, elbow);
-      const hand = mesh(G.hand, fr.skin, elbow);
+      mesh(G.fore, m.shirt, elbow);
+      const hand = mesh(G.hand, m.skin, elbow);
       return { shoulder, elbow, hand };
     };
     const leg = (side) => {
       const hip = new T.Group(); hip.position.set(0.09 * side, 0, 0); body.add(hip);
-      mesh(G.thigh, fr.pants, hip);
+      mesh(G.thigh, m.pants, hip);
       const knee = new T.Group(); knee.position.y = -0.44; hip.add(knee);
-      mesh(G.shin, fr.pants, knee);
-      mesh(G.foot, fr.shoes, knee);
+      mesh(G.shin, m.pants, knee);
+      mesh(G.foot, m.shoes, knee);
       return { hip, knee };
     };
     const L = arm(1), R = arm(-1), LL = leg(1), RL = leg(-1);
-    // Seated base pose for every scene.
-    for (const l of [LL, RL]) { l.hip.rotation.x = -Math.PI / 2; l.knee.rotation.x = Math.PI / 2; }
+    const P = POSES[pose];
+    if (P.seated) {
+      const open = P.legs || 0;
+      for (const l of [LL, RL]) { l.hip.rotation.x = -Math.PI / 2 + open; l.knee.rotation.x = Math.PI / 2 - open; }
+    }
     LL.hip.rotation.z = 0.04; RL.hip.rotation.z = -0.04;
-    const P = {
-      typing: { lean: 0.12, sh: [-0.38, 0.1], el: -1.18, head: 0.12 },
-      writing: { lean: 0.18, sh: [-0.42, 0.06], el: -1.12, head: 0.3 },
-      phone: { lean: -0.08, sh: [-0.32, 0.2], el: -1.45, head: 0.38 },
-    }[pose];
     spine.rotation.x = P.lean;
     for (const [a, side] of [[L, 1], [R, -1]]) {
       a.shoulder.rotation.x = P.sh[0];
@@ -1283,7 +1501,50 @@ async function createWorld(T, progress) {
     }
     head.rotation.x = P.head;
 
-    // Hit area, hover ring.
+    function update(t) {
+      if (REDUCE) return;
+      t += ph;
+      const br = Math.sin(t * 1.7);
+      spine.scale.y = 1 + br * 0.012;
+      spine.rotation.x = P.lean + br * 0.008;
+      if (pose === 'typing') {
+        L.elbow.rotation.x = P.el + Math.sin(t * 13) * 0.05 + Math.sin(t * 7.1) * 0.03;
+        R.elbow.rotation.x = P.el + Math.sin(t * 11 + 1.7) * 0.05 + Math.sin(t * 5.3) * 0.03;
+        L.hand.rotation.x = Math.sin(t * 17) * 0.12;
+        R.hand.rotation.x = Math.sin(t * 15 + 2) * 0.12;
+        head.rotation.y = Math.sin(t * 0.4) * 0.08;
+      } else if (pose === 'writing') {
+        // Mira al pizarrón y vuelve a los apuntes.
+        const look = Math.max(0, Math.sin(t * 0.55)) ** 3;
+        head.rotation.x = P.head - look * 0.5;
+        head.rotation.y = look * 0.25;
+        R.elbow.rotation.x = P.el + Math.sin(t * 9) * 0.04 * (1 - look);
+        R.shoulder.rotation.z = -P.sh[1] * -1 + Math.cos(t * 9) * 0.03 * (1 - look);
+      } else if (pose === 'standing') {
+        // Balanceo de pie y giro lento de cabeza (recorre el aula con la mirada).
+        body.rotation.z = Math.sin(t * 0.5) * 0.018;
+        body.position.y = Math.sin(t * 1.0) * 0.004;
+        head.rotation.y = Math.sin(t * 0.33) * 0.4 + Math.sin(t * 0.9) * 0.05;
+        R.shoulder.rotation.x = P.sh[0] + Math.sin(t * 0.7) * 0.06;
+        L.shoulder.rotation.x = P.sh[0] - Math.sin(t * 0.7) * 0.04;
+      } else if (pose === 'relaxed') {
+        head.rotation.y = Math.sin(t * 0.3) * 0.2;
+        head.rotation.x = P.head + Math.sin(t * 0.6) * 0.03;
+        L.elbow.rotation.x = P.el + Math.sin(t * 0.8) * 0.04;
+      } else {
+        head.rotation.x = P.head + Math.sin(t * 0.7) * 0.03;
+        R.elbow.rotation.x = P.el + Math.sin(t * 0.9) * 0.02;
+        L.elbow.rotation.x = P.el + Math.sin(t * 6) * 0.025 * (Math.sin(t * 0.8) > 0 ? 1 : 0);
+      }
+    }
+    return { root, body, spine, head, L, R, LL, RL, P, update };
+  }
+  function makeFranco(pose) {
+    const f = figure(fr, pose);
+    const { root, spine, R } = f;
+    const badge = mesh(UNIT_BOX, mat.signal, spine, 0.085, 0.36, 0.125); badge.scale.set(0.05, 0.034, 0.012); badge.castShadow = false;
+
+    // Área de hit, anillo de hover.
     const hit = new T.Mesh(new T.BoxGeometry(0.9, 1.5, 0.9), mat.signal);
     hit.position.set(0, 0.35, 0.1); hit.visible = false; root.add(hit);
     const ring = new T.Mesh(new T.RingGeometry(0.6, 0.68, 48), new T.MeshBasicMaterial({ color: 0x1fbf75, transparent: true, opacity: 0, depthWrite: false }));
@@ -1306,31 +1567,260 @@ async function createWorld(T, progress) {
 
     function update(t) {
       if (REDUCE) return;
-      const br = Math.sin(t * 1.7);
-      spine.scale.y = 1 + br * 0.012;
-      spine.rotation.x = P.lean + br * 0.008;
-      if (pose === 'typing') {
-        L.elbow.rotation.x = P.el + Math.sin(t * 13) * 0.05 + Math.sin(t * 7.1) * 0.03;
-        R.elbow.rotation.x = P.el + Math.sin(t * 11 + 1.7) * 0.05 + Math.sin(t * 5.3) * 0.03;
-        L.hand.rotation.x = Math.sin(t * 17) * 0.12;
-        R.hand.rotation.x = Math.sin(t * 15 + 2) * 0.12;
-        head.rotation.y = Math.sin(t * 0.4) * 0.08;
-      } else if (pose === 'writing') {
-        // Look at the board, then back down to the notes.
-        const look = Math.max(0, Math.sin(t * 0.55)) ** 3;
-        head.rotation.x = P.head - look * 0.5;
-        head.rotation.y = look * 0.25;
-        R.elbow.rotation.x = P.el + Math.sin(t * 9) * 0.04 * (1 - look);
-        R.shoulder.rotation.z = -P.sh[1] * -1 + Math.cos(t * 9) * 0.03 * (1 - look);
-      } else {
-        head.rotation.x = P.head + Math.sin(t * 0.7) * 0.03;
-        R.elbow.rotation.x = P.el + Math.sin(t * 0.9) * 0.02;
-        L.elbow.rotation.x = P.el + Math.sin(t * 6) * 0.025 * (Math.sin(t * 0.8) > 0 ? 1 : 0);
-        if (phoneGlow) phoneGlow.material.color.setScalar(1).setHex(0x1fbf75).multiplyScalar(0.85 + Math.sin(t * 2.2) * 0.15);
-      }
+      f.update(t);
+      if (phoneGlow) phoneGlow.material.color.setScalar(1).setHex(0x1fbf75).multiplyScalar(0.85 + Math.sin(t * 2.2) * 0.15);
     }
     return { root, hit, ring, anchor, chest, update, phoneGlow };
   }
+  // Gente secundaria: misma figura, sin hit box ni cartel. Materiales propios (cacheados por color)
+  // para que el hover de Franco no los tiña.
+  const pmCache = new Map();
+  const pm = (hex) => { if (!pmCache.has(hex)) pmCache.set(hex, M(hex)); return pmCache.get(hex); };
+  const PRESETS = [
+    { shirt: 0x3f5f80, pants: 0x262c36, skin: 0xc8a68e, hair: 0x1b1e23 }, // azul apagado
+    { shirt: 0x9c5a46, pants: 0x2d3038, skin: 0xa97d5e, hair: 0x4a3426 }, // terracota
+    { shirt: 0xb3903d, pants: 0x1f242b, skin: 0xe0bfa3, hair: 0xb8955a }, // mostaza
+    { shirt: 0x5f7360, pants: 0x3a3f4a, skin: 0xc8a68e, hair: 0x4a3426 }, // verde grisáceo
+    { shirt: 0x6e4b6c, pants: 0x262c36, skin: 0xb48a6a, hair: 0x1b1e23 }, // ciruela
+  ];
+  function makePerson({ shirt, pants, skin, hair, pose = 'typing' }) {
+    const f = figure({ skin: pm(skin), hair: pm(hair), shirt: pm(shirt), pants: pm(pants), shoes: pm(0x111317) }, pose, Math.random() * 6.28);
+    return { root: f.root, update: f.update };
+  }
+  const person = (preset, pose) => makePerson({ ...PRESETS[preset % PRESETS.length], pose });
+
+  // ---------- props estáticos (van al Batch) ----------
+  // Coordenadas locales → mundo para props girados `ry` alrededor de (x, z).
+  // Convención: cada prop "mira" a -x en local (la persona se sienta en +x) y se gira con ry.
+  const at = (x, z, ry) => { const c = Math.cos(ry), s = Math.sin(ry); return (lx, lz) => [x + lx * c + lz * s, z - lx * s + lz * c]; };
+  const TORUS = new T.TorusGeometry(0.03, 0.009, 4, 8);
+  const PUFF = new T.IcosahedronGeometry(1, 1);
+  const ICO = new T.IcosahedronGeometry(1, 0);
+  // Silla giratoria: base de 5 rayos, pistón, asiento, respaldo (en +x local) y apoyabrazos.
+  function swivelChair(b, x, z, ry = 0) {
+    const w = at(x, z, ry);
+    b.cyl(x, 0.06, z, 0.03, 0.34, mat.metal, 6);
+    b.cyl(x, 0.0, z, 0.06, 0.06, mat.dark, 6);
+    for (let i = 0; i < 5; i++) { const a = (i / 5) * Math.PI * 2 + ry; b.box(x + Math.cos(a) * 0.17, 0.03, z + Math.sin(a) * 0.17, 0.34, 0.03, 0.04, mat.dark, -a); }
+    b.box(x, 0.4, z, 0.5, 0.07, 0.5, mat.furn, ry);
+    const [bx, bz] = w(0.24, 0); b.box(bx, 0.47, bz, 0.06, 0.62, 0.46, mat.furn, ry);
+    for (const s of [-1, 1]) {
+      const [ax, az] = w(0.04, 0.26 * s); b.box(ax, 0.64, az, 0.3, 0.03, 0.04, mat.dark, ry);
+      const [px, pz] = w(0.1, 0.26 * s); b.box(px, 0.47, pz, 0.03, 0.17, 0.03, mat.dark, ry);
+    }
+  }
+  // Silla de aula: 4 patas, asiento y respaldo.
+  function classChair(b, x, z, ry = 0) {
+    const w = at(x, z, ry);
+    b.box(x, 0.44, z, 0.42, 0.04, 0.42, mat.furnL, ry);
+    for (const [lx, lz] of [[-0.18, -0.18], [-0.18, 0.18], [0.18, -0.18], [0.18, 0.18]]) { const [px, pz] = w(lx, lz); b.box(px, 0, pz, 0.035, 0.44, 0.035, mat.metal, ry); }
+    const [kx, kz] = w(0.19, 0); b.box(kx, 0.48, kz, 0.03, 0.4, 0.42, mat.furnL, ry);
+    for (const s of [-1, 1]) { const [px, pz] = w(0.19, 0.17 * s); b.box(px, 0.44, pz, 0.03, 0.06, 0.03, mat.metal, ry); }
+  }
+  // Notebook abierta: base + pantalla inclinada (cara brillante hacia +x local, donde está la persona).
+  function notebook(b, x, y, z, ry = 0, face = mat.screen) {
+    const w = at(x, z, ry);
+    b.box(x, y, z, 0.3, 0.016, 0.22, mat.dark, ry);
+    const [kx, kz] = w(0.04, 0); b.box(kx, y + 0.016, kz, 0.14, 0.004, 0.17, mat.trim, ry);
+    const th = 0.38, hx = -0.15, hh = 0.105, c = Math.cos(th), s = Math.sin(th);
+    const [px, pz] = w(hx - s * hh, 0);
+    b.add(UNIT_BOX, mat.dark, px, y + 0.016 + c * hh, pz, 0.014, 0.21, 0.3, 0, ry, th);
+    const [fx, fz] = w(hx - s * hh + c * 0.009, 0);
+    b.add(UNIT_BOX, face, fx, y + 0.016 + c * hh + s * 0.009, fz, 0.004, 0.19, 0.28, 0, ry, th);
+  }
+  // Dos monitores sobre un brazo, un poco cerrados hacia la persona (+x local).
+  // Devuelve el centro y giro de cada cara para colgar una textura animada encima.
+  function dualMonitors(b, x, y, z, ry = 0, faces = [mat.screen, mat.screen]) {
+    const w = at(x, z, ry);
+    b.box(x, y, z, 0.26, 0.02, 0.2, mat.dark, ry);
+    b.cyl(x, y + 0.02, z, 0.025, 0.42, mat.metal, 6);
+    const out = [];
+    for (const s of [-1, 1]) {
+      const a = ry + s * 0.16, c = Math.cos(a), sn = Math.sin(a);
+      const [mx, mz] = w(-0.05, s * 0.3);
+      b.box(mx, y + 0.27, mz, 0.035, 0.34, 0.56, mat.black, a);
+      const fx = mx + 0.02 * c, fz = mz - 0.02 * sn;
+      b.box(fx, y + 0.285, fz, 0.006, 0.31, 0.53, faces[s > 0 ? 1 : 0], a);
+      out.push({ x: fx + 0.005 * c, y: y + 0.44, z: fz - 0.005 * sn, ry: a });
+      const [ax, az] = w(-0.03, s * 0.15); b.box(ax, y + 0.4, az, 0.03, 0.03, 0.3, mat.metal, ry);
+    }
+    return out;
+  }
+  function mug(b, x, y, z, m = mat.paper) {
+    b.cyl(x, y, z, 0.045, 0.1, m, 10);
+    b.add(TORUS, m, x + 0.055, y + 0.055, z, 1, 1, 1, 0, 0, 0);
+  }
+  // Cafetera con el frente hacia +z: cuerpo, bandeja, tacita, lucecita roja.
+  function coffeeMachine(b, x, y, z) {
+    b.box(x, y + 0.2, z, 0.3, 0.24, 0.3, mat.dark);
+    b.box(x, y, z - 0.06, 0.3, 0.2, 0.18, mat.dark);
+    b.box(x, y + 0.44, z, 0.32, 0.03, 0.32, mat.trim);
+    b.box(x, y, z + 0.08, 0.24, 0.02, 0.12, mat.metal);
+    b.cyl(x, y + 0.02, z + 0.08, 0.035, 0.07, mat.paper, 8);
+    b.box(x, y + 0.16, z + 0.08, 0.03, 0.04, 0.03, mat.metal);
+    b.box(x + 0.1, y + 0.33, z + 0.152, 0.02, 0.02, 0.006, mat.red);
+    b.box(x - 0.04, y + 0.31, z + 0.152, 0.08, 0.03, 0.006, mat.screen2);
+  }
+  function waterDispenser(b, x, z) {
+    b.box(x, 0, z, 0.32, 0.95, 0.32, mat.pale);
+    b.box(x, 0.95, z, 0.3, 0.04, 0.3, mat.trim);
+    b.cyl(x, 0.99, z, 0.14, 0.42, mat.glassDay, 10);
+    b.cyl(x, 1.41, z, 0.05, 0.04, mat.glassDay, 8);
+    b.box(x - 0.05, 0.78, z + 0.17, 0.03, 0.05, 0.04, mat.trim);
+    b.box(x + 0.05, 0.78, z + 0.17, 0.03, 0.05, 0.04, mat.red);
+  }
+  // Mueble bajo para la tele (frente hacia +z).
+  function tvUnit(b, x, z, w = 1.7) {
+    b.box(x, 0.06, z, w, 0.44, 0.45, mat.furn);
+    b.box(x, 0.5, z, w + 0.04, 0.04, 0.49, mat.furnL);
+    b.box(x, 0.2, z + 0.226, w * 0.45, 0.016, 0.01, mat.trim);
+    b.box(x, 0.3, z + 0.226, 0.01, 0.2, 0.01, mat.trim);
+    for (const s of [-1, 1]) b.box(x + s * (w / 2 - 0.08), 0, z, 0.06, 0.06, 0.4, mat.dark);
+  }
+  // Panel de tele que mira a +z; la cara es un plano aparte con textura.
+  function tv(b, x, cy, z, w, h, tex) {
+    b.box(x, cy - h / 2 - 0.02, z, w + 0.04, h + 0.04, 0.04, mat.black);
+    const scr = new T.Mesh(new T.PlaneGeometry(w, h), new T.MeshBasicMaterial({ map: tex, toneMapped: false }));
+    scr.position.set(x, cy, z + 0.025);
+    return scr;
+  }
+  const rug = (b, x, z, w, d, m = mat.rug) => b.box(x, 0, z, w, 0.02, d, m);
+  function plant(b, x, z, s = 1) {
+    b.cyl(x, 0, z, 0.22 * s, 0.4 * s, mat.pot, 7, 0.82);
+    b.add(ICO, mat.plant, x, 0.82 * s, z, 0.36 * s, 0.44 * s, 0.36 * s, 0.2, 0.4, 0);
+    b.add(ICO, mat.plant2, x - 0.15 * s, 1.15 * s, z + 0.1 * s, 0.22 * s, 0.28 * s, 0.22 * s, 0.5, 0, 0.3);
+  }
+  function backpack(b, x, z, ry, m) {
+    b.box(x, 0, z, 0.28, 0.36, 0.16, m, ry);
+    const w = at(x, z, ry);
+    const [sx, sz] = w(0, -0.095); b.box(sx, 0.08, sz, 0.2, 0.22, 0.03, mat.dark, ry);
+    const [tx, tz] = w(0, 0.02); b.box(tx, 0.36, tz, 0.16, 0.03, 0.08, mat.dark, ry);
+  }
+  // Sofá que mira a +x local, `seats` almohadones a lo largo de z. Los brazos van afuera de `len`.
+  function sofa(b, x, z, ry, len, seats = 2) {
+    const w = at(x, z, ry);
+    const put = (lx, y, lz, sx, h, sz, m) => { const [px, pz] = w(lx, lz); b.box(px, y, pz, sx, h, sz, m, ry); };
+    const inner = len - 0.4, cw = (inner - 0.06 * (seats - 1)) / seats;
+    put(0, 0.06, 0, 0.95, 0.32, inner, mat.sofa);
+    put(-0.4, 0.38, 0, 0.22, 0.62, inner, mat.sofa);
+    for (let i = 0; i < seats; i++) {
+      const lz = -inner / 2 + cw / 2 + i * (cw + 0.06);
+      put(0.06, 0.38, lz, 0.8, 0.1, cw, mat.cushion);
+      put(-0.24, 0.48, lz, 0.14, 0.42, cw - 0.08, mat.cushion);
+    }
+    for (const s of [-1, 1]) put(0, 0.06, s * (inner / 2 + 0.1), 0.95, 0.6, 0.2, mat.sofa);
+    for (const lx of [-0.38, 0.38]) for (const s of [-1, 1]) put(lx, 0, s * (inner / 2 + 0.07), 0.06, 0.06, 0.06, mat.dark);
+  }
+  // Pupitre de aula (tapa 0.55 × 1.0, a 0.72).
+  function studentDesk(b, x, z) {
+    b.box(x, 0.72, z, 0.55, 0.04, 1.0, mat.furnL);
+    for (const sx of [-0.24, 0.24]) for (const sz of [-0.46, 0.46]) b.box(x + sx, 0, z + sz, 0.04, 0.72, 0.04, mat.furn);
+    b.box(x - 0.24, 0.5, z, 0.03, 0.2, 0.9, mat.furn);
+  }
+  // Biblioteca con libros: el fondo queda en x local 0 y los estantes salen hacia +x local.
+  function bookcase(b, x, z, ry, w = 2.2, levels = 4) {
+    const at_ = at(x, z, ry);
+    const put = (lx, y, lz, sx, h, sz, m) => { const [px, pz] = at_(lx, lz); b.box(px, y, pz, sx, h, sz, m, ry); };
+    const H = levels * 0.55 + 0.04;
+    put(0.02, 0, 0, 0.04, H, w, mat.furn);
+    for (let i = 0; i <= levels; i++) put(0.18, i * 0.55, 0, 0.32, 0.04, w, mat.furnL);
+    for (const s of [-1, 1]) put(0.18, 0, s * (w / 2 - 0.02), 0.32, H - 0.06, 0.04, mat.furnL);
+    const bm = [mat.furn, mat.pale, mat.trim, mat.paper, mat.furnL, mat.dark, mat.plum];
+    for (let s = 0; s < levels; s++) {
+      let lz = -w / 2 + 0.12;
+      while (lz < w / 2 - 0.3) {
+        const bw = 0.07 + ((lz * 37 + s * 11 + w) % 5) * 0.02, bh = 0.32 + ((lz * 53 + s * 7) % 4) * 0.04;
+        if (((lz * 13 + s + 9) | 0) % 7 !== 3) put(0.18, s * 0.55 + 0.04, lz + bw / 2, 0.26, bh, bw, bm[(Math.abs(lz * 29 + s * 3) | 0) % bm.length]);
+        lz += bw + 0.015;
+      }
+    }
+  }
+  // Mesita redonda de pie central.
+  function roundTable(b, x, z, r = 0.6) {
+    b.cyl(x, 0, z, 0.26, 0.03, mat.dark, 10);
+    b.cyl(x, 0.03, z, 0.035, 0.7, mat.metal, 6);
+    b.cyl(x, 0.73, z, r, 0.04, mat.furnL, 14);
+  }
+
+  // ---------- animales (grupos animados) ----------
+  const puff = (m, parent, x, y, z, sx, sy = sx, sz = sx) => { const p = mesh(PUFF, m, parent, x, y, z); p.scale.set(sx, sy, sz); return p; };
+  // Caniche sentado, mira a +z local: copos de pelo con icosaedros.
+  function makeDog() {
+    const root = new T.Group();
+    const A = mat.dogA, B = mat.dogB;
+    puff(A, root, 0, 0.2, -0.1, 0.2, 0.17, 0.24);
+    puff(A, root, 0, 0.34, 0.08, 0.17, 0.2, 0.2);
+    for (const s of [-1, 1]) {
+      puff(B, root, 0.16 * s, 0.1, -0.1, 0.09, 0.08, 0.11);
+      mesh(new T.CylinderGeometry(0.03, 0.03, 0.26, 5), A, root, 0.1 * s, 0.17, 0.2);
+      puff(B, root, 0.1 * s, 0.045, 0.22, 0.06, 0.045, 0.07);
+    }
+    const head = new T.Group(); head.position.set(0, 0.58, 0.16); root.add(head);
+    puff(A, head, 0, 0, 0, 0.13, 0.12, 0.13);
+    puff(B, head, 0, 0.1, -0.01, 0.1, 0.08, 0.1);
+    for (const s of [-1, 1]) puff(B, head, 0.13 * s, -0.03, -0.02, 0.055, 0.1, 0.07);
+    puff(A, head, 0, -0.03, 0.12, 0.06, 0.05, 0.07);
+    mesh(new T.IcosahedronGeometry(0.022, 0), mat.black, head, 0, -0.01, 0.185).castShadow = false;
+    for (const s of [-1, 1]) mesh(new T.IcosahedronGeometry(0.014, 0), mat.black, head, 0.05 * s, 0.025, 0.11).castShadow = false;
+    const tail = new T.Group(); tail.position.set(0, 0.3, -0.3); root.add(tail);
+    mesh(new T.CylinderGeometry(0.015, 0.02, 0.14, 5), A, tail, 0, 0.05, -0.02).rotation.x = 0.5;
+    puff(B, tail, 0, 0.12, -0.06, 0.05);
+    const ph = Math.random() * 6;
+    function update(t) {
+      if (REDUCE) return;
+      t += ph;
+      head.position.y = 0.58 + Math.sin(t * 2.4) * 0.012;
+      head.rotation.z = Math.sin(t * 0.7) * 0.08;
+      head.rotation.y = Math.sin(t * 0.45) * 0.15;
+      tail.rotation.y = Math.sin(t * 9) * 0.45;
+      root.scale.y = 1 + Math.sin(t * 1.9) * 0.01;
+    }
+    return { root, update };
+  }
+  // Gato: 'sleep' (ovillado, respira) o 'sit' (sentado, mueve la cola). Mira a +z local.
+  function makeCat(m, pose = 'sit') {
+    const root = new T.Group();
+    const blob = (parent, x, y, z, sx, sy = sx, sz = sx) => puff(m, parent, x, y, z, sx, sy, sz);
+    const ear = new T.ConeGeometry(0.026, 0.06, 4);
+    let tail = null;
+    if (pose === 'sleep') {
+      blob(root, 0, 0.07, 0, 0.21, 0.08, 0.17);
+      const head = blob(root, 0.1, 0.085, 0.12, 0.08, 0.065, 0.08);
+      for (const s of [-1, 1]) { const e = mesh(ear, m, root, 0.1 + 0.045 * s, 0.14, 0.11); e.castShadow = false; }
+      head.castShadow = false;
+      const seg = new T.CylinderGeometry(0.014, 0.018, 0.13, 5);
+      for (let i = 0; i < 3; i++) {
+        const a = 0.9 + i * 0.75;
+        const s = mesh(seg, m, root, -0.2 * Math.cos(a) * 0.9, 0.035, 0.19 * Math.sin(a));
+        s.rotation.z = Math.PI / 2; s.rotation.y = Math.PI / 2 - a;
+      }
+    } else {
+      blob(root, 0, 0.17, -0.02, 0.1, 0.17, 0.13);
+      blob(root, 0, 0.12, 0.08, 0.09, 0.1, 0.08);
+      const head = new T.Group(); head.position.set(0, 0.37, 0.06); root.add(head);
+      blob(head, 0, 0, 0, 0.085, 0.08, 0.085);
+      for (const s of [-1, 1]) { const e = mesh(ear, m, head, 0.055 * s, 0.075, 0); e.castShadow = false; }
+      for (const s of [-1, 1]) { const e = mesh(new T.PlaneGeometry(0.02, 0.012), mat.eye, head, 0.03 * s, 0.01, 0.082); e.castShadow = false; }
+      for (const s of [-1, 1]) mesh(new T.CylinderGeometry(0.02, 0.022, 0.2, 5), m, root, 0.05 * s, 0.1, 0.12);
+      tail = new T.Group(); tail.position.set(0, 0.06, -0.1); root.add(tail);
+      const tl = mesh(new T.CylinderGeometry(0.008, 0.02, 0.3, 5), m, tail, 0, 0, -0.15);
+      tl.rotation.x = -Math.PI / 2;
+    }
+    const ph = Math.random() * 6;
+    function update(t) {
+      if (REDUCE) return;
+      t += ph;
+      if (pose === 'sleep') { const s = 1 + Math.sin(t * 1.1) * 0.03; root.scale.set(s, s, s); }
+      else { tail.rotation.y = Math.sin(t * 1.3) * 0.6 + Math.sin(t * 2.9) * 0.15; tail.rotation.x = 0.15 + Math.sin(t * 0.9) * 0.1; }
+    }
+    return { root, update };
+  }
+
+  // ---------- pantallas (redibujo ≤ 6/s, sólo con el diorama activo) ----------
+  const FPS6 = 1 / 6;
+  const rrect = (c, x, y, w, h, r) => {
+    if (c.roundRect) { c.beginPath(); c.roundRect(x, y, w, h, r); } else { c.beginPath(); c.rect(x, y, w, h); }
+  };
 
   // ---------- dioramas ----------
   const dioramas = {};
@@ -1339,36 +1829,41 @@ async function createWorld(T, progress) {
   function office() {
     const root = new T.Group(); root.position.x = SCENE_X.office; scene.add(root);
     const b = new Batch(root);
-    base(root, b, { window: { a: 1.6, b: 3.6, y0: 1.1, y1: 2.6 } });
-    // Desk along the left wall.
-    const dx = -3.7, dz = -0.6;
-    b.box(dx, 0.72, dz, 0.9, 0.05, 2.3, mat.furnL);
-    b.box(dx - 0.38, 0, dz, 0.06, 0.72, 2.2, mat.furn);
-    b.box(dx + 0.38, 0, dz - 1.08, 0.05, 0.72, 0.05, mat.furn);
-    b.box(dx + 0.38, 0, dz + 1.08, 0.05, 0.72, 0.05, mat.furn);
-    b.box(dx - 0.1, 0.38, dz + 0.75, 0.6, 0.34, 0.6, mat.furn); // drawer block
-    // Monitor (screen faces +x).
-    b.box(-4.0, 0.77, dz, 0.22, 0.02, 0.34, mat.dark);
-    b.box(-4.02, 0.79, dz, 0.05, 0.36, 0.06, mat.dark);
-    b.box(-4.05, 1.0, dz, 0.05, 0.64, 1.08, mat.black);
+    base(root, b, { window: { a: 0.3, b: 2.1, y0: 1.1, y1: 2.6 } });
+    rug(b, -1.1, -0.6, 5.6, 4.6);
+    // Dos islas de escritorios enfrentados (largo en z); Franco en la isla pegada a la pared izquierda.
     const code = canvasTex(320, 200, () => {});
-    const screen = new T.Mesh(new T.PlaneGeometry(1.0, 0.58), new T.MeshBasicMaterial({ map: code.tex, toneMapped: false }));
-    screen.position.set(-4.02, 1.32, dz); screen.rotation.y = Math.PI / 2;
-    root.add(screen);
-    // Keyboard, mouse, mug, papers.
-    b.box(-3.48, 0.77, dz, 0.17, 0.025, 0.52, mat.dark);
-    b.box(-3.5, 0.77, dz + 0.42, 0.1, 0.02, 0.06, mat.dark);
-    b.cyl(-3.85, 0.77, dz + 0.8, 0.05, 0.11, mat.paper, 10);
-    b.add(new T.TorusGeometry(0.035, 0.01, 4, 8), mat.paper, -3.85, 0.83, dz + 0.86, 1, 1, 1, 0, 0, 0);
-    b.box(-3.85, 0.77, dz - 0.85, 0.3, 0.03, 0.22, mat.paper, 0.2);
-    // Chair (seat faces -x).
-    const cx = -2.95, cz = dz;
-    b.cyl(cx, 0.06, cz, 0.03, 0.34, mat.metal, 6);
-    for (let i = 0; i < 5; i++) { const a = (i / 5) * Math.PI * 2; b.box(cx + Math.cos(a) * 0.17, 0.03, cz + Math.sin(a) * 0.17, 0.34, 0.03, 0.04, mat.dark, -a); }
-    b.box(cx, 0.4, cz, 0.5, 0.07, 0.5, mat.furn);
-    b.box(cx + 0.24, 0.47, cz, 0.06, 0.62, 0.46, mat.furn);
-    // Rug.
-    b.box(-2.7, 0, -0.6, 2.2, 0.012, 2.0, mat.wall);
+    let codeScreen = null;
+    function island(cx, cz) {
+      b.box(cx, 0.72, cz, 1.4, 0.05, 3.2, mat.furnL);
+      for (const s of [-1, 1]) b.box(cx, 0, cz + s * 1.55, 1.3, 0.72, 0.05, mat.furn);
+      b.box(cx, 0, cz, 0.05, 0.72, 3.1, mat.furn);
+      b.box(cx, 0.77, cz, 0.03, 0.3, 3.1, mat.trim);
+      b.box(cx + 0.35, 0.3, cz - 1.1, 0.5, 0.42, 0.6, mat.furn);
+    }
+    // Estación en el borde (ex, z) de una isla: la persona se sienta en +x local, mirando a -x.
+    function station(ex, z, ry, opts = {}) {
+      const w = at(ex, z, ry);
+      const [nx, nz] = w(-0.24, 0.02); notebook(b, nx, 0.77, nz, ry);
+      const [mx, mz] = w(-0.58, 0); const faces = dualMonitors(b, mx, 0.77, mz, ry, opts.faces);
+      if (opts.mug) { const [gx, gz] = w(-0.14, 0.4); mug(b, gx, 0.77, gz); }
+      if (opts.paper) { const [px, pz] = w(-0.3, -0.45); b.box(px, 0.77, pz, 0.24, 0.012, 0.32, mat.paper, ry + 0.25); }
+      if (opts.book) { const [px, pz] = w(-0.32, -0.42); b.box(px, 0.77, pz, 0.18, 0.05, 0.26, mat.plum, ry - 0.15); }
+      const [cx, cz] = w(0.34, 0); swivelChair(b, cx, cz, ry);
+      return { x: cx, z: cz, faces };
+    }
+    island(-3.0, -0.6); island(0.9, -0.6);
+    const sFranco = station(-2.3, -0.6, 0, { mug: true, paper: true, faces: [mat.screen, mat.screen2] });
+    const sA = station(-3.7, -0.6, Math.PI, { mug: true });
+    const sB = station(1.6, -0.6, 0, { book: true, faces: [mat.screen2, mat.screen] });
+    const sC = station(0.2, -0.6, Math.PI, { paper: true, mug: true });
+    // Monitor de Franco con el código (el que da a la cámara).
+    {
+      const f = sFranco.faces[1];
+      codeScreen = new T.Mesh(new T.PlaneGeometry(0.53, 0.31), new T.MeshBasicMaterial({ map: code.tex, toneMapped: false }));
+      codeScreen.position.set(f.x, f.y, f.z); codeScreen.rotation.y = Math.PI / 2 + f.ry;
+      root.add(codeScreen);
+    }
     // Server rack (front faces +z).
     const rx = -4.2, rz = -4.15;
     b.box(rx, 0, rz, 0.9, 2.2, 0.9, mat.black);
@@ -1384,44 +1879,58 @@ async function createWorld(T, progress) {
     for (let i = 0; i < 24; i++) leds.setColorAt(i, Math.random() > 0.3 ? ledOn : ledOff);
     root.add(leds);
     // Shelf with books on the back wall.
-    b.box(-0.6, 1.62, -4.62, 2.6, 0.05, 0.36, mat.furnL);
-    b.box(-0.6, 2.32, -4.62, 2.6, 0.05, 0.36, mat.furnL);
+    const shx = -1.5;
+    b.box(shx, 1.62, -4.62, 2.6, 0.05, 0.36, mat.furnL);
+    b.box(shx, 2.32, -4.62, 2.6, 0.05, 0.36, mat.furnL);
     const books = [[0.32, mat.furn], [0.4, mat.pale], [0.36, mat.trim], [0.28, mat.furnL], [0.42, mat.furn], [0.34, mat.paper]];
-    books.forEach(([h, m], i) => b.box(-1.7 + i * 0.13, 1.67, -4.62, 0.11, h, 0.28, m));
-    b.box(0.3, 1.67, -4.62, 0.36, 0.06, 0.26, mat.pale, 0.1);
-    b.box(0.1, 2.37, -4.62, 0.5, 0.3, 0.2, mat.furn);
-    // Plant (icosahedron foliage).
-    b.cyl(3.9, 0, -4.0, 0.22, 0.4, mat.pot, 7, 0.82);
-    b.add(new T.IcosahedronGeometry(1, 0), mat.plant, 3.9, 0.82, -4.0, 0.36, 0.44, 0.36, 0.2, 0.4, 0);
-    b.add(new T.IcosahedronGeometry(1, 0), mat.plant2, 3.75, 1.15, -3.9, 0.22, 0.28, 0.22, 0.5, 0, 0.3);
-    // Small meeting table with two stools in the front half.
-    b.cyl(1.9, 0, 1.6, 0.26, 0.03, mat.dark, 10);
-    b.cyl(1.9, 0.03, 1.6, 0.035, 0.7, mat.metal, 6);
-    b.cyl(1.9, 0.73, 1.6, 0.6, 0.04, mat.furnL, 14);
-    b.box(1.75, 0.77, 1.5, 0.32, 0.015, 0.24, mat.paper, 0.5);
-    b.box(2.1, 0.77, 1.75, 0.34, 0.02, 0.24, mat.dark, -0.3);
-    for (const [sx, sz] of [[1.0, 2.1], [2.75, 1.0]]) {
+    books.forEach(([h, m], i) => b.box(shx - 1.1 + i * 0.13, 1.67, -4.62, 0.11, h, 0.28, m));
+    b.box(shx + 0.9, 1.67, -4.62, 0.36, 0.06, 0.26, mat.pale, 0.1);
+    b.box(shx + 0.7, 2.37, -4.62, 0.5, 0.3, 0.2, mat.furn);
+    b.cyl(shx - 0.9, 2.37, -4.62, 0.09, 0.2, mat.pot, 7, 0.8);
+    b.add(ICO, mat.plant2, shx - 0.9, 2.66, -4.62, 0.16, 0.14, 0.16, 0.3, 0.2, 0);
+    // Rincón del café en la pared del fondo: mesada, cafetera, tazas y dispenser de agua.
+    b.box(3.2, 0, -4.6, 1.6, 0.9, 0.6, mat.furn);
+    b.box(3.2, 0.9, -4.6, 1.64, 0.04, 0.64, mat.furnL);
+    b.box(3.2, 0.42, -4.29, 1.5, 0.016, 0.01, mat.trim);
+    coffeeMachine(b, 2.7, 0.94, -4.62);
+    mug(b, 3.25, 0.94, -4.48); mug(b, 3.42, 0.94, -4.72, mat.pale); mug(b, 3.62, 0.94, -4.52);
+    b.box(3.75, 0.94, -4.7, 0.2, 0.12, 0.14, mat.paper, 0.2);
+    waterDispenser(b, 4.45, -4.5);
+    plant(b, 4.5, -3.55);
+    // Tele de reuniones en la pared del fondo, sobre el rincón del café.
+    const dash = canvasTex(384, 216, () => {});
+    root.add(tv(b, 3.3, 1.9, -4.78, 1.56, 0.86, dash.tex));
+    // Pizarra con ruedas junto a la isla de Franco, girada hacia la sala.
+    b.add(UNIT_BOX, mat.paper, -3.0, 1.35, 2.6, 1.4, 0.9, 0.04, 0, 0.6, 0);
+    b.add(UNIT_BOX, mat.metal, -3.0, 0.45, 2.6, 0.04, 0.9, 0.04, 0, 0.6, 0);
+    b.add(UNIT_BOX, mat.dark, -3.0, 0.02, 2.6, 0.8, 0.04, 0.4, 0, 0.6, 0);
+    b.add(UNIT_BOX, mat.signal, -3.1, 1.5, 2.66, 0.5, 0.02, 0.005, 0, 0.6, 0);
+    b.add(UNIT_BOX, mat.trim, -3.0, 1.3, 2.66, 0.8, 0.02, 0.005, 0, 0.6, 0);
+    b.add(UNIT_BOX, mat.trim, -2.95, 1.1, 2.66, 0.6, 0.02, 0.005, 0, 0.6, 0);
+    // Mesita de reunión con dos banquetas, en el frente.
+    roundTable(b, 3.0, 2.2);
+    b.box(2.85, 0.77, 2.1, 0.32, 0.015, 0.24, mat.paper, 0.5);
+    mug(b, 3.25, 0.77, 2.4);
+    for (const [sx, sz] of [[2.15, 2.75], [3.85, 1.65]]) {
       b.cyl(sx, 0, sz, 0.03, 0.44, mat.metal, 6);
       b.cyl(sx, 0.44, sz, 0.2, 0.06, mat.furn, 10);
       b.cyl(sx, 0, sz, 0.18, 0.02, mat.dark, 8);
     }
-    // Floor-standing whiteboard on wheels, angled toward the room.
-    b.add(UNIT_BOX, mat.paper, -2.2, 1.35, 3.6, 1.4, 0.9, 0.04, 0, 0.6, 0);
-    b.add(UNIT_BOX, mat.metal, -2.2, 0.45, 3.6, 0.04, 0.9, 0.04, 0, 0.6, 0);
-    b.add(UNIT_BOX, mat.dark, -2.2, 0.02, 3.6, 0.8, 0.04, 0.4, 0, 0.6, 0);
-    // Side cabinet.
-    b.box(2.6, 0, -4.45, 1.4, 0.8, 0.6, mat.furn);
-    b.box(2.6, 0.8, -4.45, 1.44, 0.04, 0.64, mat.furnL);
     b.flush();
 
     const franco = makeFranco('typing');
-    franco.root.position.set(cx, 0.53, cz);
+    franco.root.position.set(sFranco.x, 0.53, sFranco.z);
     franco.root.rotation.y = -Math.PI / 2;
     root.add(franco.root);
     franco.ring.position.y = -0.5;
+    // Compañeros: el de enfrente de Franco siempre; los de la otra isla sólo en desktop.
+    const people = [];
+    const seat = (p, st, ry) => { p.root.position.set(st.x, 0.53, st.z); p.root.rotation.y = ry; root.add(p.root); people.push(p); };
+    seat(person(0, 'typing'), sA, Math.PI / 2);
+    if (!MOBILE) { seat(person(1, 'typing'), sB, -Math.PI / 2); seat(person(2, 'typing'), sC, Math.PI / 2); }
 
     const glow = new T.PointLight(0xbff5da, 0, 3, 1.4);
-    glow.position.set(-3.6, 1.3, dz); root.add(glow);
+    glow.position.set(-2.9, 1.25, -0.6); root.add(glow);
 
     // Scrolling code on the monitor.
     const lines = [];
@@ -1452,9 +1961,50 @@ async function createWorld(T, progress) {
       code.tex.needsUpdate = true;
     }
     drawCode(true);
+
+    // Tablero de la tele: barras que cambian, una línea que corre y el chip "EN LÍNEA".
+    const bars = Array.from({ length: 7 }, () => ({ v: 0.3 + Math.random() * 0.6, g: 0.3 + Math.random() * 0.6 }));
+    const series = Array.from({ length: 36 }, () => 0.5);
+    let dashLast = -1, dashN = 0, lat = 42, deploys = 12;
+    function drawDash() {
+      const c = dash.ctx, w = 384, h = 216;
+      c.fillStyle = '#0b0d10'; c.fillRect(0, 0, w, h);
+      c.fillStyle = '#151a1f'; c.fillRect(0, 0, w, 26);
+      c.textBaseline = 'middle'; c.textAlign = 'left';
+      c.font = '600 11px "JetBrains Mono", monospace'; c.fillStyle = '#c9cfd8';
+      c.fillText('PANEL · PRODUCCIÓN', 12, 13);
+      c.fillStyle = 'rgba(31,191,117,.18)'; rrect(c, w - 96, 6, 84, 14, 7); c.fill();
+      c.fillStyle = '#1fbf75'; c.beginPath(); c.arc(w - 86, 13, 3, 0, Math.PI * 2); c.fill();
+      c.font = '600 10px "JetBrains Mono", monospace'; c.fillText('EN LÍNEA', w - 78, 13);
+      c.fillStyle = '#8a94a3'; c.font = '400 9px "JetBrains Mono", monospace';
+      c.fillText('PEDIDOS / HORA', 16, 42); c.fillText('TRÁFICO', 236, 42);
+      const bx = 16, bw = 22, by = 150;
+      bars.forEach((o, i) => { const hh = o.v * 96; c.fillStyle = i === 4 ? '#1fbf75' : '#3a4250'; c.fillRect(bx + i * 30, by - hh, bw, hh); });
+      c.fillStyle = '#2f3540'; c.fillRect(bx, by + 2, 7 * 30 - 8, 1); c.fillRect(236, by + 2, 130, 1);
+      c.strokeStyle = 'rgba(31,191,117,.35)'; c.lineWidth = 1;
+      for (let i = 0; i < 3; i++) { c.beginPath(); c.moveTo(236, 60 + i * 30); c.lineTo(366, 60 + i * 30); c.stroke(); }
+      c.strokeStyle = '#1fbf75'; c.lineWidth = 2; c.beginPath();
+      series.forEach((v, i) => { const x = 236 + i * 3.7, y = 150 - v * 88; i ? c.lineTo(x, y) : c.moveTo(x, y); });
+      c.stroke();
+      c.fillStyle = '#8a94a3'; c.font = '400 9px "JetBrains Mono", monospace';
+      c.fillText('LATENCIA', 16, 176); c.fillText('UPTIME', 136, 176); c.fillText('DESPLIEGUES HOY', 236, 176);
+      c.fillStyle = '#c9cfd8'; c.font = '600 16px "JetBrains Mono", monospace';
+      c.fillText(lat + ' ms', 16, 196); c.fillText('99,98 %', 136, 196); c.fillText(String(deploys), 236, 196);
+      dash.tex.needsUpdate = true;
+    }
+    function stepDash() {
+      dashN++;
+      if (dashN % 12 === 0) { for (const o of bars) o.g = 0.2 + Math.random() * 0.75; lat = 30 + ((Math.random() * 40) | 0); }
+      if (dashN % 90 === 0) deploys++;
+      for (const o of bars) o.v += (o.g - o.v) * 0.18;
+      series.shift();
+      series.push(Math.min(0.95, Math.max(0.08, series[series.length - 1] + (Math.random() - 0.5) * 0.18)));
+    }
+    drawDash();
     let codeT = 0, ledT = 0, blink = 0;
     function update(t, dt) {
       franco.update(t);
+      for (const p of people) p.update(t);
       if (REDUCE) return;
       codeT += dt; ledT += dt;
       if (codeT > 0.16) {
@@ -1467,6 +2017,7 @@ async function createWorld(T, progress) {
         for (let i = 0; i < 3; i++) leds.setColorAt((Math.random() * 24) | 0, Math.random() > 0.35 ? ledOn : ledOff);
         leds.instanceColor.needsUpdate = true;
       }
+      if (t - dashLast >= FPS6) { dashLast = t; stepDash(); drawDash(); }
     }
     lights.office = [[glow, 1.2]];
     return { root, franco, update, light: { hemi: 1.5, sun: 2.4, sunColor: 0xfff6ea } };
@@ -1476,100 +2027,214 @@ async function createWorld(T, progress) {
     const root = new T.Group(); root.position.x = SCENE_X.uni; scene.add(root);
     const b = new Batch(root);
     base(root, b, { window: { a: -3.4, b: -1.4, y0: 1.1, y1: 2.6 } });
-    // Board on the left wall (faces +x).
-    b.box(-4.76, 0.95, 0, 0.06, 1.95, 5.5, mat.trim);
-    b.box(-4.68, 0.93, 0, 0.16, 0.04, 5.2, mat.furnL);
-    const board = canvasTex(1024, 360, (c, w, h) => {
-      c.fillStyle = '#1b2126'; c.fillRect(0, 0, w, h);
+    // Pizarrón en la pared izquierda (mira a +x), corrido al fondo para dejar lugar a la pantalla.
+    const BZ = -2.3;
+    b.box(-4.76, 0.95, BZ, 0.06, 1.95, 4.5, mat.trim);
+    b.box(-4.68, 0.93, BZ, 0.16, 0.04, 4.2, mat.furnL);
+    b.box(-4.62, 0.97, BZ - 1.6, 0.06, 0.025, 0.12, mat.paper);
+    b.box(-4.62, 0.97, BZ - 1.4, 0.06, 0.025, 0.12, mat.pale);
+    // Tres "diapositivas" de pizarrón dibujadas en coordenadas lógicas 1024×444.
+    const LW = 1024, LH = 444;
+    const MONO = '"JetBrains Mono", monospace';
+    const INK = 'rgba(214,220,228,.9)', INK2 = 'rgba(138,148,163,.9)';
+    const boardBg = (c) => {
+      c.fillStyle = '#1b2126'; c.fillRect(0, 0, LW, LH);
       c.strokeStyle = 'rgba(201,207,216,.08)'; c.lineWidth = 1;
-      for (let x = 0; x < w; x += 32) { c.beginPath(); c.moveTo(x, 0); c.lineTo(x, h); c.stroke(); }
-      c.font = '500 21px "JetBrains Mono", monospace';
-      c.fillStyle = 'rgba(214,220,228,.9)';
-      const code2 = ['dijkstra(G, s):', '  dist[v] ← ∞ ; dist[s] ← 0', '  Q ← V', '  mientras Q ≠ ∅:', '    u ← extraerMin(Q)', '    para v ∈ ady(u):', '      relajar(u, v)'];
-      code2.forEach((l, i) => c.fillText(l, 34, 50 + i * 32));
-      c.fillStyle = '#1fbf75'; c.fillRect(34, 285, 300, 2);
-      c.fillStyle = 'rgba(214,220,228,.9)';
-      c.fillText('T(n) = O((V + E) log V)', 34, 320);
-      // Graph sketch.
-      const nodes = [[620, 90, 'A'], [760, 60, 'B'], [880, 150, 'C'], [700, 210, 'D'], [580, 250, 'E'], [860, 290, 'F']];
-      const edges = [[0, 1, 4], [1, 2, 3], [0, 3, 2], [3, 2, 5], [3, 4, 1], [2, 5, 2], [4, 5, 7]];
-      c.lineWidth = 2;
-      for (const [a, z, wgt] of edges) {
-        const [x1, y1] = nodes[a], [x2, y2] = nodes[z];
-        const hot = (a === 0 && z === 3) || (a === 3 && z === 2) || (a === 2 && z === 5);
-        c.strokeStyle = hot ? '#1fbf75' : 'rgba(214,220,228,.55)';
-        c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke();
-        c.fillStyle = 'rgba(214,220,228,.7)'; c.font = '400 16px "JetBrains Mono", monospace';
-        c.fillText(String(wgt), (x1 + x2) / 2 + 6, (y1 + y2) / 2 - 6);
+      for (let x = 0; x < LW; x += 32) { c.beginPath(); c.moveTo(x, 0); c.lineTo(x, LH); c.stroke(); }
+    };
+    const slides = [
+      (c) => {
+        c.font = `500 21px ${MONO}`; c.fillStyle = INK;
+        const code2 = ['dijkstra(G, s):', '  dist[v] ← ∞ ; dist[s] ← 0', '  Q ← V', '  mientras Q ≠ ∅:', '    u ← extraerMin(Q)', '    para v ∈ ady(u):', '      relajar(u, v)'];
+        code2.forEach((l, i) => c.fillText(l, 34, 60 + i * 34));
+        c.fillStyle = '#1fbf75'; c.fillRect(34, 318, 300, 2);
+        c.fillStyle = INK; c.fillText('T(n) = O((V + E) log V)', 34, 356);
+        c.font = `400 15px ${MONO}`; c.fillStyle = INK2; c.fillText('cola de prioridad: heap binario', 34, 392);
+        // Graph sketch.
+        const nodes = [[620, 120, 'A'], [760, 90, 'B'], [880, 180, 'C'], [700, 240, 'D'], [580, 280, 'E'], [860, 320, 'F']];
+        const edges = [[0, 1, 4], [1, 2, 3], [0, 3, 2], [3, 2, 5], [3, 4, 1], [2, 5, 2], [4, 5, 7]];
+        c.lineWidth = 2;
+        for (const [a, z, wgt] of edges) {
+          const [x1, y1] = nodes[a], [x2, y2] = nodes[z];
+          const hot = (a === 0 && z === 3) || (a === 3 && z === 2) || (a === 2 && z === 5);
+          c.strokeStyle = hot ? '#1fbf75' : 'rgba(214,220,228,.55)';
+          c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke();
+          c.fillStyle = 'rgba(214,220,228,.7)'; c.font = `400 16px ${MONO}`;
+          c.fillText(String(wgt), (x1 + x2) / 2 + 6, (y1 + y2) / 2 - 6);
+        }
+        for (const [x, y, n] of nodes) {
+          c.fillStyle = '#1b2126'; c.beginPath(); c.arc(x, y, 18, 0, Math.PI * 2); c.fill();
+          c.strokeStyle = 'rgba(214,220,228,.9)'; c.stroke();
+          c.fillStyle = 'rgba(214,220,228,.95)'; c.font = `500 17px ${MONO}`;
+          c.fillText(n, x - 6, y + 6);
+        }
+        c.font = `400 15px ${MONO}`; c.fillStyle = INK2;
+        c.fillText('camino mínimo A → F', 620, 380);
+      },
+      (c) => {
+        c.font = `500 22px ${MONO}`; c.fillStyle = INK; c.fillText('Complejidad temporal', 34, 50);
+        const ox = 90, oy = 380, W = 420, H = 290;
+        c.strokeStyle = 'rgba(214,220,228,.7)'; c.lineWidth = 2;
+        c.beginPath(); c.moveTo(ox, oy - H); c.lineTo(ox, oy); c.lineTo(ox + W, oy); c.stroke();
+        c.font = `400 15px ${MONO}`; c.fillStyle = INK2; c.fillText('n', ox + W - 10, oy + 24); c.fillText('t', ox - 26, oy - H + 10);
+        const curves = [['O(n)', 'rgba(214,220,228,.45)', (u) => u * 0.45], ['O(n log n)', '#1fbf75', (u) => u * Math.log2(1 + u * 15) / 4.4], ['O(n²)', 'rgba(214,220,228,.9)', (u) => u * u]];
+        curves.forEach(([name, col, f], i) => {
+          c.strokeStyle = col; c.lineWidth = i === 1 ? 3 : 2; c.beginPath();
+          for (let k = 0; k <= 40; k++) { const u = k / 40, v = Math.min(1, f(u)); const x = ox + u * W, y = oy - v * H; k ? c.lineTo(x, y) : c.moveTo(x, y); }
+          c.stroke();
+          c.fillStyle = col; c.fillRect(600, 92 + i * 36, 22, 4);
+          c.fillStyle = INK; c.font = `500 18px ${MONO}`; c.fillText(name, 634, 100 + i * 36);
+        });
+        c.font = `400 16px ${MONO}`; c.fillStyle = INK2;
+        [['n', 'n log n', 'n²'], ['8', '24', '64'], ['64', '384', '4096'], ['1024', '10240', '1 048 576']].forEach((row, r) => {
+          row.forEach((cell, k) => { c.fillStyle = r ? INK : INK2; c.fillText(cell, 600 + k * 140, 240 + r * 32); });
+        });
+        c.fillStyle = '#1fbf75'; c.fillRect(600, 252, 380, 2);
+      },
+      (c) => {
+        c.font = `500 22px ${MONO}`; c.fillStyle = INK; c.fillText('Repaso · parcial', 34, 50);
+        c.fillStyle = '#1fbf75'; c.fillRect(34, 64, 220, 2);
+        const F = ['T(n) = 2·T(n/2) + Θ(n)   ⇒   Θ(n log n)', 'Σ i  (i = 1..n)  =  n(n+1) / 2', 'P(A|B) = P(B|A) · P(A) / P(B)', 'log_b x = ln x / ln b', 'μ = (1/n) Σ xᵢ     σ² = (1/n) Σ (xᵢ − μ)²', '∇f = (∂f/∂x, ∂f/∂y)', 'gcd(a, b) = gcd(b, a mod b)'];
+        c.font = `500 20px ${MONO}`;
+        F.forEach((l, i) => { c.fillStyle = i === 2 ? '#1fbf75' : INK; c.fillText(l, 34, 110 + i * 44); });
+        c.font = `400 15px ${MONO}`; c.fillStyle = INK2; c.fillText('* entra todo lo anterior a la unidad 6', 34, 420);
+      },
+    ];
+    const board = canvasTex(896, 388, () => {});
+    const BS = { idx: 0, shown: -1, last: -1 };
+    function drawBoard(idx, prev, p) {
+      const c = board.ctx, w = board.canvas.width, h = board.canvas.height;
+      c.save(); c.scale(w / LW, h / LH);
+      boardBg(c); slides[prev == null ? idx : prev](c);
+      if (prev != null) {
+        c.save(); c.beginPath(); c.rect(0, 0, p * LW, LH); c.clip();
+        boardBg(c); slides[idx](c); c.restore();
+        c.fillStyle = '#1fbf75'; c.fillRect(p * LW - 2, 0, 3, LH);
       }
-      for (const [x, y, n] of nodes) {
-        c.fillStyle = '#1b2126'; c.beginPath(); c.arc(x, y, 18, 0, Math.PI * 2); c.fill();
-        c.strokeStyle = 'rgba(214,220,228,.9)'; c.stroke();
-        c.fillStyle = 'rgba(214,220,228,.95)'; c.font = '500 17px "JetBrains Mono", monospace';
-        c.fillText(n, x - 6, y + 6);
-      }
-      c.font = '400 15px "JetBrains Mono", monospace'; c.fillStyle = 'rgba(138,148,163,.9)';
-      c.fillText('camino mínimo A → F', 620, 340);
-    });
-    const boardMesh = new T.Mesh(new T.PlaneGeometry(5.3, 1.86), new T.MeshBasicMaterial({ map: board.tex, toneMapped: false, color: 0xd0d4d9 }));
-    boardMesh.position.set(-4.72, 1.9, 0); boardMesh.rotation.y = Math.PI / 2;
+      c.restore();
+      board.tex.needsUpdate = true;
+    }
+    drawBoard(0, null, 1);
+    const boardMesh = new T.Mesh(new T.PlaneGeometry(4.3, 1.86), new T.MeshBasicMaterial({ map: board.tex, toneMapped: false, color: 0xd0d4d9 }));
+    boardMesh.position.set(-4.72, 1.9, BZ); boardMesh.rotation.y = Math.PI / 2;
     root.add(boardMesh);
-    // Rows of desks (facing the board, -x) with benches behind.
-    const rows = [-2.2, -0.3, 1.6], cols = [-1.7, 1.5];
-    for (const x of rows) for (const z of cols) {
-      b.box(x, 0.7, z, 0.55, 0.05, 1.9, mat.furnL);
-      b.box(x, 0, z - 0.88, 0.5, 0.7, 0.05, mat.furn);
-      b.box(x, 0, z + 0.88, 0.5, 0.7, 0.05, mat.furn);
-      b.box(x - 0.22, 0.32, z, 0.04, 0.38, 1.8, mat.furn);
-      b.box(x + 0.62, 0.41, z, 0.34, 0.05, 1.9, mat.furn);
-      b.box(x + 0.62, 0, z - 0.85, 0.3, 0.41, 0.05, mat.trim);
-      b.box(x + 0.62, 0, z + 0.85, 0.3, 0.41, 0.05, mat.trim);
-    }
-    // Notes on other desks.
-    b.box(-0.35, 0.75, 1.2, 0.24, 0.012, 0.32, mat.paper, 0.3);
-    b.box(1.55, 0.75, -1.4, 0.24, 0.012, 0.32, mat.paper, -0.2);
-    b.box(1.6, 0.75, 1.8, 0.2, 0.06, 0.28, mat.trim, 0.1);
-    // Franco's notebook and pen.
-    b.box(-2.2, 0.75, -2.05, 0.26, 0.012, 0.36, mat.paper, 0.08);
-    b.box(-2.14, 0.765, -1.86, 0.012, 0.012, 0.16, mat.dark, 0.4);
-    // Lectern.
-    b.box(-3.7, 0, 3.4, 0.55, 1.0, 0.5, mat.furn);
-    b.add(UNIT_BOX, mat.furnL, -3.66, 1.06, 3.4, 0.62, 0.05, 0.58, 0, 0, -0.25);
-    // Ceiling projector.
-    b.box(0.3, 2.84, -0.2, 0.04, 0.18, 0.04, mat.metal);
-    b.box(0.3, 2.66, -0.2, 0.42, 0.16, 0.36, mat.pale);
-    b.add(unitCyl(10), mat.dark, 0.08, 2.74, -0.2, 0.06, 0.05, 0.06, 0, 0, Math.PI / 2);
-    // Bookshelf on the back wall.
-    b.box(2.8, 0, -4.55, 2.2, 2.3, 0.04, mat.furn);
-    for (let i = 0; i < 5; i++) b.box(2.8, i * 0.55, -4.42, 2.2, 0.04, 0.32, mat.furnL);
-    b.box(1.7, 0, -4.42, 0.04, 2.24, 0.32, mat.furnL);
-    b.box(3.9, 0, -4.42, 0.04, 2.24, 0.32, mat.furnL);
-    const bm = [mat.furn, mat.pale, mat.trim, mat.paper, mat.furnL, mat.dark];
-    for (let s = 0; s < 4; s++) {
-      let x = 1.82;
-      while (x < 3.6) {
-        const w = 0.07 + ((x * 37 + s * 11) % 5) * 0.02, h = 0.32 + ((x * 53 + s * 7) % 4) * 0.04;
-        if (((x * 13 + s) | 0) % 7 !== 3) b.box(x + w / 2, s * 0.55 + 0.04, -4.42, w, h, 0.26, bm[((x * 29 + s * 3) | 0) % bm.length]);
-        x += w + 0.015;
+    // Pantalla de proyección (enrollable) a la derecha del pizarrón, y el proyector apuntándole.
+    const PZ = 1.5;
+    b.add(unitCyl(10), mat.dark, -4.7, 2.3, PZ, 0.05, 2.34, 0.05, Math.PI / 2, 0, 0);
+    b.box(-4.7, 0.86, PZ, 0.03, 0.04, 2.24, mat.dark);
+    const slide = canvasTex(384, 216, () => {});
+    function drawSlide(idx) {
+      const c = slide.ctx, w = 384, h = 216;
+      c.fillStyle = '#303a48'; c.fillRect(0, 0, w, h);
+      c.fillStyle = '#1fbf75'; c.fillRect(0, 0, 6, h);
+      c.textBaseline = 'middle'; c.textAlign = 'left';
+      c.font = `600 15px ${MONO}`; c.fillStyle = '#e6ebf0';
+      c.fillText(['Grafos: camino mínimo', 'Complejidad: n log n vs n²', 'Repaso para el parcial'][idx], 22, 30);
+      c.fillStyle = 'rgba(230,235,240,.25)'; c.fillRect(22, 46, 220, 1);
+      const bw = [[150, 110, 180], [120, 170, 90], [160, 130, 200]][idx];
+      bw.forEach((len, i) => {
+        c.fillStyle = '#1fbf75'; c.beginPath(); c.arc(28, 72 + i * 32, 3.5, 0, Math.PI * 2); c.fill();
+        c.fillStyle = 'rgba(230,235,240,.55)'; c.fillRect(40, 68 + i * 32, len, 8);
+        c.fillStyle = 'rgba(230,235,240,.25)'; c.fillRect(40, 80 + i * 32, len * 0.6, 4);
+      });
+      const cx = 268, cy = 70, cw = 94, ch = 90;
+      c.fillStyle = 'rgba(0,0,0,.18)'; c.fillRect(cx - 8, cy - 8, cw + 16, ch + 16);
+      if (idx === 0) {
+        [0.45, 0.7, 0.35, 0.9, 0.6].forEach((v, i) => { c.fillStyle = i === 3 ? '#1fbf75' : 'rgba(230,235,240,.5)'; c.fillRect(cx + i * 19, cy + ch - v * ch, 14, v * ch); });
+      } else if (idx === 1) {
+        c.strokeStyle = 'rgba(230,235,240,.5)'; c.lineWidth = 2; c.beginPath(); c.moveTo(cx, cy + ch); c.lineTo(cx + cw, cy + ch - cw * 0.5); c.stroke();
+        c.strokeStyle = '#1fbf75'; c.beginPath();
+        for (let k = 0; k <= 20; k++) { const u = k / 20; const x = cx + u * cw, y = cy + ch - u * u * ch; k ? c.lineTo(x, y) : c.moveTo(x, y); }
+        c.stroke();
+      } else {
+        c.strokeStyle = '#1fbf75'; c.lineWidth = 10; c.beginPath(); c.arc(cx + cw / 2, cy + ch / 2, 34, -Math.PI / 2, Math.PI * 0.9); c.stroke();
+        c.strokeStyle = 'rgba(230,235,240,.3)'; c.beginPath(); c.arc(cx + cw / 2, cy + ch / 2, 34, Math.PI * 0.9, Math.PI * 1.5); c.stroke();
       }
+      c.font = `400 10px ${MONO}`; c.fillStyle = 'rgba(230,235,240,.5)';
+      c.fillText('Algoritmos II · clase 7', 22, h - 16); c.textAlign = 'right'; c.fillText(`${idx + 1} / 3`, w - 16, h - 16); c.textAlign = 'left';
+      slide.tex.needsUpdate = true;
     }
+    drawSlide(0);
+    const screenMesh = new T.Mesh(new T.PlaneGeometry(2.2, 1.3), new T.MeshBasicMaterial({ map: slide.tex, toneMapped: false, color: 0xe8ecf0 }));
+    screenMesh.position.set(-4.7, 1.55, PZ); screenMesh.rotation.y = Math.PI / 2;
+    root.add(screenMesh);
+    // Ceiling projector (lens faces -x, toward the screen).
+    b.box(0.3, 2.84, PZ, 0.04, 0.18, 0.04, mat.metal);
+    b.box(0.3, 2.66, PZ, 0.42, 0.16, 0.36, mat.pale);
+    b.add(unitCyl(10), mat.dark, 0.08, 2.74, PZ, 0.06, 0.05, 0.06, 0, 0, Math.PI / 2);
+    b.box(0.3, 2.7, PZ + 0.182, 0.02, 0.02, 0.006, mat.signal);
+    if (!MOBILE) {
+      // Cono de luz tenue del proyector a la pantalla.
+      const lens = new T.Vector3(0.06, 2.74, PZ), scr = new T.Vector3(-4.7, 1.55, PZ);
+      const len = lens.distanceTo(scr);
+      const cone = new T.Mesh(new T.ConeGeometry(1.1, len, 24, 1, true), new T.MeshBasicMaterial({ color: 0xcfe6ff, transparent: true, opacity: 0.08, blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide }));
+      cone.position.copy(lens).add(scr).multiplyScalar(0.5);
+      cone.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), lens.clone().sub(scr).normalize());
+      cone.scale.x = 0.6;
+      cone.renderOrder = 2;
+      root.add(cone);
+    }
+    // Pupitres en 3×3 mirando al pizarrón (-x), con pasillo entre filas.
+    const cols = [-1.9, -0.4, 1.1], rows = [-1.9, 0, 1.9];
+    const SEAT = (x, z) => ({ x: x + 0.6, z });
+    for (const x of cols) for (const z of rows) { studentDesk(b, x, z); classChair(b, x + 0.62, z, 0); }
+    // Franco adelante a la izquierda; compañeros en 5 bancos; 3 vacíos, dos con mochila.
+    const fSeat = SEAT(-1.9, 1.9);
+    const mates = [[-1.9, 0], [-0.4, 1.9], [1.1, 1.9], [-1.9, -1.9], [-0.4, -1.9]];
+    const empties = [[1.1, -1.9, mat.plum], [-0.4, 0, pm(0x9c5a46)], [1.1, 0, null]];
+    // Apuntes en los bancos ocupados.
+    for (const [x, z] of mates) { b.box(x, 0.74, z, 0.24, 0.012, 0.32, mat.paper, 0.2 - ((x * 7 + z * 3) % 1) * 0.5); b.box(x + 0.08, 0.746, z + 0.15, 0.012, 0.012, 0.16, mat.dark, 0.4); }
+    for (const [x, z, m] of empties) { if (m) backpack(b, x + 0.55, z + 0.6, 0.3, m); else b.box(x, 0.74, z, 0.2, 0.06, 0.28, mat.trim, 0.1); }
+    // Franco's notebook and pen.
+    b.box(-1.9, 0.74, 1.9, 0.26, 0.012, 0.36, mat.paper, 0.08);
+    b.box(-1.84, 0.752, 2.1, 0.012, 0.012, 0.16, mat.dark, 0.4);
+    // Atril entre el pizarrón y la pantalla.
+    b.box(-3.9, 0, -0.5, 0.55, 1.0, 0.5, mat.furn);
+    b.add(UNIT_BOX, mat.furnL, -3.86, 1.06, -0.5, 0.62, 0.05, 0.58, 0, 0, -0.25);
+    b.box(-3.84, 1.1, -0.5, 0.3, 0.012, 0.4, mat.paper, 0.1);
+    // Biblioteca en la pared del fondo.
+    bookcase(b, 2.8, -4.57, -Math.PI / 2, 2.2, 4);
+    plant(b, 4.3, -3.6, 0.8);
     b.flush();
 
     const franco = makeFranco('writing');
-    franco.root.position.set(-1.58, 0.51, -2.05);
+    franco.root.position.set(fSeat.x, 0.51, fSeat.z);
     franco.root.rotation.y = -Math.PI / 2;
     root.add(franco.root);
     franco.ring.position.y = -0.48;
+    const people = [];
+    mates.slice(0, MOBILE ? 3 : 5).forEach(([x, z], i) => {
+      const p = person(i + 1, 'writing');
+      p.root.position.set(x + 0.6, 0.51, z); p.root.rotation.y = -Math.PI / 2;
+      root.add(p.root); people.push(p);
+    });
+    const teacher = makePerson({ shirt: 0x4a505c, pants: 0x1f242b, skin: 0xc8a68e, hair: 0x8e939c, pose: 'standing' });
+    teacher.root.position.set(-3.95, 0.93, 0.45); teacher.root.rotation.y = Math.PI / 2 + 0.2;
+    root.add(teacher.root); people.push(teacher);
+
+    // Pizarrón y pantalla cambian de diapositiva cada 6 s con un barrido corto.
+    function tickBoard(t) {
+      const cyc = t / 6, idx = Math.floor(cyc) % 3, p = (cyc % 1) * 6 / 0.6;
+      if (p >= 1) { if (BS.shown !== idx) { BS.shown = idx; drawBoard(idx, null, 1); drawSlide(idx); } return; }
+      if (t - BS.last < FPS6) return;
+      BS.last = t;
+      drawBoard(idx, (idx + 2) % 3, p);
+    }
+    const update = (t) => {
+      franco.update(t);
+      for (const p of people) p.update(t);
+      if (!REDUCE) tickBoard(t);
+    };
     lights.uni = [];
-    return { root, franco, update: (t) => franco.update(t), light: { hemi: 1.6, sun: 2.2, sunColor: 0xf3f6fa } };
+    return { root, franco, update, light: { hemi: 1.6, sun: 2.2, sunColor: 0xf3f6fa } };
   }
 
   function home() {
     const root = new T.Group(); root.position.x = SCENE_X.home; scene.add(root);
     const b = new Batch(root);
     base(root, b, { wallLeftOpen: { a: -1.6, b: 0.6, y0: 1.0, y1: 2.5 }, night: true });
-    // Rug.
-    b.box(0, 0, -2.6, 4.2, 0.012, 2.8, mat.wall);
+    // Alfombra con los sillones alrededor.
+    rug(b, 0, -2.0, 3.6, 2.6, mat.rug2);
     // Sofa against the back wall, facing +z.
     const sz = -3.95;
     b.box(0, 0.06, sz, 2.6, 0.32, 0.95, mat.sofa);
@@ -1581,8 +2246,11 @@ async function createWorld(T, progress) {
     b.box(-1.38, 0.06, sz, 0.2, 0.6, 0.95, mat.sofa);
     b.box(1.38, 0.06, sz, 0.2, 0.6, 0.95, mat.sofa);
     for (const x of [-1.35, 1.35]) for (const z of [sz - 0.38, sz + 0.38]) b.box(x, 0, z, 0.06, 0.06, 0.06, mat.dark);
+    // Segundo sofá en L (mira a +x) y un sillón de un cuerpo mirando al centro.
+    sofa(b, -2.3, -1.5, 0, 2.1, 2);
+    sofa(b, 2.45, -1.15, 2.2, 1.2, 1);
     // Side table with mate and thermos.
-    const tx = 2.05, tz = -3.7;
+    const tx = 1.95, tz = -3.55;
     b.cyl(tx, 0, tz, 0.2, 0.03, mat.dark, 10);
     b.cyl(tx, 0.03, tz, 0.025, 0.5, mat.metal, 6);
     b.cyl(tx, 0.53, tz, 0.33, 0.04, mat.furnL, 12);
@@ -1618,13 +2286,30 @@ async function createWorld(T, progress) {
     });
     const signText = new T.Mesh(new T.PlaneGeometry(1.4, 0.26), new T.MeshBasicMaterial({ map: label.tex, transparent: true, toneMapped: false, depthWrite: false }));
     signText.position.set(0, 2.52, -4.77); root.add(signText);
+    // Mueble de tele contra la pared del fondo, con una serie andando.
+    tvUnit(b, 3.2, -4.5, 1.7);
+    b.box(3.2, 0.54, -4.5, 0.5, 0.08, 0.2, mat.dark);
+    const tvc = canvasTex(256, 144, () => {});
+    root.add(tv(b, 3.2, 1.19, -4.56, 1.86, 1.06, tvc.tex));
+    const tvLight = new T.PointLight(0x7fb0ff, 0, 4.5, 1.4);
+    tvLight.position.set(3.1, 1.3, -3.7); root.add(tvLight);
     // Low shelf + plant on the right.
     b.box(3.9, 0, -1.5, 0.7, 0.9, 1.6, mat.furn);
     b.box(3.9, 0.9, -1.5, 0.74, 0.04, 1.64, mat.furnL);
     b.box(3.85, 0.94, -1.95, 0.24, 0.32, 0.18, mat.pale);
     b.box(3.85, 0.94, -1.7, 0.2, 0.24, 0.12, mat.trim);
     b.cyl(3.9, 0.94, -1.05, 0.14, 0.24, mat.pot, 7, 0.8);
-    b.add(new T.IcosahedronGeometry(1, 0), mat.plant, 3.9, 1.38, -1.05, 0.24, 0.3, 0.24, 0.3, 0.2, 0);
+    b.add(ICO, mat.plant, 3.9, 1.38, -1.05, 0.24, 0.3, 0.24, 0.3, 0.2, 0);
+    // Rincón de comedor adelante a la derecha, biblioteca en la pared izquierda y una planta grande.
+    roundTable(b, 2.5, 2.4, 0.55);
+    classChair(b, 3.25, 2.4, 0); classChair(b, 1.75, 2.4, Math.PI);
+    mug(b, 2.35, 0.77, 2.2, mat.pale); b.cyl(2.65, 0.77, 2.55, 0.12, 0.05, mat.paper, 10, 0.8);
+    b.box(2.4, 0.77, 2.65, 0.26, 0.015, 0.2, mat.plum, 0.3);
+    bookcase(b, -4.78, 2.3, 0, 2.0, 3);
+    plant(b, -3.9, 4.0, 1.1);
+    // Pantuflas y un libro al lado del sofá.
+    b.box(-1.0, 0, -2.9, 0.12, 0.04, 0.26, mat.pot, 0.15); b.box(-0.82, 0, -2.88, 0.12, 0.04, 0.26, mat.pot, -0.1);
+    b.box(1.2, 0.02, -1.0, 0.22, 0.04, 0.3, mat.plum, 0.4);
     b.flush();
 
     const franco = makeFranco('phone');
@@ -1634,10 +2319,47 @@ async function createWorld(T, progress) {
     franco.ring.position.z = 0.45;
     const phoneLight = new T.PointLight(0x1fbf75, 0, 1.6, 1.2);
     phoneLight.position.set(-0.55, 0.95, sz + 0.55); root.add(phoneLight);
-    lights.home = [[lamp, 5.5], [phoneLight, 1.4]];
+    // Mascotas: caniche en la alfombra mirando a Franco, gato gris dormido en el sofá chico,
+    // gato negro sentado sobre el mueble de la tele.
+    const pets = [];
+    const dog = makeDog();
+    dog.root.position.set(0.7, 0, -1.4); dog.root.rotation.y = Math.atan2(-0.55 - 0.7, sz + 0.12 + 1.4);
+    root.add(dog.root); pets.push(dog);
+    const catB = makeCat(mat.catB, 'sit');
+    catB.root.position.set(2.55, 0.54, -4.42); catB.root.rotation.y = 0.55;
+    root.add(catB.root); pets.push(catB);
+    if (!MOBILE) {
+      const catG = makeCat(mat.catG, 'sleep');
+      const [gx, gz] = at(-2.3, -1.5, 0)(0.06, 0.44);
+      catG.root.position.set(gx, 0.48, gz); catG.root.rotation.y = 0.9;
+      root.add(catG.root); pets.push(catG);
+    }
+    // La tele: bandas de color que cambian de "escena" cada ~5 s.
+    let tvLast = -1;
+    function drawTv(t) {
+      const c = tvc.ctx, w = 256, h = 144;
+      const sc = Math.floor(t / 5), hue = (sc * 77 + t * 4) % 360, cut = t % 5;
+      const g = c.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, `hsl(${hue} 45% 30%)`); g.addColorStop(0.65, `hsl(${(hue + 40) % 360} 40% 18%)`); g.addColorStop(1, '#0b0d10');
+      c.fillStyle = g; c.fillRect(0, 0, w, h);
+      c.fillStyle = `hsl(${(hue + 60) % 360} 70% 72%)`; c.beginPath(); c.arc(70 + Math.sin(t * 0.2 + sc) * 40, 48, 15, 0, Math.PI * 2); c.fill();
+      c.fillStyle = 'rgba(10,12,16,.85)';
+      for (let i = 0; i < 7; i++) { const x = (((i * 46 - t * 22) % (w + 60)) + w + 60) % (w + 60) - 30; const hh = 26 + ((i * 37 + sc * 13) % 44); c.fillRect(x, h - 22 - hh, 22 + (i % 3) * 6, hh); }
+      c.fillRect(0, h - 22, w, 22);
+      if (cut < 0.35) { c.fillStyle = `rgba(0,0,0,${(1 - cut / 0.35).toFixed(2)})`; c.fillRect(0, 0, w, h); }
+      c.fillStyle = '#000'; c.fillRect(0, 0, w, 12); c.fillRect(0, h - 12, w, 12);
+      tvc.tex.needsUpdate = true;
+    }
+    drawTv(0);
+    lights.home = [[lamp, 5.5], [phoneLight, 1.4], [tvLight, 1.2]];
     const update = (t) => {
       franco.update(t);
-      if (!REDUCE) phoneLight.intensity = (state.scene === 'home' ? 1.4 : 0) * (0.85 + Math.sin(t * 2.2) * 0.15);
+      for (const p of pets) p.update(t);
+      if (REDUCE) return;
+      const on = state.scene === 'home';
+      phoneLight.intensity = (on ? 1.4 : 0) * (0.85 + Math.sin(t * 2.2) * 0.15);
+      tvLight.intensity = (on ? 1.2 : 0) * (1 + Math.sin(t * 7.3) * 0.08 + Math.sin(t * 3.1) * 0.07);
+      if (t - tvLast >= FPS6) { tvLast = t; drawTv(t); }
     };
     return { root, franco, update, light: { hemi: 1.35, sun: 1.3, sunColor: 0x9fb4d0 } };
   }
@@ -1647,41 +2369,106 @@ async function createWorld(T, progress) {
   dioramas.uni = university(); progress(0.55); await nextFrame();
   dioramas.home = home(); progress(0.7); await nextFrame();
 
-  // ---------- camera rig ----------
+  // ---------- ground halo: soft contact shadow + faint floor haze under each slab ----------
+  const haloTex = canvasTex(256, 256, (c, w, h) => {
+    const g = c.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2);
+    g.addColorStop(0, 'rgba(70,80,96,.22)'); g.addColorStop(0.55, 'rgba(70,80,96,.1)'); g.addColorStop(1, 'rgba(70,80,96,0)');
+    c.fillStyle = g; c.fillRect(0, 0, w, h);
+    // Blurred square the size of the slab footprint (11.4 of the plane's 24 units).
+    c.filter = 'blur(16px)';
+    c.fillStyle = 'rgba(0,0,0,.72)';
+    const s = (11.4 / 24) * w; c.fillRect((w - s) / 2, (h - s) / 2, s, s);
+  }).tex;
+  const haloGeo = new T.PlaneGeometry(24, 24);
+  const haloMat = new T.MeshBasicMaterial({ map: haloTex, transparent: true, depthWrite: false });
+  for (const k of SCENES) {
+    const m = new T.Mesh(haloGeo, haloMat);
+    m.rotation.x = -Math.PI / 2; m.position.y = -0.82; m.renderOrder = -1;
+    dioramas[k].root.add(m);
+  }
+
+  // ---------- floating dust (additive points inside the active diorama) ----------
+  const DUST_N = COARSE ? 120 : 350;
+  const dustPos = new Float32Array(DUST_N * 3), dustCol = new Float32Array(DUST_N * 3), dustSeed = new Float32Array(DUST_N * 2);
+  for (let i = 0; i < DUST_N; i++) {
+    dustPos[i * 3] = (Math.random() - 0.5) * 10; dustPos[i * 3 + 1] = Math.random() * 3.6; dustPos[i * 3 + 2] = (Math.random() - 0.5) * 10;
+    dustSeed[i * 2] = Math.random() * 6.28; dustSeed[i * 2 + 1] = 0.4 + Math.random() * 0.8;
+  }
+  const dustGeo = new T.BufferGeometry();
+  dustGeo.setAttribute('position', new T.BufferAttribute(dustPos, 3));
+  dustGeo.setAttribute('color', new T.BufferAttribute(dustCol, 3));
+  const dust = new T.Points(dustGeo, new T.PointsMaterial({ size: 0.055, vertexColors: true, transparent: true, opacity: 0.6, blending: T.AdditiveBlending, depthWrite: false, sizeAttenuation: true }));
+  dust.frustumCulled = false;
+  scene.add(dust);
+  // Scene-local point where the dust picks up the green glow (monitor, board, phone).
+  const GLOW_AT = { office: [-2.9, 1.2, -0.6], uni: [-4.5, 1.9, -2.3], home: [-0.55, 0.95, -3.4] };
+  const _pale = new T.Color(0x8a94a3), _green = new T.Color(0x5fe0a3), _c = new T.Color();
+  function tintDust(key) {
+    const [gx, gy, gz] = GLOW_AT[key];
+    for (let i = 0; i < DUST_N; i++) {
+      const d = Math.hypot(dustPos[i * 3] - gx, dustPos[i * 3 + 1] - gy, dustPos[i * 3 + 2] - gz);
+      _c.copy(_pale).lerp(_green, Math.max(0, 1 - d / 3.2));
+      dustCol[i * 3] = _c.r; dustCol[i * 3 + 1] = _c.g; dustCol[i * 3 + 2] = _c.b;
+    }
+    dustGeo.attributes.color.needsUpdate = true;
+  }
+  function updateDust(t, dt) {
+    for (let i = 0; i < DUST_N; i++) {
+      const ph = dustSeed[i * 2], sp = dustSeed[i * 2 + 1];
+      let y = dustPos[i * 3 + 1] + dt * 0.06 * sp;
+      if (y > 3.6) y -= 3.6;
+      dustPos[i * 3 + 1] = y;
+      dustPos[i * 3] += Math.sin(t * 0.35 + ph) * dt * 0.08;
+      dustPos[i * 3 + 2] += Math.cos(t * 0.3 + ph * 1.3) * dt * 0.08;
+    }
+    dustGeo.attributes.position.needsUpdate = true;
+    // Gentle sway with the pointer.
+    dust.position.set(SCENE_X[state.scene] + pointer.nx * 0.35, -pointer.ny * 0.25, 0);
+  }
+
+  // ---------- camera rig: perspective camera on the old isometric angles ----------
   const BASE_AZ = Math.PI / 4, BASE_EL = Math.atan(1 / Math.SQRT2); // true isometric elevation
   const MAX_AZ = Math.PI / 6;
   const CAM_Y = 1.5; // target above the floor so the slab sits a bit low, under the HUD
+  const TAN_HALF = Math.tan((FOV / 2) * Math.PI / 180);
+  const HOME_ZOOM = { inicio: 0.62, mundo: 1.3, off: 1 };
   const rig = { x: 0, y: CAM_Y, z: 0, az: 0, el: 0, zoom: 1 };
   const orbit = { az: 0, el: 0, goalAz: 0, goalEl: 0, vAz: 0 };
-  const view = { userZoom: 1, halfH: 7, w: 1, h: 1, camY: CAM_Y };
-  let focused = false;
-  const DIST = 40;
+  const para = { az: 0, el: 0 }; // pointer parallax on the rig, eased
+  const view = { userZoom: 1, halfH: 7, dist: 33, w: 1, h: 1, camY: CAM_Y };
+  let focused = false, viewMode = 'off', elapsed = 0;
+  const homeZoom = () => HOME_ZOOM[viewMode] ?? 1;
 
   function resize() {
-    const w = section.clientWidth || innerWidth, h = section.clientHeight || innerHeight;
+    const w = innerWidth, h = innerHeight;
     view.w = w; view.h = h;
     renderer.setSize(w, h, false);
     const aspect = w / h;
     // Fit the slab (≈14.5 units wide in iso) on narrow screens too.
     // Leave room for the HUD: the diorama fills ~2/3 of the height on desktop.
     view.halfH = Math.max(7.1, 8.0 / aspect);
+    // Same framing as the old orthographic frustum: at the target distance the
+    // visible half-height is halfH, so dist = halfH / tan(fov / 2).
+    view.dist = view.halfH / TAN_HALF;
     // Portrait: the HUD takes the top third, so aim higher to drop the diorama lower.
     view.camY = CAM_Y + (aspect < 0.8 ? (0.26 * view.halfH) / Math.cos(BASE_EL) : 0);
     if (!focused) rig.y = view.camY;
-    camera.left = -view.halfH * aspect; camera.right = view.halfH * aspect;
-    camera.top = view.halfH; camera.bottom = -view.halfH;
+    camera.aspect = aspect;
     camera.updateProjectionMatrix();
   }
   function applyCamera() {
-    const az = BASE_AZ + rig.az + orbit.az, el = BASE_EL + rig.el + orbit.el;
+    const auto = viewMode === 'inicio' && !REDUCE ? Math.sin(elapsed * 0.12) * 0.05 : 0;
+    const bob = REDUCE ? 0 : Math.sin(elapsed * 0.4) * 0.15 * (focused ? 0.3 : 1);
+    const az = BASE_AZ + rig.az + orbit.az + para.az + auto, el = BASE_EL + rig.el + orbit.el + para.el;
+    // Zoom maps to distance: zoom 1 reproduces the old framing.
+    const dist = view.dist / (rig.zoom * view.userZoom);
     camera.position.set(
-      rig.x + DIST * Math.cos(el) * Math.sin(az),
-      rig.y + DIST * Math.sin(el),
-      rig.z + DIST * Math.cos(el) * Math.cos(az),
+      rig.x + dist * Math.cos(el) * Math.sin(az),
+      rig.y + bob + dist * Math.sin(el),
+      rig.z + dist * Math.cos(el) * Math.cos(az),
     );
-    camera.lookAt(rig.x, rig.y, rig.z);
-    camera.zoom = rig.zoom * view.userZoom;
-    camera.updateProjectionMatrix();
+    camera.lookAt(rig.x, rig.y + bob, rig.z);
+    scene.fog.near = dist; scene.fog.far = dist + 34;
     camera.updateMatrixWorld();
   }
 
@@ -1692,6 +2479,8 @@ async function createWorld(T, progress) {
     sun.position.set(SCENE_X[key] + 6, 12, 5); sun.target.position.set(SCENE_X[key], 0, 0);
     for (const k of SCENES) for (const [l, v] of lights[k] ?? []) l.intensity = k === key ? v : 0;
     base0 = { hemi: hemi.intensity, sun: sun.intensity };
+    dust.position.x = SCENE_X[key];
+    tintDust(key);
   }
   let base0 = { hemi: 1.5, sun: 2.4 };
 
@@ -1707,8 +2496,8 @@ async function createWorld(T, progress) {
   renderer.render(scene, camera);
   progress(1);
 
-  // ---------- render loop (paused offscreen / hidden tab) ----------
-  let running = false, onScreen = true, last = performance.now(), elapsed = 0;
+  // ---------- render loop (paused when the view is off / hidden tab) ----------
+  let running = false, last = performance.now();
   const label = $('#francoLabel');
   const _v = new T.Vector3();
   let labelOn = false, hovered = false, hoverAmt = 0;
@@ -1722,9 +2511,17 @@ async function createWorld(T, progress) {
     const damp = REDUCE ? 1 : 0.1;
     orbit.az += (orbit.goalAz - orbit.az) * damp;
     orbit.el += (orbit.goalEl - orbit.el) * damp;
+    // Pointer parallax on the rig: frozen while dragging so the drag keeps priority,
+    // stronger on inicio where there is no drag at all.
+    if (!drag.active && !REDUCE) {
+      const k = viewMode === 'inicio' ? 1.8 : 1;
+      const gAz = focused ? 0 : pointer.nx * 0.10 * k, gEl = focused ? 0 : -pointer.ny * 0.06 * k;
+      para.az += (gAz - para.az) * 0.06; para.el += (gEl - para.el) * 0.06;
+    }
     applyCamera();
     const d = dioramas[state.scene];
     d.update(elapsed, dt);
+    if (!REDUCE) updateDust(elapsed, dt);
     // Hover highlight: emissive rim tint + floor ring.
     hoverAmt += ((hovered ? 1 : 0) - hoverAmt) * (REDUCE ? 1 : 0.15);
     for (const m of francoMats) { m.emissive.setHex(0x1fbf75); m.emissiveIntensity = hoverAmt * 0.16; }
@@ -1737,20 +2534,21 @@ async function createWorld(T, progress) {
       label.style.transform = `translate3d(${x.toFixed(1)}px, ${(y - 18).toFixed(1)}px, 0) translate(-50%, -100%)`;
     }
   }
-  function start() { if (running || !onScreen || document.hidden || !state.entered) return; running = true; last = performance.now(); requestAnimationFrame(frame); }
+  function start() { if (running || document.hidden || !state.entered || viewMode === 'off') return; running = true; last = performance.now(); requestAnimationFrame(frame); }
   function stop() { running = false; }
-  new IntersectionObserver(([e]) => { onScreen = e.isIntersecting; onScreen ? start() : stop(); }, { threshold: 0 }).observe(section);
   document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()));
   addEventListener('resize', () => { resize(); applyCamera(); if (!running) renderer.render(scene, camera); });
-  const setLabel = (on) => { labelOn = on; label.classList.toggle('is-on', on); };
+  // The label only exists on the interactive view.
+  const setLabel = (on) => { labelOn = on && viewMode === 'mundo'; label.classList.toggle('is-on', labelOn); };
 
-  // ---------- pointer: orbit, hover, click, pinch ----------
+  // ---------- pointer: orbit, hover, click, pinch (mundo view only) ----------
   const raycaster = new T.Raycaster();
   const ndc = new T.Vector2();
   const drag = { active: false, id: null, sx: 0, sy: 0, lx: 0, ly: 0, moved: false, lastT: 0, v: 0 };
   const pointers = new Map();
   let pinch0 = 0, zoom0 = 1;
   const cursor = $('#cursor');
+  const interactive = () => viewMode === 'mundo';
   function hitFranco(clientX, clientY) {
     const r = canvas.getBoundingClientRect();
     ndc.set(((clientX - r.left) / r.width) * 2 - 1, -((clientY - r.top) / r.height) * 2 + 1);
@@ -1765,7 +2563,7 @@ async function createWorld(T, progress) {
     if (!FINE) canvas.style.cursor = on ? 'pointer' : '';
     if (on) audio.tick();
   }
-  const locked = () => state.busy || state.panelOpen;
+  const locked = () => state.busy || state.panelOpen || !interactive();
   canvas.addEventListener('pointerdown', (e) => {
     if (locked()) return;
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -1788,10 +2586,7 @@ async function createWorld(T, progress) {
     }
     if (drag.active && e.pointerId === drag.id) {
       const dx = e.clientX - drag.lx, dy = e.clientY - drag.ly;
-      if (!drag.moved && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) > 6) {
-        drag.moved = true;
-        lenis?.stop();
-      }
+      if (!drag.moved && Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) > 6) drag.moved = true;
       if (drag.moved) {
         const now = performance.now();
         const k = 0.0042;
@@ -1811,7 +2606,7 @@ async function createWorld(T, progress) {
     if (!drag.active || e.pointerId !== drag.id) return;
     drag.active = false;
     cursor.classList.remove('is-grabbing');
-    if (drag.moved) { orbit.vAz = REDUCE ? 0 : drag.v; lenis?.start(); return; }
+    if (drag.moved) { orbit.vAz = REDUCE ? 0 : drag.v; return; }
     if (cancelled || locked()) return;
     if (hitFranco(e.clientX, e.clientY)) {
       if (e.pointerType !== 'mouse') { setHover(true); setTimeout(() => setHover(false), 900); }
@@ -1821,9 +2616,9 @@ async function createWorld(T, progress) {
   canvas.addEventListener('pointerup', (e) => endDrag(e, false));
   canvas.addEventListener('pointercancel', (e) => endDrag(e, true));
   canvas.addEventListener('pointerleave', () => { if (!drag.active) setHover(false); });
-  canvas.addEventListener('pointerenter', () => cursor.classList.add('is-grab'));
+  canvas.addEventListener('pointerenter', () => { if (interactive()) cursor.classList.add('is-grab'); });
   canvas.addEventListener('pointerout', () => cursor.classList.remove('is-grab'));
-  // Ctrl/⌘ + wheel (and trackpad pinch) zooms; a plain wheel keeps scrolling the page.
+  // Ctrl/⌘ + wheel (and trackpad pinch) zooms.
   canvas.addEventListener('wheel', (e) => {
     if (!(e.ctrlKey || e.metaKey) || locked()) return;
     e.preventDefault();
@@ -1833,26 +2628,52 @@ async function createWorld(T, progress) {
   // ---------- camera moves ----------
   const { gsap } = loader.libs;
   const camSet = (vars) => { gsap.killTweensOf(rig); gsap.set(rig, vars); applyCamera(); };
+  const tagIn = (dur) => scramble($('#sceneTag'), `ESCENA ${META[state.scene].n} · ${META[state.scene].name}`, dur);
   function intro(instant) {
     setLabel(false);
     start();
+    const z = homeZoom();
     if (instant || REDUCE) {
-      camSet({ zoom: 1, az: 0, el: 0 });
+      camSet({ zoom: z, az: 0, el: 0 });
       setLabel(true);
-      scramble($('#sceneTag'), `ESCENA ${META[state.scene].n} · ${META[state.scene].name}`, 0.3);
+      tagIn(0.3);
       return;
     }
-    camSet({ zoom: 0.42, az: -0.55, el: 0.22 });
-    gsap.to(rig, { zoom: 1, az: 0, el: 0, duration: 1.8, ease: 'expo.out', onComplete: () => setLabel(true) });
-    gsap.delayedCall(0.35, () => scramble($('#sceneTag'), `ESCENA ${META[state.scene].n} · ${META[state.scene].name}`, 0.55));
+    // Dolly in from far away; the slight downward tilt settles last.
+    camSet({ zoom: 0.35, az: -0.35, el: 0.26 });
+    gsap.to(rig, { zoom: z, az: 0, el: 0, duration: 2.0, ease: 'expo.out', onComplete: () => setLabel(true) });
+    gsap.delayedCall(0.35, () => tagIn(0.55));
   }
   function show(key) {
-    // Called while the mask fully covers the canvas.
+    // Called while the cell mask fully covers the canvas.
     activate(key);
     orbit.az = orbit.goalAz = orbit.vAz = 0; orbit.el = orbit.goalEl = 0;
     view.userZoom = 1;
-    camSet({ x: SCENE_X[key], y: view.camY, z: 0, az: REDUCE ? 0 : -0.12, zoom: REDUCE ? 1 : 0.88 });
-    if (!REDUCE) gsap.to(rig, { az: 0, zoom: 1, duration: 1.2, ease: 'expo.out' });
+    const z = homeZoom();
+    camSet({ x: SCENE_X[key], y: view.camY, z: 0, az: REDUCE ? 0 : -0.12, zoom: REDUCE ? z : z * 0.88 });
+    if (!REDUCE) gsap.to(rig, { az: 0, zoom: z, duration: 1.2, ease: 'expo.out' });
+    if (!running) renderer.render(scene, camera);
+  }
+  // View per page: inicio (wide, auto-orbit, no interaction), mundo (interactive), off (paused, faded).
+  function setView(mode, { instant = false } = {}) {
+    if (mode === viewMode) return;
+    viewMode = mode;
+    stage.classList.toggle('is-off', mode === 'off');
+    stage.classList.toggle('is-inicio', mode === 'inicio');
+    setLabel(false); setHover(false);
+    if (mode === 'off') { stop(); return; }
+    if (!focused) {
+      const z = homeZoom(), el = mode === 'inicio' ? 0.06 : 0;
+      if (instant || REDUCE) {
+        camSet({ zoom: z, el, az: 0, x: SCENE_X[state.scene], y: view.camY, z: 0 });
+        setLabel(true);
+      } else {
+        gsap.killTweensOf(rig);
+        gsap.to(rig, { zoom: z, el, az: 0, duration: 1.4, ease: 'expo.out', onComplete: () => setLabel(true) });
+      }
+    }
+    renderer.render(scene, camera);
+    start();
   }
   function focusOn() {
     focused = true;
@@ -1864,7 +2685,8 @@ async function createWorld(T, progress) {
     // Keep Franco in the part of the screen the panel leaves free.
     const narrow = isNarrow();
     const zoom = narrow ? Math.min(2.6, view.halfH * 0.24) : 2.3;
-    const upp = (2 * view.halfH) / (zoom * view.userZoom) / view.h; // world units per px
+    // World units per px at the target distance (same as the old ortho frustum).
+    const upp = (2 * view.halfH) / (zoom * view.userZoom) / view.h;
     const shiftX = narrow ? 0 : Math.min(420, view.w) / 2;
     // Mobile: centre him in the strip between the header (~60px) and the sheet (top 20%).
     const shiftY = narrow ? view.h / 2 - (60 + view.h * 0.2) / 2 : 0;
@@ -1887,14 +2709,14 @@ async function createWorld(T, progress) {
     gsap.killTweensOf([rig, hemi, sun, focus]);
     const dur = REDUCE ? 0 : 1.4;
     focused = false;
-    gsap.to(rig, { x: SCENE_X[state.scene], y: view.camY, z: 0, zoom: 1, duration: dur, ease: 'expo.out', onComplete: () => setLabel(true) });
+    gsap.to(rig, { x: SCENE_X[state.scene], y: view.camY, z: 0, zoom: homeZoom(), duration: dur, ease: 'expo.out', onComplete: () => setLabel(true) });
     gsap.to(hemi, { intensity: base0.hemi, duration: dur * 0.8, ease: 'expo.out' });
     gsap.to(sun, { intensity: base0.sun, duration: dur * 0.8, ease: 'expo.out' });
     gsap.to(focus, { intensity: 0, duration: dur * 0.6, ease: 'expo.out' });
     gsap.to('#focusVig', { opacity: 0, duration: dur * 0.6, ease: 'expo.out' });
   }
-  if (params.has('debug')) window.__world = { T, camera, rig, view, dioramas, renderer };
-  return { intro, show, focusOn, unfocus, setLabel, start, stop };
+  if (params.has('debug')) window.__world = { T, camera, rig, view, para, dioramas, renderer, pointer };
+  return { intro, show, focusOn, unfocus, setLabel, setView, start, stop };
 }
 
 // =====================================================================
@@ -1959,7 +2781,7 @@ function setMode(mode) {
   state.mode = mode;
   const url = new URL(location.href);
   if (mode === 'auto') url.searchParams.delete('escena'); else url.searchParams.set('escena', SCENE_TO_PARAM[mode]);
-  history.replaceState(null, '', url);
+  history.replaceState(history.state, '', url);
   const next = resolveScene();
   if (next === state.scene) paintSceneInfo(false); else switchScene(next);
 }
@@ -2039,16 +2861,12 @@ function seedPanel() {
 
 async function openPanel() {
   if (!state.entered || state.panelOpen || state.busy) return;
-  // The panel belongs to the world: go back up first if the page was scrolled.
-  if (scrollY > 8) {
-    if (lenis) lenis.scrollTo(0, { duration: 0.8 }); else scrollTo({ top: 0, behavior: REDUCE ? 'auto' : 'smooth' });
-    await wait(REDUCE ? 50 : 850);
-  }
+  // The panel belongs to the world: switch to that page first if needed.
+  if (state.page !== 'mundo') { await router.go('mundo'); if (state.panelOpen || state.page !== 'mundo') return; }
   state.panelOpen = true;
   document.body.classList.add('panel-open');
   lastFocus = document.activeElement;
   audio.tick();
-  lenis?.stop();
   seedPanel();
   if (META[state.scene].kind === 'chat') probeApi();
   const delay = world ? world.focusOn() * 0.6 : 0;
@@ -2071,7 +2889,6 @@ function closePanel() {
   setTimeout(() => {
     if (state.panelOpen) return;
     panel.hidden = true; backdrop.hidden = true;
-    lenis?.start();
   }, REDUCE ? 220 : 400);
   (lastFocus && document.contains(lastFocus) ? lastFocus : $('#talk')).focus({ preventScroll: true });
 }
@@ -2134,13 +2951,13 @@ const norm = (s) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 function mockAnswer(question) {
   const t = norm(question);
   if (/proyect|hiciste|portfolio|trabajos|aeroclub|atmos|nasa|restaurante/.test(t))
-    return 'Te cuento tres: el sistema de retroalimentación académica, que fue mi proyecto final de Analista Programador y está en producción; el sitio del Aeroclub Trelew, para un cliente real; y AtmOS, que hicimos en 48 horas en el NASA Space Apps Challenge 2025 y se llevó una mención honorable. Más abajo en esta página tenés los detalles.';
+    return 'Te cuento tres: el sistema de retroalimentación académica, que fue mi proyecto final de Analista Programador y está en producción; el sitio del Aeroclub Trelew, para un cliente real; y AtmOS, que hicimos en 48 horas en el NASA Space Apps Challenge 2025 y se llevó una mención honorable. En la página de proyectos tenés los detalles.';
   if (/stack|tecnolog|lenguaj|react|python|framework|herramient/.test(t))
     return 'No tengo un stack fijo: elijo según lo que haya que construir, mirando cuánto puede evolucionar la tecnología y qué tan buena es su comunidad y su documentación. En proyectos usé React, TypeScript, FastAPI, SQLite y Astro, entre otras.';
   if (/estudi|universidad|facultad|carrera|titulo|unpsjb|licenciatura|formacion/.test(t))
     return 'Soy Analista Programador desde 2025 y estoy cursando 4.º año de la Licenciatura en Sistemas en la UNPSJB. Antes, en 2022, me recibí de Técnico en Informática en la ESETP N.º 724.';
   if (/contact|mail|correo|escrib|linkedin|github|precio|presupuesto|cuanto/.test(t))
-    return 'Para eso escribime a francomartin2012@hotmail.com y te respondo yo. También estoy en LinkedIn y GitHub: los links están al final de la página.';
+    return 'Para eso escribime a francomartin2012@hotmail.com y te respondo yo. También estoy en LinkedIn y GitHub: los links están en la página Sobre mí.';
   if (/trabaj|laburo|legislatura|empleo|experiencia/.test(t))
     return 'Hoy trabajo en la Legislatura de Chubut, en lo mío; es mi primer año ahí. Antes estuve un año en la Oficina de Desarrollo de Software de la Subsecretaría de Innovación de Chubut.';
   return 'En modo ejemplo no tengo una respuesta para eso. Probá preguntarme por mis proyectos, mi formación, dónde trabajo o cómo contactarme.';
@@ -2314,122 +3131,362 @@ function splitWords(h) {
 }
 
 // =====================================================================
-// After enter: Lenis, ScrollTrigger, reveals, HUD
+// Router: pages as states, hash history, "mancha" transition, title glitch
 // =====================================================================
-let lenis = null;
-function scrollToTarget(target) {
-  const node = typeof target === 'string' ? document.querySelector(target) : target;
-  const y = node && node.id !== 'mundo' ? node : 0;
-  if (lenis) lenis.scrollTo(y, { duration: 1.4, offset: 0 });
-  else if (y === 0) scrollTo({ top: 0, behavior: REDUCE ? 'auto' : 'smooth' });
-  else node.scrollIntoView({ behavior: REDUCE ? 'auto' : 'smooth' });
+const PAGES = ['inicio', 'mundo', 'proyectos', 'sobre'];
+// Matrix rain for inicio: columns of glyphs that fall without pause while the page is active.
+const rain = (() => {
+  const canvas = document.getElementById('rain');
+  const ctx = canvas?.getContext('2d');
+  const GLYPHS = 'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ0123456789Z:・"=*+<>¦|ç';
+  const BG = 'rgb(32,37,45)';
+  let streams = [], base = 15, W = 0, H = 0, raf = 0, last = 0, on = false, mono = 'monospace';
+  // Smaller glyphs read as farther away: slower and dimmer.
+  function mk(x, spread) {
+    const fs = base * (0.6 + Math.random() * 0.9);
+    const depth = (fs / base - 0.6) / 0.9;
+    return { x, fs, y: -Math.random() * H * (spread ? 1.6 : 0.5), v: fs * (4.5 + depth * 9 + Math.random() * 3), a: 0.3 + depth * 0.7, len: 12 + Math.random() * 30 };
+  }
+  function size() {
+    const dpr = Math.min(2, devicePixelRatio || 1);
+    W = canvas.clientWidth; H = canvas.clientHeight;
+    canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    mono = getComputedStyle(document.documentElement).getPropertyValue('--font-mono') || 'monospace';
+    base = COARSE ? 12 : 15;
+    const cw = base * 0.8, n = Math.ceil(W / cw) + 1;
+    streams = [];
+    for (let i = 0; i < n; i++) {
+      const k = COARSE ? 1 + (Math.random() < 0.5 ? 1 : 0) : 2 + (Math.random() < 0.6 ? 1 : 0);
+      for (let j = 0; j < k; j++) streams.push(mk(i * cw, true));
+    }
+    ctx.fillStyle = BG; ctx.fillRect(0, 0, W, H);
+  }
+  function frame(now) {
+    if (!on) return;
+    const dt = Math.min(0.05, (now - last) / 1000 || 0.016); last = now;
+    // Fade the previous frame instead of clearing: that is what leaves the long trails.
+    ctx.fillStyle = 'rgba(32,37,45,.085)'; ctx.fillRect(0, 0, W, H);
+    ctx.textBaseline = 'top';
+    const slow = REDUCE ? 0.4 : 1;
+    for (const s of streams) {
+      s.y += s.v * dt * slow;
+      const fs = s.fs, gy = Math.floor(s.y / fs) * fs;
+      ctx.font = `600 ${fs}px ${mono}`;
+      // Bright head, green neck, and a glyph somewhere in the tail that keeps changing.
+      ctx.fillStyle = `rgba(222,255,236,${s.a})`;
+      ctx.fillText(GLYPHS[(Math.random() * GLYPHS.length) | 0], s.x, gy);
+      ctx.fillStyle = `rgba(31,191,117,${s.a * 0.95})`;
+      ctx.fillText(GLYPHS[(Math.random() * GLYPHS.length) | 0], s.x, gy - fs);
+      if (Math.random() < 0.35) {
+        ctx.fillStyle = `rgba(31,191,117,${s.a * 0.45})`;
+        ctx.fillText(GLYPHS[(Math.random() * GLYPHS.length) | 0], s.x, gy - fs * (2 + ((Math.random() * Math.min(s.len, 14)) | 0)));
+      }
+      if (gy > H + s.len * fs) Object.assign(s, mk(s.x, false));
+    }
+    raf = requestAnimationFrame(frame);
+  }
+  function start() { if (!ctx || on || document.hidden) return; on = true; size(); last = performance.now(); raf = requestAnimationFrame(frame); }
+  function stop() { on = false; cancelAnimationFrame(raf); }
+  addEventListener('resize', () => { if (on) size(); });
+  document.addEventListener('visibilitychange', () => (document.hidden ? stop() : state.entered && state.page === 'inicio' && start()));
+  return { start, stop };
+})();
+
+// Word-level hover on inicio: each word is its own span so only the one under the cursor reacts.
+function splitHeroWords(el) {
+  if (!el || el.querySelector('.w')) return;
+  const words = el.textContent.split(/(\s+)/);
+  el.textContent = '';
+  for (const part of words) {
+    if (!part) continue;
+    if (/^\s+$/.test(part)) { el.append(document.createTextNode(part)); continue; }
+    const w = document.createElement('span');
+    w.className = 'w'; w.dataset.text = part; w.textContent = part;
+    el.append(w);
+  }
+}
+function sparks(w) {
+  const page = document.getElementById('inicio');
+  const pr = page.getBoundingClientRect(), r = w.getBoundingClientRect();
+  const n = COARSE ? 5 : 9;
+  for (let i = 0; i < n; i++) {
+    const s = document.createElement('i');
+    s.className = 'spark';
+    const x = r.left - pr.left + Math.random() * r.width, y = r.top - pr.top + Math.random() * r.height;
+    s.style.left = `${x}px`; s.style.top = `${y}px`;
+    page.append(s);
+    const dx = (Math.random() - 0.5) * 90, dy = -20 - Math.random() * 70;
+    s.animate([
+      { transform: 'translate(0,0) scale(1)', opacity: 1 },
+      { transform: `translate(${dx}px,${dy}px) scale(.2)`, opacity: 0 },
+    ], { duration: 550 + Math.random() * 350, easing: 'cubic-bezier(.16,1,.3,1)' }).onfinish = () => s.remove();
+  }
+}
+(() => {
+  const brand = document.getElementById('brandName');
+  brand?.closest('.brand')?.addEventListener('pointerenter', () => scramble(brand, 'FrancoSolerSistemas', 0.6));
+  for (const sel of ['#inicio .hero-eyebrow', '#inicio .hero-title .l1', '#inicio .hero-title .l2', '#inicio .hero-desc']) splitHeroWords(document.querySelector(sel));
+  const hot = new WeakMap();
+  document.querySelector('#inicio .hero')?.addEventListener('pointerover', (e) => {
+    const w = e.target.closest?.('.w');
+    if (!w || REDUCE || hot.get(w)) return;
+    hot.set(w, true);
+    w.classList.add('is-hot');
+    scramble(w, w.dataset.text, 0.45);
+    sparks(w);
+    setTimeout(() => { w.classList.remove('is-hot'); hot.delete(w); }, 520);
+  });
+})();
+
+const VIEW_OF = { inicio: 'off', mundo: 'mundo', proyectos: 'off', sobre: 'off' };
+const pageEl = (p) => document.querySelector(`.page[data-page="${p}"]`);
+const heading = (p) => pageEl(p).querySelector('[data-glitch]');
+
+// Organic blob: two filtered circles (graphite + light rim) displaced by fractal noise.
+const mancha = (() => {
+  const svg = $('#mancha'), turb = $('#manchaTurb'), disp = $('#manchaDisp'), filt = $('#manchaFilter');
+  const blob = $('#manchaBlob'), rim = $('#manchaRim');
+  const m = { r: 0, cx: innerWidth / 2, cy: innerHeight / 2, wob: 0 };
+  let seed = 2;
+  function origin(x, y) { m.cx = x; m.cy = y; }
+  function fit() {
+    filt.setAttribute('x', -300); filt.setAttribute('y', -300);
+    filt.setAttribute('width', innerWidth + 600); filt.setAttribute('height', innerHeight + 600);
+  }
+  // Attributes are rewritten every frame so the browser repaints the filtered group.
+  function draw() {
+    const r = Math.max(0, m.r);
+    const base = Math.min(140, innerWidth * 0.12, r * 0.5);
+    const scale = base * (1 + Math.sin(m.wob * Math.PI * 2) * 0.15); // edge wobble
+    for (const c of [blob, rim]) { c.setAttribute('cx', m.cx.toFixed(1)); c.setAttribute('cy', m.cy.toFixed(1)); }
+    blob.setAttribute('r', r.toFixed(1));
+    rim.setAttribute('r', (r + 2.5).toFixed(1));
+    disp.setAttribute('scale', scale.toFixed(1));
+  }
+  const coverRadius = () => Math.hypot(Math.max(m.cx, innerWidth - m.cx), Math.max(m.cy, innerHeight - m.cy)) + 200;
+  async function cover(gsap) {
+    // New noise per transition; a slightly tighter frequency for the reveal half.
+    seed = (seed % 50) + 7;
+    turb.setAttribute('seed', seed);
+    turb.setAttribute('baseFrequency', '0.012');
+    fit(); m.r = 0; m.wob = 0; draw();
+    svg.classList.add('is-on');
+    await gsap.to(m, { r: coverRadius(), wob: 0.5, duration: 0.3, ease: 'expo.in', onUpdate: draw });
+  }
+  async function reveal(gsap) {
+    turb.setAttribute('baseFrequency', '0.015');
+    await gsap.to(m, { r: 0, wob: 1, duration: 1.0, ease: 'expo.out', onUpdate: draw });
+    svg.classList.remove('is-on');
+  }
+  return { origin, cover, reveal };
+})();
+
+// Title glitch: two cloned layers, offset ±4px with red/cyan shadows, sliced by CSS steps().
+function glitch(h) {
+  if (!h || REDUCE) return;
+  for (const l of h.querySelectorAll('.glitch-layer')) l.remove();
+  const html = h.innerHTML;
+  for (const k of ['a', 'b']) {
+    const l = document.createElement('span');
+    l.className = `glitch-layer ${k}`;
+    l.setAttribute('aria-hidden', 'true');
+    l.innerHTML = html;
+    l.addEventListener('animationend', () => l.remove(), { once: true });
+    h.append(l);
+  }
 }
 
+const router = (() => {
+  let transitioning = false;
+  function swap(page) {
+    const first = state.page === null;
+    state.page = page;
+    for (const p of PAGES) {
+      const el = pageEl(p);
+      el.classList.toggle('is-active', p === page);
+      el.setAttribute('aria-hidden', String(p !== page));
+    }
+    pageEl(page).querySelector('.page-scroll')?.scrollTo({ top: 0, behavior: 'instant' });
+    document.body.classList.toggle('on-paper', page === 'proyectos' || page === 'sobre');
+    document.body.dataset.page = page;
+    for (const a of $$('.nav a[data-go]')) {
+      if (a.dataset.go === page) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    }
+    if (world) world.setView(VIEW_OF[page], { instant: first });
+    if (page === 'inicio') rain.start(); else rain.stop();
+    armReveals(page);
+  }
+  async function go(page, { instant = false, push = true, replace = false } = {}) {
+    if (!PAGES.includes(page)) page = 'inicio';
+    if (!state.entered || page === state.page || transitioning) return;
+    const { gsap } = loader.libs;
+    if (replace) history.replaceState({ page }, '', `#${page}`);
+    else if (push) history.pushState({ page }, '', `#${page}`);
+    if (state.panelOpen) closePanel();
+    if (instant || !gsap) {
+      swap(page);
+      if (!instant) glitch(heading(page));
+      return;
+    }
+    transitioning = true;
+    audio.whoosh();
+    if (REDUCE) {
+      const pages = $('#pages');
+      await gsap.to(pages, { opacity: 0, duration: 0.12, ease: 'none' });
+      swap(page);
+      await gsap.to(pages, { opacity: 1, duration: 0.13, ease: 'none' });
+    } else {
+      await mancha.cover(gsap);
+      swap(page);
+      glitch(heading(page));
+      await mancha.reveal(gsap);
+    }
+    transitioning = false;
+    heading(page)?.focus({ preventScroll: true });
+  }
+  return { go };
+})();
+
+addEventListener('popstate', (e) => {
+  if (!state.entered) return;
+  mancha.origin(pointer.x, pointer.y);
+  router.go(e.state?.page ?? location.hash.slice(1), { push: false });
+});
+
+// inicio entrance: glitch the name once, then the hero lines rise in.
+function heroIntro() {
+  const { gsap } = loader.libs;
+  if (!gsap || REDUCE) { glitch($('#heroTitle')); return; }
+  gsap.from($$('#inicio .hero > *'), { y: 26, opacity: 0, duration: 1.2, ease: 'expo.out', stagger: 0.09, delay: 0.25, clearProps: 'transform,opacity' });
+  // Glitch once the heading is visible enough to show it.
+  gsap.delayedCall(0.55, () => glitch($('#heroTitle')));
+}
+
+// =====================================================================
+// Reveals inside the scrolling pages (IntersectionObserver, armed on first visit)
+// =====================================================================
+const armed = new Set();
+function armReveals(page) {
+  if (armed.has(page)) return;
+  armed.add(page);
+  const root = pageEl(page);
+  const scroller = root.querySelector('.page-scroll');
+  if (!scroller) return;
+  const { gsap } = loader.libs;
+  for (const h of $$('.split', root)) splitWords(h);
+  for (const m of $$('[data-scramble]', root)) m.textContent = m.textContent.toUpperCase();
+  if (!gsap || REDUCE) return;
+  const run = (el) => {
+    if (el.classList.contains('split')) gsap.from(el.querySelectorAll('.wi'), { yPercent: 110, opacity: 0, duration: 1.2, ease: 'expo.out', stagger: 0.045 });
+    else if (el.hasAttribute('data-scramble')) scramble(el, el.textContent, 0.6);
+    else if (el.classList.contains('reveal-card')) {
+      gsap.fromTo(el, { clipPath: 'inset(100% 0% 0% 0% round 16px)' }, {
+        clipPath: 'inset(0% 0% 0% 0% round 16px)', duration: 1.3, ease: 'expo.out', onComplete: () => { el.style.clipPath = ''; },
+      });
+    } else if (el.classList.contains('chips')) gsap.from(el.children, { y: 14, opacity: 0, duration: 0.8, ease: 'expo.out', stagger: 0.05 });
+    else if (el.classList.contains('contact-big')) gsap.from(el.querySelectorAll('.mail, .socials li, .pill-btn'), { y: 18, opacity: 0, duration: 1, ease: 'expo.out', stagger: 0.06 });
+    else gsap.from(el, { y: 24, opacity: 0, duration: 1.1, ease: 'expo.out' });
+  };
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) if (e.isIntersecting) { io.unobserve(e.target); run(e.target); }
+  }, { root: scroller, rootMargin: '0px 0px -8% 0px' });
+  for (const t of $$('.split, [data-scramble], .reveal, .reveal-card, .chips, .contact-big', root)) io.observe(t);
+}
+
+// =====================================================================
+// Project cards: 3D tilt toward the pointer + inner counter-parallax
+// =====================================================================
+const tilts = [];
+function initCards() {
+  if (!FINE || REDUCE) return;
+  for (const card of $$('.card')) {
+    card.classList.add('is-tilt');
+    const s = { rx: 0, ry: 0, gx: 0, gy: 0, hot: false };
+    card.addEventListener('pointermove', (e) => {
+      const r = card.getBoundingClientRect();
+      const x = ((e.clientX - r.left) / r.width) * 2 - 1, y = ((e.clientY - r.top) / r.height) * 2 - 1;
+      s.gx = -y * 6; s.gy = x * 6;
+    });
+    card.addEventListener('pointerenter', () => { s.hot = true; audio.tick(); });
+    card.addEventListener('pointerleave', () => { s.hot = false; s.gx = s.gy = 0; });
+    tilts.push({ card, s });
+  }
+  tickers.add(() => {
+    if (state.page !== 'proyectos') return;
+    for (const { card, s } of tilts) {
+      s.rx += (s.gx - s.rx) * 0.12; s.ry += (s.gy - s.ry) * 0.12;
+      const inner = card.querySelector('.card-media img, .card-media .ph');
+      if (!s.hot && Math.abs(s.rx) < 0.01 && Math.abs(s.ry) < 0.01) {
+        // At rest: hand the card back to the stylesheet.
+        if (card.style.transform) { s.rx = s.ry = 0; card.style.transform = ''; if (inner) inner.style.transform = ''; }
+        continue;
+      }
+      card.style.transform = `perspective(900px) rotateX(${s.rx.toFixed(2)}deg) rotateY(${s.ry.toFixed(2)}deg) scale(${s.hot ? 1.02 : 1})`;
+      if (inner) inner.style.transform = `translate(${(-s.ry * 1.2).toFixed(2)}px, ${(s.rx * 1.2).toFixed(2)}px) scale(1.06)`;
+    }
+  });
+}
+
+// =====================================================================
+// After enter: navigation, hover sounds, cards
+// =====================================================================
 function afterEnter() {
-  const { gsap, ScrollTrigger, Lenis } = loader.libs;
+  const { gsap } = loader.libs;
   paintSceneInfo(false);
   // With a 3D world the tag types in during the camera intro; otherwise right away.
   if (world) $('#sceneTag').textContent = '';
   else scramble($('#sceneTag'), `ESCENA ${META[state.scene].n} · ${META[state.scene].name}`, 0.55);
 
-  // Header / anchor navigation.
-  for (const a of $$('[data-nav]')) {
-    a.addEventListener('click', (e) => {
-      const href = a.getAttribute('href');
-      if (!href?.startsWith('#')) return;
+  // Page navigation: header, pills, world switch. The blob grows from the click.
+  for (const b of $$('[data-go]')) {
+    b.addEventListener('click', (e) => {
       e.preventDefault();
       audio.tick();
-      scrollToTarget(href);
+      mancha.origin(e.clientX || innerWidth / 2, e.clientY || innerHeight / 2);
+      router.go(b.dataset.go);
     });
   }
-  $('#backTop').addEventListener('click', () => scrollToTarget('#mundo'));
   for (const a of $$('[data-scr]')) {
     const label = a.textContent;
     a.setAttribute('aria-label', label);
     a.addEventListener('mouseenter', () => scramble(a, label.toUpperCase(), 0.35));
     a.style.textTransform = 'uppercase';
   }
-  for (const b of $$('.talk, .seg button, .audio-btn')) b.addEventListener('mouseenter', () => audio.tick());
+  for (const b of $$('.talk, .seg button, .audio-btn, .pill-btn, .ws-toggle')) b.addEventListener('mouseenter', () => audio.tick());
+  initCards();
 
   if (!gsap) {
     document.body.classList.add('lite');
     return;
   }
-  gsap.registerPlugin(ScrollTrigger);
-
-  if (!REDUCE && Lenis) {
-    lenis = new Lenis({ duration: 1.15, smoothWheel: true });
-    lenis.on('scroll', ScrollTrigger.update);
-    gsap.ticker.add((t) => lenis.raf(t * 1000));
-    gsap.ticker.lagSmoothing(0);
-  }
-
-  // Header/HUD switch to paper colors once the world is mostly gone.
-  ScrollTrigger.create({
-    trigger: '#mundo', start: 'bottom 64px', end: 'max',
-    onToggle: (self) => document.body.classList.toggle('on-paper', self.isActive),
-  });
-  // World recedes as you scroll past it.
-  if (!REDUCE) {
-    gsap.to('#worldStage', { scale: 0.93, ease: 'none', scrollTrigger: { trigger: '#mundo', start: 'top top', end: 'bottom top', scrub: true } });
-    gsap.to('#scrollDim', { opacity: 0.65, ease: 'none', scrollTrigger: { trigger: '#mundo', start: 'top top', end: 'bottom top', scrub: true } });
-  }
-
-  // Reveals.
-  for (const h of $$('.split')) {
-    splitWords(h);
-    if (REDUCE) continue;
-    gsap.from(h.querySelectorAll('.wi'), {
-      yPercent: 110, opacity: 0, duration: 1.2, ease: 'expo.out', stagger: 0.045,
-      scrollTrigger: { trigger: h, start: 'top 88%', once: true },
-    });
-  }
-  for (const m of $$('[data-scramble]')) {
-    const text = m.textContent.toUpperCase();
-    m.textContent = text;
-    if (REDUCE) continue;
-    ScrollTrigger.create({ trigger: m, start: 'top 92%', once: true, onEnter: () => scramble(m, text, 0.6) });
-  }
-  if (!REDUCE) {
-    for (const r of $$('.reveal')) {
-      gsap.from(r, { y: 24, opacity: 0, duration: 1.1, ease: 'expo.out', scrollTrigger: { trigger: r, start: 'top 90%', once: true } });
-    }
-    for (const c of $$('.reveal-card')) {
-      gsap.fromTo(c, { clipPath: 'inset(100% 0% 0% 0% round 16px)' }, {
-        clipPath: 'inset(0% 0% 0% 0% round 16px)', duration: 1.3, ease: 'expo.out',
-        scrollTrigger: { trigger: c, start: 'top 90%', once: true },
-        onComplete: () => { c.style.clipPath = ''; },
-      });
-    }
-    gsap.from('#chips .chip', { y: 14, opacity: 0, duration: 0.8, ease: 'expo.out', stagger: 0.05, scrollTrigger: { trigger: '#chips', start: 'top 92%', once: true } });
-    gsap.from('.socials li, .mail, .back-btn', { y: 18, opacity: 0, duration: 1, ease: 'expo.out', stagger: 0.06, scrollTrigger: { trigger: '.contact-big', start: 'top 90%', once: true } });
-  }
   addEventListener('resize', () => { cells = []; grid = [1, 1]; });
-  // Refresh after images and fonts settle.
-  addEventListener('load', () => ScrollTrigger.refresh());
-  setTimeout(() => ScrollTrigger.refresh(), 400);
 }
 
 // =====================================================================
-// Custom cursor (desktop, pointer: fine)
+// Custom cursor (desktop, pointer: fine): dot + lagging ring
 // =====================================================================
 if (FINE && !REDUCE) {
-  const c = $('#cursor');
-  const pos = { x: innerWidth / 2, y: innerHeight / 2 }, cur = { ...pos };
+  const c = $('#cursor'), ring = $('#cursorRing');
+  const pos = { x: innerWidth / 2, y: innerHeight / 2 }, cur = { ...pos }, rp = { ...pos };
   addEventListener('pointermove', (e) => {
     if (e.pointerType !== 'mouse') return;
     pos.x = e.clientX; pos.y = e.clientY;
-    if (state.entered) c.classList.add('is-on');
-    const link = e.target.closest?.('a, button, input, textarea, label');
-    c.classList.toggle('is-link', !!link && !c.classList.contains('is-hot'));
+    if (state.entered) { c.classList.add('is-on'); ring.classList.add('is-on'); }
+    const link = e.target.closest?.('a, button, input, textarea, label, [data-go]');
+    const isLink = !!link && !c.classList.contains('is-hot');
+    c.classList.toggle('is-link', isLink);
+    ring.classList.toggle('is-link', isLink);
   });
-  document.addEventListener('pointerleave', () => c.classList.remove('is-on'));
-  const loop = () => {
+  document.addEventListener('pointerleave', () => { c.classList.remove('is-on'); ring.classList.remove('is-on'); });
+  tickers.add(() => {
     cur.x += (pos.x - cur.x) * 0.2; cur.y += (pos.y - cur.y) * 0.2;
+    // The ring trails further behind on the home page.
+    const lag = state.page === 'inicio' ? 0.05 : 0.1;
+    rp.x += (pos.x - rp.x) * lag; rp.y += (pos.y - rp.y) * lag;
     c.style.transform = `translate3d(${cur.x.toFixed(1)}px, ${cur.y.toFixed(1)}px, 0)`;
-    requestAnimationFrame(loop);
-  };
-  requestAnimationFrame(loop);
+    ring.style.transform = `translate3d(${rp.x.toFixed(1)}px, ${rp.y.toFixed(1)}px, 0)`;
+  });
 }
 
 paintSceneInfo(false);
