@@ -12,3 +12,7 @@ worker-configuration.d.ts
 # Local tooling cache
 .atl/
 .gstack/
+
+# Redesign reference material (never commit videos)
+referencias/
+*.mp4
