@@ -33,6 +33,8 @@ Abrir `index.html` con doble clic (`file://`) también funciona, pero sin imáge
 | Chat (oficina y universidad) | Real si `npm run dev` está corriendo (`POST /api/chat`). Si no, responde en modo ejemplo y lo marca. |
 | Contacto directo (disponible) | De ejemplo: no envía nada porque todavía no existe `/api/contact`. |
 | Audio | Real, generado con WebAudio. Solo arranca después de un clic. |
+| Tele del living (disponible) | Real: reproduce `tv.mp4`, un fragmento de *Big Buck Bunny* (© 2008 Blender Foundation, CC BY 3.0, bigbuckbunny.org), silenciado y en bucle, solo mientras esa escena está a la vista. Si el video no carga, la pantalla muestra bandas de color dibujadas en canvas. |
+| Vista al hablar | Real: al tocar a Franco la cámara pasa detrás de él y mira lo que él mira (monitores, profesor y pantalla, tele). Con el mouse encima se ve como una tele sin señal. |
 
 ## Parámetros de URL
 
@@ -50,4 +52,5 @@ Se pueden combinar: `?escena=disponible&sinwebgl=1`.
 - `index.html`: el prototipo.
 - `serve.mjs`: servidor de desarrollo.
 - `fallback-mundo.svg`: ilustración estática de la oficina para cuando no hay WebGL.
+- `tv.mp4`: fragmento de *Big Buck Bunny* (© 2008 Blender Foundation, CC BY 3.0, bigbuckbunny.org) para la tele del living.
 - `entrada-base.html` y `mundo-cartoon-descartado.html`: referencias anteriores (la segunda está descartada).
