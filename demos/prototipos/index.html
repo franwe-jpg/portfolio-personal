@@ -446,9 +446,21 @@ body.on-paper .pill { background: rgba(243,245,247,.85); border-color: rgba(21,2
 .card.is-tilt { will-change: transform; }
 .card.is-tilt:hover { box-shadow: 0 34px 60px -34px rgba(21,24,29,.5); }
 .card-media { position: relative; aspect-ratio: 16 / 10; background: var(--s2); overflow: hidden; }
-.card-media img { width: 100%; height: 100%; object-fit: cover; transition: transform 1.2s var(--e-out); }
-.card:hover .card-media img { transform: scale(1.03); }
-.card.is-tilt .card-media img, .card.is-tilt .card-media .ph { transition: none; will-change: transform; }
+.card-view { position: absolute; inset: 0; transition: transform 1.2s var(--e-out); }
+.card:hover .card-view { transform: scale(1.03); }
+.card.is-tilt .card-view { transition: none; will-change: transform; }
+.card-track { display: flex; height: 100%; transition: transform .35s var(--e-out); }
+.card-track img, .card-track video { flex: none; width: 100%; height: 100%; }
+.card-track img { object-fit: cover; }
+.card-track video { object-fit: contain; background: #000; display: block; }
+.card-track .ph { position: relative; flex: none; width: 100%; height: 100%; }
+.card-arrow { position: absolute; top: 50%; z-index: 2; width: 30px; height: 30px; margin-top: -15px; border: 0; border-radius: 50%; background: rgba(10,12,16,.6); color: #fff; font: 500 18px/1 var(--font-mono); display: grid; place-items: center; cursor: pointer; }
+.card-arrow.prev { left: 10px; }
+.card-arrow.next { right: 10px; }
+.card-arrow:hover { background: rgba(31,191,117,.85); color: #0b0d10; }
+.card-dots { position: absolute; left: 0; right: 0; bottom: 10px; z-index: 2; display: flex; justify-content: center; gap: 6px; pointer-events: none; }
+.card-dots i { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.45); }
+.card-dots i.on { background: #1fbf75; }
 .ph { position: absolute; inset: 0; display: grid; place-items: center; background: linear-gradient(135deg, var(--s2), var(--g0)); color: var(--tmuted); font: 500 clamp(36px, 6vw, 56px) var(--font-mono); letter-spacing: .06em; }
 .ph::after { content: "IMAGEN NO DISPONIBLE"; position: absolute; bottom: 14px; left: 16px; font: 400 10px var(--font-mono); letter-spacing: .12em; color: var(--line); }
 .badge { position: absolute; left: 14px; top: 14px; z-index: 2; font: 500 10.5px var(--font-mono); letter-spacing: .06em; padding: 6px 10px; border-radius: 999px; background: rgba(14,16,19,.78); color: var(--text); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
@@ -474,7 +486,7 @@ body.on-paper .pill { background: rgba(243,245,247,.85); border-color: rgba(21,2
 @media (prefers-reduced-motion: reduce) {
   .dot, .audio-btn[aria-pressed="true"] .eq i, .msg.typing span, .grain, .glitch-layer { animation: none !important; }
   .glitch-layer { display: none; }
-  .enter, .enter svg, .card-media img { transition: none !important; }
+  .enter, .enter svg, .card-view, .card-track { transition: none !important; }
   .page-scroll { scroll-behavior: auto; }
   .panel, .panel.is-open { transition: opacity .2s linear !important; transform: none !important; opacity: 0; }
   .panel.is-open { opacity: 1; }
@@ -1626,7 +1638,8 @@ async function createWorld(T, progress) {
     sofa: M(0x4a5361), cushion: M(0x5a6372), rug: M(0x333a46), rug2: M(0x3f3a40), plum: M(0x5a4458),
     screen: M(0x27313a, { emissive: 0x6f8aa0, emissiveIntensity: 0.55, roughness: 0.4 }),
     screen2: M(0x1f2a24, { emissive: 0x3fa883, emissiveIntensity: 0.5, roughness: 0.4 }),
-    dogA: M(0xd8b48e), dogB: M(0xe9d9bf), catG: M(0x7d8390), catB: M(0x22252c),
+    dog: M(0x16181c, { flatShading: false, roughness: 0.7 }), catW: M(0xe4e6e9), catO: M(0xd9873a), catB: M(0x22252c),
+    silver: M(0xc6ccd4, { roughness: 0.3, metalness: 0.7 }), glass: M(0x2a2e36, { roughness: 0.35, metalness: 0.5 }),
     red: new T.MeshBasicMaterial({ color: 0xe25544 }), eye: new T.MeshBasicMaterial({ color: 0xf0d060 }),
     glassDay: M(0x34465a, { emissive: 0x1a2a3a, emissiveIntensity: 1, roughness: 0.3 }),
     glassNight: M(0x0f1824, { emissive: 0x0a121d, emissiveIntensity: 1, roughness: 0.3 }),
@@ -1635,7 +1648,7 @@ async function createWorld(T, progress) {
     moon: new T.MeshBasicMaterial({ color: 0xdfe4ea }),
   };
   const fr = {
-    skin: M(0xc8a68e), hair: M(0x1b1e23), shirt: M(0x2b313b), pants: M(0x1f242b), shoes: M(0x111317),
+    skin: M(0xc8a68e), hair: M(0x4e3424), shirt: M(0x8fbbdc), pants: M(0x15181d), shoes: M(0x0c0e11),
   };
   const francoMats = [fr.skin, fr.hair, fr.shirt, fr.pants, fr.shoes];
 
@@ -1783,7 +1796,10 @@ async function createWorld(T, progress) {
   };
   // Figura base compartida por Franco y la gente secundaria. `m` trae los materiales,
   // `ph` desfasa el idle para que no se muevan todos al unísono.
-  function figure(m, pose, ph = 0) {
+  const GLASS_RING = new T.TorusGeometry(0.032, 0.006, 4, 10);
+  // `o`: detalles opcionales — glasses, watch (reloj en la muñeca izquierda), curly (pelo de rulos),
+  // recede (menos pelo en la frente), long (pelo largo), collar (material del cuello de chomba), lapel (material de la camisa bajo un saco).
+  function figure(m, pose, ph = 0, o = {}) {
     const root = new T.Group();
     const body = new T.Group(); root.add(body); // pivote de cadera en y=0
     mesh(G.pelvis, m.pants, body, 0, 0.02, 0);
@@ -1793,10 +1809,40 @@ async function createWorld(T, progress) {
     mesh(G.neck, m.skin, spine, 0, 0.55, 0);
     const head = new T.Group(); head.position.y = 0.58; spine.add(head);
     const skull = mesh(G.head, m.skin, head, 0, 0.13, 0.005); skull.scale.set(0.95, 1.12, 1.02);
-    mesh(UNIT_BOX, m.hair, head, 0, 0.245, -0.015).scale.set(0.235, 0.075, 0.25);
-    mesh(UNIT_BOX, m.hair, head, 0, 0.17, -0.1).scale.set(0.23, 0.16, 0.07);
-    mesh(UNIT_BOX, m.hair, head, 0.112, 0.2, -0.03).scale.set(0.02, 0.1, 0.18);
-    mesh(UNIT_BOX, m.hair, head, -0.112, 0.2, -0.03).scale.set(0.02, 0.1, 0.18);
+    if (o.curly) {
+      // Rulos: copos sobre el cráneo (dirección desde el centro de la cabeza, tamaño).
+      for (const [ax, ay, az, sz] of [[0, 1, 0, 0.095], [0.6, 0.8, 0.2, 0.08], [-0.6, 0.8, 0.2, 0.08], [0.6, 0.7, -0.5, 0.08], [-0.6, 0.7, -0.5, 0.08], [0, 0.75, -0.65, 0.085], [0.95, 0.3, -0.2, 0.07], [-0.95, 0.3, -0.2, 0.07], [0.5, 0.55, 0.7, 0.06], [-0.5, 0.55, 0.7, 0.06], [0.85, 0, -0.5, 0.065], [-0.85, 0, -0.5, 0.065], [0, 0.3, -0.95, 0.075], [0.7, -0.3, -0.6, 0.06], [-0.7, -0.3, -0.6, 0.06]]) {
+        const l = Math.hypot(ax, ay, az);
+        mesh(PUFF, m.hair, head, (ax / l) * 0.115, 0.13 + (ay / l) * 0.13, 0.005 + (az / l) * 0.115).scale.setScalar(sz);
+      }
+    } else {
+      // Con `recede` la tapa arranca más atrás: entradas en la frente, el resto del pelo igual.
+      mesh(UNIT_BOX, m.hair, head, 0, 0.245, o.recede ? -0.045 : -0.015).scale.set(0.235, 0.075, o.recede ? 0.19 : 0.25);
+      mesh(UNIT_BOX, m.hair, head, 0, 0.17, -0.1).scale.set(0.23, 0.16, 0.07);
+      mesh(UNIT_BOX, m.hair, head, 0.112, 0.2, -0.03).scale.set(0.02, 0.1, 0.18);
+      mesh(UNIT_BOX, m.hair, head, -0.112, 0.2, -0.03).scale.set(0.02, 0.1, 0.18);
+    }
+    if (o.long) {
+      // Pelo largo: cae por la espalda hasta media altura y por los costados hasta los hombros.
+      mesh(UNIT_BOX, m.hair, head, 0, -0.04, -0.1).scale.set(0.24, 0.42, 0.08);
+      for (const s of [-1, 1]) mesh(UNIT_BOX, m.hair, head, 0.125 * s, 0.03, -0.03).scale.set(0.03, 0.3, 0.17);
+    }
+    if (o.glasses) {
+      for (const s of [-1, 1]) mesh(GLASS_RING, mat.glass, head, 0.047 * s, 0.15, 0.128).castShadow = false;
+      mesh(UNIT_BOX, mat.glass, head, 0, 0.15, 0.128).scale.set(0.03, 0.008, 0.008);
+      for (const s of [-1, 1]) { const a = mesh(UNIT_BOX, mat.glass, head, 0.114 * s, 0.155, 0.04); a.scale.set(0.008, 0.008, 0.17); a.castShadow = false; }
+    }
+    if (o.collar) {
+      // Cuello de chomba: dos solapas abiertas al frente y una tira atrás.
+      for (const s of [-1, 1]) { const f = mesh(UNIT_BOX, o.collar, spine, 0.05 * s, 0.525, 0.085); f.scale.set(0.085, 0.012, 0.05); f.rotation.set(0.35, -0.55 * s, 0.25 * s); }
+      mesh(UNIT_BOX, o.collar, spine, 0, 0.535, -0.045).scale.set(0.15, 0.035, 0.03);
+      mesh(UNIT_BOX, o.collar, spine, 0, 0.44, 0.112).scale.set(0.012, 0.09, 0.012);
+    }
+    if (o.lapel) {
+      // Camisa que asoma en V bajo el saco.
+      mesh(UNIT_BOX, o.lapel, spine, 0, 0.42, 0.112).scale.set(0.065, 0.17, 0.012);
+      for (const s of [-1, 1]) { const l = mesh(UNIT_BOX, m.shirt, spine, 0.045 * s, 0.42, 0.117); l.scale.set(0.02, 0.17, 0.012); l.rotation.y = 0.5 * s; }
+    }
     const arm = (side) => {
       const shoulder = new T.Group(); shoulder.position.set(0.235 * side, 0.46, 0); spine.add(shoulder);
       mesh(G.upper, m.shirt, shoulder);
@@ -1814,6 +1860,11 @@ async function createWorld(T, progress) {
       return { hip, knee };
     };
     const L = arm(1), R = arm(-1), LL = leg(1), RL = leg(-1);
+    if (o.watch) {
+      // Reloj en la muñeca izquierda: malla plateada y caratula sobre el dorso.
+      mesh(UNIT_BOX, mat.silver, L.elbow, 0, -0.262, 0).scale.set(0.08, 0.022, 0.056);
+      mesh(UNIT_BOX, mat.black, L.elbow, 0, -0.262, 0.03).scale.set(0.032, 0.026, 0.006);
+    }
     const P = POSES[pose];
     if (P.seated) {
       const open = P.legs || 0;
@@ -1867,7 +1918,7 @@ async function createWorld(T, progress) {
     return { root, body, spine, head, L, R, LL, RL, P, update };
   }
   function makeFranco(pose) {
-    const f = figure(fr, pose);
+    const f = figure(fr, pose, 0, { glasses: true, watch: true });
     const { root, spine, R } = f;
     const badge = mesh(UNIT_BOX, mat.signal, spine, 0.085, 0.36, 0.125); badge.scale.set(0.05, 0.034, 0.012); badge.castShadow = false;
 
@@ -1942,8 +1993,8 @@ async function createWorld(T, progress) {
     { shirt: 0x5f7360, pants: 0x3a3f4a, skin: 0xc8a68e, hair: 0x4a3426 }, // verde grisáceo
     { shirt: 0x6e4b6c, pants: 0x262c36, skin: 0xb48a6a, hair: 0x1b1e23 }, // ciruela
   ];
-  function makePerson({ shirt, pants, skin, hair, pose = 'typing' }) {
-    const f = figure({ skin: pm(skin), hair: pm(hair), shirt: pm(shirt), pants: pm(pants), shoes: pm(0x111317) }, pose, Math.random() * 6.28);
+  function makePerson({ shirt, pants, skin, hair, pose = 'typing', collar, lapel, ...o }) {
+    const f = figure({ skin: pm(skin), hair: pm(hair), shirt: pm(shirt), pants: pm(pants), shoes: pm(0x111317) }, pose, Math.random() * 6.28, { ...o, collar: collar ? pm(collar) : null, lapel: lapel ? pm(lapel) : null });
     return { root: f.root, update: f.update };
   }
   const person = (preset, pose) => makePerson({ ...PRESETS[preset % PRESETS.length], pose });
@@ -2103,32 +2154,34 @@ async function createWorld(T, progress) {
 
   // ---------- animales (grupos animados) ----------
   const puff = (m, parent, x, y, z, sx, sy = sx, sz = sx) => { const p = mesh(PUFF, m, parent, x, y, z); p.scale.set(sx, sy, sz); return p; };
-  // Caniche sentado, mira a +z local: copos de pelo con icosaedros.
+  const SPH = new T.SphereGeometry(1, 14, 10);
+  // Caniche negro de pelo liso, sentado, mira a +z local: esferas lisas, orejas caídas.
   function makeDog() {
     const root = new T.Group();
-    const A = mat.dogA, B = mat.dogB;
-    puff(A, root, 0, 0.2, -0.1, 0.2, 0.17, 0.24);
-    puff(A, root, 0, 0.34, 0.08, 0.17, 0.2, 0.2);
+    const m = mat.dog;
+    const blob = (parent, x, y, z, sx, sy = sx, sz = sx) => { const p = mesh(SPH, m, parent, x, y, z); p.scale.set(sx, sy, sz); return p; };
+    blob(root, 0, 0.14, -0.12, 0.15, 0.13, 0.2);     // grupa apoyada
+    blob(root, 0, 0.26, 0.08, 0.13, 0.17, 0.15);     // pecho
+    blob(root, 0, 0.4, 0.12, 0.07, 0.09, 0.07);      // cuello
     for (const s of [-1, 1]) {
-      puff(B, root, 0.16 * s, 0.1, -0.1, 0.09, 0.08, 0.11);
-      mesh(new T.CylinderGeometry(0.03, 0.03, 0.26, 5), A, root, 0.1 * s, 0.17, 0.2);
-      puff(B, root, 0.1 * s, 0.045, 0.22, 0.06, 0.045, 0.07);
+      blob(root, 0.12 * s, 0.08, -0.1, 0.07, 0.06, 0.1);                       // muslos
+      mesh(new T.CylinderGeometry(0.028, 0.03, 0.3, 7), m, root, 0.08 * s, 0.15, 0.18); // patas delanteras
+      blob(root, 0.08 * s, 0.015, 0.21, 0.045, 0.025, 0.065);                   // pies delanteros
+      blob(root, 0.13 * s, 0.015, 0.0, 0.04, 0.025, 0.07);                      // pies traseros
     }
-    const head = new T.Group(); head.position.set(0, 0.58, 0.16); root.add(head);
-    puff(A, head, 0, 0, 0, 0.13, 0.12, 0.13);
-    puff(B, head, 0, 0.1, -0.01, 0.1, 0.08, 0.1);
-    for (const s of [-1, 1]) puff(B, head, 0.13 * s, -0.03, -0.02, 0.055, 0.1, 0.07);
-    puff(A, head, 0, -0.03, 0.12, 0.06, 0.05, 0.07);
-    mesh(new T.IcosahedronGeometry(0.022, 0), mat.black, head, 0, -0.01, 0.185).castShadow = false;
-    for (const s of [-1, 1]) mesh(new T.IcosahedronGeometry(0.014, 0), mat.black, head, 0.05 * s, 0.025, 0.11).castShadow = false;
-    const tail = new T.Group(); tail.position.set(0, 0.3, -0.3); root.add(tail);
-    mesh(new T.CylinderGeometry(0.015, 0.02, 0.14, 5), A, tail, 0, 0.05, -0.02).rotation.x = 0.5;
-    puff(B, tail, 0, 0.12, -0.06, 0.05);
+    const head = new T.Group(); head.position.set(0, 0.52, 0.14); root.add(head);
+    blob(head, 0, 0, 0, 0.1, 0.095, 0.1);            // cráneo
+    blob(head, 0, -0.03, 0.1, 0.055, 0.045, 0.08);   // hocico
+    for (const s of [-1, 1]) { const e = blob(head, 0.095 * s, -0.04, -0.01, 0.028, 0.095, 0.055); e.rotation.z = s * 0.2; } // orejas lisas caídas
+    mesh(new T.IcosahedronGeometry(0.02, 0), mat.black, head, 0, -0.01, 0.175).castShadow = false;
+    for (const s of [-1, 1]) mesh(new T.IcosahedronGeometry(0.012, 0), mat.eye, head, 0.045 * s, 0.025, 0.085).castShadow = false;
+    const tail = new T.Group(); tail.position.set(0, 0.2, -0.3); root.add(tail);
+    const tl = mesh(new T.CylinderGeometry(0.012, 0.022, 0.2, 6), m, tail, 0, 0.08, -0.04); tl.rotation.x = 0.45;
     const ph = Math.random() * 6;
     function update(t) {
       if (REDUCE) return;
       t += ph;
-      head.position.y = 0.58 + Math.sin(t * 2.4) * 0.012;
+      head.position.y = 0.52 + Math.sin(t * 2.4) * 0.012;
       head.rotation.z = Math.sin(t * 0.7) * 0.08;
       head.rotation.y = Math.sin(t * 0.45) * 0.15;
       tail.rotation.y = Math.sin(t * 9) * 0.45;
@@ -2136,13 +2189,23 @@ async function createWorld(T, progress) {
     }
     return { root, update };
   }
-  // Gato: 'sleep' (ovillado, respira) o 'sit' (sentado, mueve la cola). Mira a +z local.
-  function makeCat(m, pose = 'sit') {
+  // Gato: 'sleep' (ovillado, respira), 'sit' (sentado, mueve la cola) o 'eat' (en cuatro patas, cabeza baja
+  // sobre el plato). Mira a +z local. `patch` agrega manchas de otro color sobre el pelaje.
+  function makeCat(m, pose = 'sit', patch = null) {
     const root = new T.Group();
     const blob = (parent, x, y, z, sx, sy = sx, sz = sx) => puff(m, parent, x, y, z, sx, sy, sz);
     const ear = new T.ConeGeometry(0.026, 0.06, 4);
-    let tail = null;
-    if (pose === 'sleep') {
+    let tail = null, head = null;
+    if (pose === 'eat') {
+      blob(root, 0, 0.17, 0, 0.09, 0.09, 0.17);
+      for (const [sx, sz] of [[-0.05, -0.11], [0.05, -0.11], [-0.05, 0.1], [0.05, 0.1]]) mesh(new T.CylinderGeometry(0.018, 0.02, 0.17, 5), m, root, sx, 0.085, sz);
+      head = new T.Group(); head.position.set(0, 0.15, 0.2); head.rotation.x = 0.75; root.add(head);
+      blob(head, 0, 0, 0, 0.08, 0.075, 0.08);
+      for (const s of [-1, 1]) { const e = mesh(ear, m, head, 0.055 * s, 0.075, 0); e.castShadow = false; }
+      if (patch) { puff(patch, root, 0.05, 0.22, -0.04, 0.06, 0.05, 0.08); puff(patch, head, -0.04, 0.04, 0.02, 0.05, 0.04, 0.05); }
+      tail = new T.Group(); tail.position.set(0, 0.22, -0.16); root.add(tail);
+      const tl = mesh(new T.CylinderGeometry(0.008, 0.02, 0.28, 5), m, tail, 0, 0.1, -0.08); tl.rotation.x = 0.6;
+    } else if (pose === 'sleep') {
       blob(root, 0, 0.07, 0, 0.21, 0.08, 0.17);
       const head = blob(root, 0.1, 0.085, 0.12, 0.08, 0.065, 0.08);
       for (const s of [-1, 1]) { const e = mesh(ear, m, root, 0.1 + 0.045 * s, 0.14, 0.11); e.castShadow = false; }
@@ -2156,11 +2219,12 @@ async function createWorld(T, progress) {
     } else {
       blob(root, 0, 0.17, -0.02, 0.1, 0.17, 0.13);
       blob(root, 0, 0.12, 0.08, 0.09, 0.1, 0.08);
-      const head = new T.Group(); head.position.set(0, 0.37, 0.06); root.add(head);
+      head = new T.Group(); head.position.set(0, 0.37, 0.06); root.add(head);
       blob(head, 0, 0, 0, 0.085, 0.08, 0.085);
-      for (const s of [-1, 1]) { const e = mesh(ear, m, head, 0.055 * s, 0.075, 0); e.castShadow = false; }
+      for (const s of [-1, 1]) { const e = mesh(ear, patch && s > 0 ? patch : m, head, 0.055 * s, 0.075, 0); e.castShadow = false; }
       for (const s of [-1, 1]) { const e = mesh(new T.PlaneGeometry(0.02, 0.012), mat.eye, head, 0.03 * s, 0.01, 0.082); e.castShadow = false; }
       for (const s of [-1, 1]) mesh(new T.CylinderGeometry(0.02, 0.022, 0.2, 5), m, root, 0.05 * s, 0.1, 0.12);
+      if (patch) { puff(patch, root, 0.065, 0.2, -0.05, 0.06, 0.07, 0.08); puff(patch, root, -0.06, 0.1, 0.02, 0.05, 0.06, 0.06); puff(patch, head, 0.045, 0.04, 0.03, 0.05, 0.045, 0.05); }
       tail = new T.Group(); tail.position.set(0, 0.06, -0.1); root.add(tail);
       const tl = mesh(new T.CylinderGeometry(0.008, 0.02, 0.3, 5), m, tail, 0, 0, -0.15);
       tl.rotation.x = -Math.PI / 2;
@@ -2170,6 +2234,7 @@ async function createWorld(T, progress) {
       if (REDUCE) return;
       t += ph;
       if (pose === 'sleep') { const s = 1 + Math.sin(t * 1.1) * 0.03; root.scale.set(s, s, s); }
+      else if (pose === 'eat') { head.rotation.x = 0.75 + Math.sin(t * 5) * 0.07; tail.rotation.y = Math.sin(t * 0.8) * 0.35; }
       else { tail.rotation.y = Math.sin(t * 1.3) * 0.6 + Math.sin(t * 2.9) * 0.15; tail.rotation.x = 0.15 + Math.sin(t * 0.9) * 0.1; }
     }
     return { root, update };
@@ -2361,8 +2426,13 @@ async function createWorld(T, progress) {
     // Compañeros: el de enfrente de Franco siempre; los de la otra isla sólo en desktop.
     const people = [];
     const seat = (p, st, ry) => { p.root.position.set(st.x, 0.53, st.z); p.root.rotation.y = ry; root.add(p.root); people.push(p); };
-    seat(person(0, 'typing'), sA, Math.PI / 2);
-    if (!MOBILE) { seat(person(1, 'typing'), sB, -Math.PI / 2); seat(person(2, 'typing'), sC, Math.PI / 2); }
+    // Enfrente de Franco: chica pelirroja de pelo largo, camisa lila y pantalón negro.
+    seat(makePerson({ shirt: 0xb08ad0, pants: 0x15181d, skin: 0xe6c7ad, hair: 0xd8642a, long: true }), sA, Math.PI / 2);
+    if (!MOBILE) {
+      // Otra isla, enfrentados: chico de lentes con chomba marrón; chica de rulos negros con lentes, saco negro sobre camisa clara y jean celeste.
+      seat(makePerson({ shirt: 0x6b4a32, collar: 0x80603f, pants: 0x2a2f38, skin: 0xb98a66, hair: 0x1b1e23, glasses: true }), sB, -Math.PI / 2);
+      seat(makePerson({ shirt: 0x1a1d22, lapel: 0xd6dbe2, pants: 0x6f9cc4, skin: 0xc8a68e, hair: 0x15171b, glasses: true, curly: true }), sC, Math.PI / 2);
+    }
 
     const glow = new T.PointLight(0xbff5da, 0, 3, 1.4);
     glow.position.set(-2.9, 1.25, -0.6); root.add(glow);
@@ -2532,63 +2602,71 @@ async function createWorld(T, progress) {
       for (let x = 0; x < LW; x += 32) { c.beginPath(); c.moveTo(x, 0); c.lineTo(x, LH); c.stroke(); }
     };
     const slides = [
+      // SQL sobre sitios distribuidos: fragmento local + consulta global, y los tres sitios en red.
       (c) => {
-        c.font = `500 21px ${MONO}`; c.fillStyle = INK;
-        const code2 = ['dijkstra(G, s):', '  dist[v] ← ∞ ; dist[s] ← 0', '  Q ← V', '  mientras Q ≠ ∅:', '    u ← extraerMin(Q)', '    para v ∈ ady(u):', '      relajar(u, v)'];
-        code2.forEach((l, i) => c.fillText(l, 34, 60 + i * 34));
-        c.fillStyle = '#1fbf75'; c.fillRect(34, 318, 300, 2);
-        c.fillStyle = INK; c.fillText('T(n) = O((V + E) log V)', 34, 356);
-        c.font = `400 15px ${MONO}`; c.fillStyle = INK2; c.fillText('cola de prioridad: heap binario', 34, 392);
-        // Graph sketch.
-        const nodes = [[620, 120, 'A'], [760, 90, 'B'], [880, 180, 'C'], [700, 240, 'D'], [580, 280, 'E'], [860, 320, 'F']];
-        const edges = [[0, 1, 4], [1, 2, 3], [0, 3, 2], [3, 2, 5], [3, 4, 1], [2, 5, 2], [4, 5, 7]];
-        c.lineWidth = 2;
-        for (const [a, z, wgt] of edges) {
-          const [x1, y1] = nodes[a], [x2, y2] = nodes[z];
-          const hot = (a === 0 && z === 3) || (a === 3 && z === 2) || (a === 2 && z === 5);
-          c.strokeStyle = hot ? '#1fbf75' : 'rgba(214,220,228,.55)';
-          c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke();
-          c.fillStyle = 'rgba(214,220,228,.7)'; c.font = `400 16px ${MONO}`;
-          c.fillText(String(wgt), (x1 + x2) / 2 + 6, (y1 + y2) / 2 - 6);
+        c.font = `500 22px ${MONO}`; c.fillStyle = INK; c.fillText('SQL en sitios distribuidos', 34, 50);
+        c.fillStyle = '#1fbf75'; c.fillRect(34, 64, 300, 2);
+        c.font = `500 19px ${MONO}`;
+        const sql = ["-- fragmento en el sitio Trelew", "CREATE TABLE Cliente_TW AS", "  SELECT * FROM Cliente", "   WHERE ciudad = 'Trelew';", '', '-- consulta global (vista unión)', 'SELECT c.nombre, SUM(v.monto)', '  FROM Cliente@S1 c JOIN Venta@S2 v', '    ON v.cli = c.id', ' GROUP BY c.nombre;'];
+        sql.forEach((l, i) => { c.fillStyle = l.startsWith('--') ? INK2 : INK; c.fillText(l, 34, 98 + i * 29); });
+        const sites = [[720, 120, 'S1 · Trelew'], [900, 150, 'S2 · Rawson'], [790, 290, 'S3 · Madryn']];
+        c.strokeStyle = 'rgba(214,220,228,.55)'; c.lineWidth = 2;
+        for (const [i, j] of [[0, 1], [1, 2], [0, 2]]) { c.beginPath(); c.moveTo(sites[i][0], sites[i][1]); c.lineTo(sites[j][0], sites[j][1]); c.stroke(); }
+        for (const [x, y, n] of sites) {
+          c.fillStyle = '#1b2126'; c.strokeStyle = n[1] === '1' ? '#1fbf75' : 'rgba(214,220,228,.9)';
+          c.beginPath(); c.rect(x - 44, y - 22, 88, 44); c.fill(); c.stroke();
+          c.fillStyle = 'rgba(214,220,228,.95)'; c.font = `500 15px ${MONO}`; c.textAlign = 'center'; c.fillText(n, x, y + 5); c.textAlign = 'left';
+          c.fillStyle = 'rgba(214,220,228,.6)'; c.fillRect(x - 30, y - 12, 60, 3); c.fillRect(x - 30, y - 5, 60, 3);
         }
-        for (const [x, y, n] of nodes) {
-          c.fillStyle = '#1b2126'; c.beginPath(); c.arc(x, y, 18, 0, Math.PI * 2); c.fill();
-          c.strokeStyle = 'rgba(214,220,228,.9)'; c.stroke();
-          c.fillStyle = 'rgba(214,220,228,.95)'; c.font = `500 17px ${MONO}`;
-          c.fillText(n, x - 6, y + 6);
-        }
-        c.font = `400 15px ${MONO}`; c.fillStyle = INK2;
-        c.fillText('camino mínimo A → F', 620, 380);
+        c.font = `400 15px ${MONO}`; c.fillStyle = INK2; c.fillText('transparencia de ubicación', 700, 360);
       },
+      // Álgebra relacional: expresiones, equivalencias y el árbol de una consulta.
       (c) => {
-        c.font = `500 22px ${MONO}`; c.fillStyle = INK; c.fillText('Complejidad temporal', 34, 50);
-        const ox = 90, oy = 380, W = 420, H = 290;
-        c.strokeStyle = 'rgba(214,220,228,.7)'; c.lineWidth = 2;
-        c.beginPath(); c.moveTo(ox, oy - H); c.lineTo(ox, oy); c.lineTo(ox + W, oy); c.stroke();
-        c.font = `400 15px ${MONO}`; c.fillStyle = INK2; c.fillText('n', ox + W - 10, oy + 24); c.fillText('t', ox - 26, oy - H + 10);
-        const curves = [['O(n)', 'rgba(214,220,228,.45)', (u) => u * 0.45], ['O(n log n)', '#1fbf75', (u) => u * Math.log2(1 + u * 15) / 4.4], ['O(n²)', 'rgba(214,220,228,.9)', (u) => u * u]];
-        curves.forEach(([name, col, f], i) => {
-          c.strokeStyle = col; c.lineWidth = i === 1 ? 3 : 2; c.beginPath();
-          for (let k = 0; k <= 40; k++) { const u = k / 40, v = Math.min(1, f(u)); const x = ox + u * W, y = oy - v * H; k ? c.lineTo(x, y) : c.moveTo(x, y); }
-          c.stroke();
-          c.fillStyle = col; c.fillRect(600, 92 + i * 36, 22, 4);
-          c.fillStyle = INK; c.font = `500 18px ${MONO}`; c.fillText(name, 634, 100 + i * 36);
-        });
-        c.font = `400 16px ${MONO}`; c.fillStyle = INK2;
-        [['n', 'n log n', 'n²'], ['8', '24', '64'], ['64', '384', '4096'], ['1024', '10240', '1 048 576']].forEach((row, r) => {
-          row.forEach((cell, k) => { c.fillStyle = r ? INK : INK2; c.fillText(cell, 600 + k * 140, 240 + r * 32); });
-        });
-        c.fillStyle = '#1fbf75'; c.fillRect(600, 252, 380, 2);
-      },
-      (c) => {
-        c.font = `500 22px ${MONO}`; c.fillStyle = INK; c.fillText('Repaso · parcial', 34, 50);
-        c.fillStyle = '#1fbf75'; c.fillRect(34, 64, 220, 2);
-        const F = ['T(n) = 2·T(n/2) + Θ(n)   ⇒   Θ(n log n)', 'Σ i  (i = 1..n)  =  n(n+1) / 2', 'P(A|B) = P(B|A) · P(A) / P(B)', 'log_b x = ln x / ln b', 'μ = (1/n) Σ xᵢ     σ² = (1/n) Σ (xᵢ − μ)²', '∇f = (∂f/∂x, ∂f/∂y)', 'gcd(a, b) = gcd(b, a mod b)'];
+        c.font = `500 22px ${MONO}`; c.fillStyle = INK; c.fillText('Álgebra relacional', 34, 50);
+        c.fillStyle = '#1fbf75'; c.fillRect(34, 64, 230, 2);
         c.font = `500 20px ${MONO}`;
-        F.forEach((l, i) => { c.fillStyle = i === 2 ? '#1fbf75' : INK; c.fillText(l, 34, 110 + i * 44); });
-        c.font = `400 15px ${MONO}`; c.fillStyle = INK2; c.fillText('* entra todo lo anterior a la unidad 6', 34, 420);
+        const F = ['π nombre, monto (σ monto > 1000 (Cliente ⋈ Venta))', 'Cliente ⋈ id = cli Venta', 'σ p (R ⋈ S) ≡ σ p (R) ⋈ S   si p usa sólo atrib. de R', 'π A (π A,B (R)) ≡ π A (R)', 'R ∪ S,  R − S,  R × S,  R ÷ S'];
+        F.forEach((l, i) => { c.fillStyle = i === 2 ? '#1fbf75' : INK; c.fillText(l, 34, 110 + i * 46); });
+        c.font = `400 15px ${MONO}`; c.fillStyle = INK2; c.fillText('reglas de reescritura: empujar σ y π hacia las hojas', 34, 350);
+        const tree = [[870, 110, 'π nombre, monto'], [870, 180, 'σ monto > 1000'], [870, 250, '⋈'], [790, 330, 'Cliente'], [950, 330, 'Venta']];
+        c.strokeStyle = 'rgba(214,220,228,.55)'; c.lineWidth = 2;
+        for (const [i, j] of [[0, 1], [1, 2], [2, 3], [2, 4]]) { c.beginPath(); c.moveTo(tree[i][0], tree[i][1]); c.lineTo(tree[j][0], tree[j][1]); c.stroke(); }
+        c.textAlign = 'center';
+        for (const [x, y, n] of tree) {
+          c.font = `500 16px ${MONO}`; const w = c.measureText(n).width + 20;
+          c.fillStyle = '#1b2126'; c.fillRect(x - w / 2, y - 14, w, 28);
+          c.fillStyle = n === '⋈' ? '#1fbf75' : 'rgba(214,220,228,.95)'; c.fillText(n, x, y + 6);
+        }
+        c.textAlign = 'left';
+      },
+      // Esquemas de fragmentación: horizontal, vertical, mixta y las condiciones de correctitud.
+      (c) => {
+        c.font = `500 22px ${MONO}`; c.fillStyle = INK; c.fillText('Esquemas de fragmentación', 34, 50);
+        c.fillStyle = '#1fbf75'; c.fillRect(34, 64, 320, 2);
+        c.font = `500 19px ${MONO}`;
+        const L = [['Horizontal', 'Fi = σ ci (R)      R = F1 ∪ F2 ∪ F3'], ['Vertical', 'Fi = π Ai (R)      R = F1 ⋈ F2  (clave en ambos)'], ['Mixta', 'π Ai (σ ci (R))'], ['Correctitud', 'completitud · reconstrucción · disyunción']];
+        L.forEach(([k, v], i) => { c.fillStyle = '#1fbf75'; c.fillText(k, 34, 110 + i * 62); c.fillStyle = INK; c.fillText(v, 34, 138 + i * 62); });
+        const box = (x, y, w, n, hot) => {
+          c.fillStyle = '#1b2126'; c.strokeStyle = hot ? '#1fbf75' : 'rgba(214,220,228,.9)'; c.lineWidth = 2;
+          c.beginPath(); c.rect(x - w / 2, y - 18, w, 36); c.fill(); c.stroke();
+          c.fillStyle = 'rgba(214,220,228,.95)'; c.font = `500 15px ${MONO}`; c.textAlign = 'center'; c.fillText(n, x, y + 5); c.textAlign = 'left';
+        };
+        c.strokeStyle = 'rgba(214,220,228,.55)'; c.lineWidth = 2;
+        for (const x of [680, 820, 960]) { c.beginPath(); c.moveTo(820, 118); c.lineTo(x, 190); c.stroke(); }
+        box(820, 100, 330, 'Cliente(id, nombre, ciudad, saldo)', false);
+        box(680, 208, 124, 'F1 · Trelew', true); box(820, 208, 124, 'F2 · Rawson', false); box(960, 208, 124, 'F3 · Madryn', false);
+        c.beginPath(); c.moveTo(820, 226); c.lineTo(820, 290); c.stroke();
+        box(740, 308, 150, 'π id, nombre', false); box(900, 308, 150, 'π id, saldo', false);
+        c.font = `400 15px ${MONO}`; c.fillStyle = INK2; c.fillText('horizontal por ciudad, luego vertical', 655, 365);
       },
     ];
+    // Pintada en el rincón inferior izquierdo, aparte de lo que se da en clase; queda en las tres diapositivas.
+    const graffiti = (c) => {
+      c.save(); c.translate(150, 418); c.rotate(-0.05);
+      c.font = `700 24px ${MONO}`; c.fillStyle = 'rgba(214,220,228,.8)'; c.textAlign = 'center'; c.fillText('PARISE CRACK', 0, 0);
+      c.strokeStyle = 'rgba(214,220,228,.45)'; c.lineWidth = 2; c.beginPath(); c.moveTo(-92, 9); c.lineTo(94, 6); c.stroke();
+      c.restore();
+    };
     const board = canvasTex(896, 388, () => {});
     const BS = { idx: 0, shown: -1, last: -1 };
     function drawBoard(idx, prev, p) {
@@ -2600,6 +2678,7 @@ async function createWorld(T, progress) {
         boardBg(c); slides[idx](c); c.restore();
         c.fillStyle = '#1fbf75'; c.fillRect(p * LW - 2, 0, 3, LH);
       }
+      graffiti(c);
       c.restore();
       board.tex.needsUpdate = true;
     }
@@ -2618,7 +2697,7 @@ async function createWorld(T, progress) {
       c.fillStyle = '#1fbf75'; c.fillRect(0, 0, 6, h);
       c.textBaseline = 'middle'; c.textAlign = 'left';
       c.font = `600 15px ${MONO}`; c.fillStyle = '#e6ebf0';
-      c.fillText(['Grafos: camino mínimo', 'Complejidad: n log n vs n²', 'Repaso para el parcial'][idx], 22, 30);
+      c.fillText(['SQL en sitios distribuidos', 'Álgebra relacional', 'Esquemas de fragmentación'][idx], 22, 30);
       c.fillStyle = 'rgba(230,235,240,.25)'; c.fillRect(22, 46, 220, 1);
       const bw = [[150, 110, 180], [120, 170, 90], [160, 130, 200]][idx];
       bw.forEach((len, i) => {
@@ -2640,7 +2719,7 @@ async function createWorld(T, progress) {
         c.strokeStyle = 'rgba(230,235,240,.3)'; c.beginPath(); c.arc(cx + cw / 2, cy + ch / 2, 34, Math.PI * 0.9, Math.PI * 1.5); c.stroke();
       }
       c.font = `400 10px ${MONO}`; c.fillStyle = 'rgba(230,235,240,.5)';
-      c.fillText('Algoritmos II · clase 7', 22, h - 16); c.textAlign = 'right'; c.fillText(`${idx + 1} / 3`, w - 16, h - 16); c.textAlign = 'left';
+      c.fillText('Bases de Datos II · clase 7', 22, h - 16); c.textAlign = 'right'; c.fillText(`${idx + 1} / 3`, w - 16, h - 16); c.textAlign = 'left';
       slide.tex.needsUpdate = true;
     }
     drawSlide(0);
@@ -2673,12 +2752,25 @@ async function createWorld(T, progress) {
     const fSeat = SEAT(-0.4, -1.9);
     const mates = [[-1.9, 0], [-0.4, 1.9], [1.1, 1.9], [-1.9, -1.9], [-1.9, 1.9]];
     const empties = [[1.1, -1.9, mat.plum], [-0.4, 0, pm(0x9c5a46)], [1.1, 0, null]];
-    // Apuntes en los bancos ocupados.
-    for (const [x, z] of mates) { b.box(x, 0.74, z, 0.24, 0.012, 0.32, mat.paper, 0.2 - ((x * 7 + z * 3) % 1) * 0.5); b.box(x + 0.08, 0.746, z + 0.15, 0.012, 0.012, 0.16, mat.dark, 0.4); }
+    // Sobre los bancos ocupados se alternan notebook, cuaderno, hoja suelta, notebook con cuaderno al lado y cuaderno con lapicera.
+    const cuaderno = (x, z, ry, cover) => {
+      b.box(x, 0.76, z, 0.21, 0.025, 0.29, cover, ry);
+      const w = at(x, z, ry); const [px, pz] = w(0, 0.055);
+      b.box(px, 0.785, pz, 0.19, 0.004, 0.13, mat.paper, ry);
+    };
+    mates.forEach(([x, z], i) => {
+      const tilt = 0.2 - ((x * 7 + z * 3) % 1) * 0.5;
+      if (i === 0) notebook(b, x - 0.04, 0.76, z, 0);
+      else if (i === 1) cuaderno(x, z, tilt, mat.plum);
+      else if (i === 2) { b.box(x, 0.76, z, 0.24, 0.012, 0.32, mat.paper, tilt); b.box(x + 0.08, 0.772, z + 0.15, 0.012, 0.012, 0.16, mat.dark, 0.4); }
+      else if (i === 3) { notebook(b, x - 0.04, 0.76, z - 0.16, 0); cuaderno(x + 0.02, z + 0.26, 0.1, mat.trim); }
+      else { cuaderno(x, z, tilt, pm(0x9c5a46)); b.box(x + 0.1, 0.785, z + 0.12, 0.012, 0.012, 0.16, mat.dark, 0.3); }
+    });
     for (const [x, z, m] of empties) { if (m) backpack(b, x + 0.55, z + 0.6, 0.3, m); else b.box(x, 0.74, z, 0.2, 0.06, 0.28, mat.trim, 0.1); }
-    // Franco's notebook and pen.
-    b.box(-0.4, 0.74, -1.9, 0.26, 0.012, 0.36, mat.paper, 0.08);
-    b.box(-0.34, 0.752, -1.7, 0.012, 0.012, 0.16, mat.dark, 0.4);
+    // Banco de Franco: notebook y tupper de comida con tapa.
+    notebook(b, -0.44, 0.76, -2.02, 0);
+    b.box(-0.38, 0.76, -1.6, 0.17, 0.065, 0.13, mat.pale, 0.15);
+    b.box(-0.38, 0.825, -1.6, 0.18, 0.015, 0.14, mat.plum, 0.15);
     // Atril entre el pizarrón y la pantalla.
     b.box(-3.9, 0, -0.5, 0.55, 1.0, 0.5, mat.furn);
     b.add(UNIT_BOX, mat.furnL, -3.86, 1.06, -0.5, 0.62, 0.05, 0.58, 0, 0, -0.25);
@@ -2699,7 +2791,7 @@ async function createWorld(T, progress) {
       p.root.position.set(x + 0.6, 0.51, z); p.root.rotation.y = -Math.PI / 2;
       root.add(p.root); people.push(p);
     });
-    const teacher = makePerson({ shirt: 0x4a505c, pants: 0x1f242b, skin: 0xc8a68e, hair: 0x8e939c, pose: 'standing' });
+    const teacher = makePerson({ shirt: 0x4a505c, pants: 0x1f242b, skin: 0xc8a68e, hair: 0x2a2420, pose: 'standing', recede: true });
     teacher.root.position.set(-3.95, 0.93, 0.45); teacher.root.rotation.y = Math.PI / 2 + 0.2;
     root.add(teacher.root); people.push(teacher);
     // POV: entre la cabeza del profesor y el centro de la pantalla, así entran los dos y el pizarrón.
@@ -2803,6 +2895,10 @@ async function createWorld(T, progress) {
     // Pantuflas delante del sofá y un libro cerca del sillón.
     b.box(0.95, 0, -1.95, 0.12, 0.04, 0.26, mat.pot, 0.15); b.box(1.13, 0, -1.93, 0.12, 0.04, 0.26, mat.pot, -0.1);
     b.box(1.7, 0.02, -2.0, 0.22, 0.04, 0.3, mat.plum, 0.4);
+    // Plato del gato contra la pared izquierda, bajo la ventana, con su alfombrita.
+    b.box(-4.5, 0, 0.3, 0.4, 0.012, 0.5, mat.rug2);
+    b.cyl(-4.6, 0.012, 0.3, 0.09, 0.045, mat.pale, 10, 0.8);
+    b.add(PUFF, mat.pot, -4.6, 0.05, 0.3, 0.065, 0.02, 0.065, 0, 0, 0);
     b.flush();
 
     const franco = makeFranco('phone');
@@ -2813,21 +2909,18 @@ async function createWorld(T, progress) {
     franco.ring.position.z = 0.3;
     const phoneLight = new T.PointLight(0x1fbf75, 0, 1.6, 1.2);
     phoneLight.position.set(0, 0.95, SZ - 0.5); root.add(phoneLight);
-    // Mascotas: caniche en la alfombra mirando a Franco, gato negro sobre el mueble al lado de la tele,
-    // gato gris dormido en el sofá en L.
+    // Mascotas: caniche negro en el sofá en L (lado izquierdo) mirando hacia la tele, gato blanco con manchas
+    // naranjas en lo alto del respaldo del sofá de Franco y gato negro comiendo de su plato contra la pared izquierda.
     const pets = [];
     const dog = makeDog();
-    dog.root.position.set(-1.2, 0, -3.2); dog.root.rotation.y = Math.atan2(0 + 1.2, SZ - 0.06 + 3.2);
+    dog.root.position.set(-2.34, 0.48, -1.71); dog.root.rotation.y = 2.3;
     root.add(dog.root); pets.push(dog);
-    const catB = makeCat(mat.catB, 'sit');
-    catB.root.position.set(1.05, 0.54, -4.42); catB.root.rotation.y = 0.4;
+    const catW = makeCat(mat.catW, 'sit', mat.catO);
+    catW.root.position.set(-0.25, 1.0, SZ + 0.4); catW.root.rotation.y = 0.6;
+    root.add(catW.root); pets.push(catW);
+    const catB = makeCat(mat.catB, 'eat');
+    catB.root.position.set(-4.27, 0, 0.3); catB.root.rotation.y = -Math.PI / 2;
     root.add(catB.root); pets.push(catB);
-    if (!MOBILE) {
-      const catG = makeCat(mat.catG, 'sleep');
-      const [gx, gz] = at(-2.4, -2.2, 0)(0.06, 0.44);
-      catG.root.position.set(gx, 0.48, gz); catG.root.rotation.y = 0.9;
-      root.add(catG.root); pets.push(catG);
-    }
     // POV: el centro de la pantalla de la tele, derecho adelante de Franco.
     const pov = { target: toWorld(root, 0, 1.19, -4.56), back: new T.Vector3(0, 0, 1) };
     // La película (Big Buck Bunny, ver el <video> en el HTML): textura de video cuando hay cuadros;
@@ -3695,31 +3788,64 @@ const SERVICES = [
   ['Logos', 'Diseño gráfico e identidad para que todo hable el mismo idioma.'],
 ];
 const TOOLS = ['React', 'TypeScript', 'FastAPI', 'SQLite', 'Astro', 'Cloudflare Workers', 'Workers AI', 'D1'];
+// Más nuevo primero: este orden es el de la página. `media`: imágenes (`img`) o un clip local (`clip` + `poster`).
 const PROJECTS = [
   {
-    id: 'retroalimentacion-academica', initials: 'RA', title: 'Gestión de Retroalimentación Académica', badge: 'Proyecto final · APU 2025',
-    img: '/proyectos/apu-1.webp', alt: 'Pantalla de bienvenida del Sistema de Análisis Académico, con las tarjetas para entrar como Alumno, Docente o Departamento',
-    description: 'Sistema Web de Gestión Académica centralizado que digitaliza el ciclo completo de retroalimentación institucional. El sistema integra en un único flujo la recolección de encuestas estudiantiles, la generación automática de reportes para docentes y la elaboración de Informes de Actividad Curricular e Informes Sintéticos de Carrera por parte del Departamento, cumpliendo con las normativas vigentes (CDFI N.º005/2014 y N.º283/2015). Esta integración permite completar, en un mismo entorno, todas las tareas del circuito de evaluación académica',
-    links: [['Ver en producción', 'https://sistema-reporte-academico-unpsjb.unpsjb.workers.dev/login'], ['Ver informe', '/isfpp-gestion-academica.pdf']],
+    id: 'gestion-restaurante', initials: 'GR', title: 'Sistema de Gestión de Restaurante', badge: 'En desarrollo · ISFPP 2026',
+    media: [{ img: '/proyectos/restaurante-1.webp', alt: 'Platos de restaurante vistos desde arriba sobre una mesa de madera: carne con ensalada, croquetas y salsas' }],
+    overlay: 'Próximamente…', ghost: 'App gestión de restaurante',
+    description: 'Un sistema para manejar un restaurante completo desde un solo lugar: la carta, los menús y promociones, el salón y los mozos, las comandas, las reservas y los cobros, cada módulo con sus reportes. Con mi equipo llevamos el 100% del proyecto desde cero: planificación, diseño, desarrollo y pruebas, con Scrum. El objetivo es que al terminarlo quede funcional y listo para comercializar. React y TypeScript, FastAPI y SQLite.',
+    links: [],
+  },
+  {
+    id: 'portfolio-v1', initials: 'PP', title: 'Portfolio Personal', badge: 'Primera versión · 2025',
+    media: [
+      { img: '/proyectos/portfolio-v1-1.webp', alt: 'Portada del primer portfolio: el nombre y la presentación a la izquierda y, a la derecha, un chat estilo WhatsApp con la invitación a hacer clic para chatear' },
+      { img: '/proyectos/portfolio-v1-2.webp', alt: 'El chat en tema oscuro, recién abierto: el saludo inicial y la invitación a hacer clic para seguir' },
+      { img: '/proyectos/portfolio-v1-3.webp', alt: 'La conversación guionada completa en tema oscuro: a qué me dedico, dónde vivo y mis proyectos, con el campo para preguntar lo que quieras' },
+      { img: '/proyectos/portfolio-v1-4.webp', alt: 'Panel de información del contacto en tema oscuro: foto de perfil y la lista de tecnologías con las que está hecho el sitio' },
+      { img: '/proyectos/portfolio-v1-5.webp', alt: 'Vista de proyectos: tarjeta del sitio del Aeroclub Trelew con su carrusel de capturas, descripción y enlace a producción' },
+      { img: '/proyectos/portfolio-v1-6.webp', alt: 'El sitio en un iPhone: la portada con el nombre, la presentación y los botones de proyectos y contacto' },
+      { img: '/proyectos/portfolio-v1-7.webp', alt: 'El chat en un iPhone con el teclado abierto: los datos de contacto en burbujas y el campo para preguntar' },
+      { clip: '/proyectos/portfolio-v1-demo.mp4', poster: '/proyectos/portfolio-v1-poster.webp', alt: 'Grabación de pantalla del celular recorriendo el chat guionado del primer portfolio' },
+    ],
+    description: 'La primera versión de este sitio, pensada como un chat de WhatsApp: una versión IA mía responde preguntas sobre mi formación, mis proyectos y cómo trabajo, con las respuestas ancladas en mi CV real. Astro y TypeScript, desplegado en Cloudflare Workers con Llama 3.1 en Workers AI, auditoría de preguntas en D1 y verificación anti-bots con Turnstile. En español e inglés, con tema claro y oscuro. Sigue en línea en su propio subdominio.',
+    links: [['Ver el sitio', 'https://v1.francosolersistemas.com'], ['Ver el código', 'https://github.com/franwe-jpg/portfolio-v1']],
   },
   {
     id: 'aeroclub-trelew', initials: 'AT', title: 'Sitio del Aeroclub Trelew', badge: 'Cliente real',
-    img: '/proyectos/aeroclub-1.webp', alt: 'Portada del sitio del Aeroclub Trelew: avión en vuelo, los logos del club y de ANAC, y los botones para ver cursos o conocer la institución',
+    media: [
+      { img: '/proyectos/aeroclub-1.webp', alt: 'Portada del sitio del Aeroclub Trelew: avión en vuelo, los logos del club y de ANAC, y los botones para ver cursos o conocer la institución' },
+      { img: '/proyectos/aeroclub-2.webp', alt: 'Sección de carreras y cursos, con una tarjeta por formación: tripulante de cabina, piloto privado y el resto de los programas' },
+      { img: '/proyectos/aeroclub-3.webp', alt: 'Sección "Nuestra Historia", con fotos de archivo de 1944 y el relato de la fundación del club en 1938' },
+      { img: '/proyectos/aeroclub-4.webp', alt: 'Sección "Aeronaves de Instrucción", con una tarjeta por avión de la flota: Cessna, Piper, Petrel, Tecnam y Lockheed' },
+      { img: '/proyectos/aeroclub-5.webp', alt: 'Sección de contacto: ubicación, teléfono, email y horarios junto al mapa y al formulario de consulta' },
+    ],
     description: 'Sitio institucional para el Aeroclub Trelew, Centro de Instrucción de Aeronáutica Civil habilitado por ANAC desde 1938. Presenta las carreras y cursos que dicta, la flota, la galería y un formulario de contacto con el tipo de consulta ya clasificado. Un caso claro de página pensada alrededor de una necesidad real: que el interesado encuentre la carrera y consulte fácilmente.',
     links: [['Ver en producción', 'https://aeroclubtrelew.org/']],
   },
   {
-    id: 'atmos', initials: 'AO', title: 'AtmOS — NASA Space Apps Challenge', badge: 'Mención honorable · Nominado global',
-    img: '/proyectos/atmos-equipo.webp', alt: 'El equipo de AtmOS posando junto a los banners de NASA Space Apps Puerto Madryn y FAND durante el NASA Space Apps Challenge 2025',
-    description: 'App web hecha en 48 horas en la sede Puerto Madryn del NASA Space Apps Challenge 2025. Con mi equipo cruzamos datos satelitales y de calidad del aire para evaluar su impacto en la salud. Nos valió una mención honorable y la nominación global. El aprendizaje real fue sintetizar información y priorizar con el reloj en contra.',
-    links: [['Ver proyecto', 'https://www.spaceappschallenge.org/2025/find-a-team/notus/?tab=details'], ['Ver demo', 'https://www.youtube.com/watch?v=TdlaQjNjynM']],
+    id: 'retroalimentacion-academica', initials: 'RA', title: 'Gestión de Retroalimentación Académica', badge: 'Proyecto final · APU 2025',
+    media: [
+      { img: '/proyectos/apu-1.webp', alt: 'Pantalla de bienvenida del Sistema de Análisis Académico, con las tarjetas para entrar como Alumno, Docente o Departamento' },
+      { img: '/proyectos/apu-2.webp', alt: 'Vista del alumno: listado de encuestas pendientes, con materia, docente, fecha de cierre y el botón para responder' },
+      { img: '/proyectos/apu-3.webp', alt: 'Vista del docente: listado de reportes generados, con accesos a ver el reporte, el informe curricular y las estadísticas' },
+      { img: '/proyectos/apu-4.webp', alt: 'Análisis de respuestas por variable de una materia, con el porcentaje de cada opción y las métricas de la encuesta al costado' },
+      { img: '/proyectos/apu-5.webp', alt: 'Vista del Departamento: informes sintéticos por carrera, con la cantidad de informes incluidos y publicados por período' },
+      { img: '/proyectos/apu-6.webp', alt: 'Dashboard de estadísticas de la Facultad: asignaturas evaluadas, docentes participantes, respuestas y satisfacción global' },
+      { img: '/proyectos/apu-7.webp', alt: 'Asignaturas con mayor participación y la tabla de alertas automáticas por calidad docente e infraestructura, con su severidad' },
+    ],
+    description: 'Sistema Web de Gestión Académica centralizado que digitaliza el ciclo completo de retroalimentación institucional. El sistema integra en un único flujo la recolección de encuestas estudiantiles, la generación automática de reportes para docentes y la elaboración de Informes de Actividad Curricular e Informes Sintéticos de Carrera por parte del Departamento, cumpliendo con las normativas vigentes (CDFI N.º005/2014 y N.º283/2015). Esta integración permite completar, en un mismo entorno, todas las tareas del circuito de evaluación académica',
+    links: [['Ver en producción', 'https://sistema-reporte-academico-unpsjb.unpsjb.workers.dev/login'], ['Ver informe', '/isfpp-gestion-academica.pdf']],
   },
   {
-    id: 'gestion-restaurante', initials: 'GR', title: 'Sistema de Gestión de Restaurante', badge: 'En desarrollo · ISFPP 2026',
-    img: '/proyectos/restaurante-1.webp', alt: 'Platos de restaurante vistos desde arriba sobre una mesa de madera: carne con ensalada, croquetas y salsas',
-    overlay: 'Próximamente…', ghost: 'App gestión de restaurante',
-    description: 'Un sistema para manejar un restaurante completo desde un solo lugar: la carta, los menús y promociones, el salón y los mozos, las comandas, las reservas y los cobros, cada módulo con sus reportes. Con mi equipo llevamos el 100% del proyecto desde cero: planificación, diseño, desarrollo y pruebas, con Scrum. El objetivo es que al terminarlo quede funcional y listo para comercializar. React y TypeScript, FastAPI y SQLite.',
-    links: [],
+    id: 'atmos', initials: 'AO', title: 'AtmOS — NASA Space Apps Challenge', badge: 'Mención honorable · Nominado global',
+    media: [
+      { img: '/proyectos/atmos-equipo.webp', alt: 'El equipo de AtmOS posando junto a los banners de NASA Space Apps Puerto Madryn y FAND durante el NASA Space Apps Challenge 2025' },
+      { img: '/proyectos/atmos-mencion.webp', alt: 'Tarjeta de la mención honorable de AtmOS en el NASA Space Apps Challenge 2025, sede Puerto Madryn' },
+    ],
+    description: 'App web hecha en 48 horas en la sede Puerto Madryn del NASA Space Apps Challenge 2025. Con mi equipo cruzamos datos satelitales y de calidad del aire para evaluar su impacto en la salud. Nos valió una mención honorable y la nominación global. El aprendizaje real fue sintetizar información y priorizar con el reloj en contra.',
+    links: [['Ver proyecto', 'https://www.spaceappschallenge.org/2025/find-a-team/notus/?tab=details'], ['Ver demo', 'https://www.youtube.com/watch?v=TdlaQjNjynM']],
   },
 ];
 const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
@@ -3735,16 +3861,44 @@ function renderSections() {
   $('#projects').replaceChildren(...PROJECTS.map((p) => {
     const card = el('article', 'card reveal-card');
     const media = el('div', 'card-media');
-    media.append(el('span', 'badge', p.badge));
-    const img = new Image();
-    img.loading = 'lazy'; img.decoding = 'async'; img.alt = p.alt; img.width = 1280; img.height = 800;
-    img.addEventListener('error', () => {
-      const ph = el('div', 'ph', p.initials);
-      ph.setAttribute('role', 'img'); ph.setAttribute('aria-label', p.alt);
-      img.replaceWith(ph);
-    }, { once: true });
-    img.src = p.img;
-    media.append(img);
+    // Galería: una pista con todas las imágenes (y el clip, si hay) que se desplaza con flechas y puntos.
+    const view = el('div', 'card-view'), track = el('div', 'card-track');
+    p.media.forEach((m, i) => {
+      if (m.clip) {
+        const v = document.createElement('video');
+        v.src = m.clip; v.poster = m.poster; v.controls = v.muted = v.playsInline = true; v.preload = 'none';
+        v.setAttribute('aria-label', m.alt);
+        track.append(v); return;
+      }
+      const img = new Image();
+      img.loading = i ? 'lazy' : 'eager'; img.decoding = 'async'; img.alt = m.alt; img.width = 1280; img.height = 800;
+      img.addEventListener('error', () => {
+        const ph = el('div', 'ph', p.initials);
+        ph.setAttribute('role', 'img'); ph.setAttribute('aria-label', m.alt);
+        img.replaceWith(ph);
+      }, { once: true });
+      img.src = m.img;
+      track.append(img);
+    });
+    view.append(track); media.append(view, el('span', 'badge', p.badge));
+    if (p.media.length > 1) {
+      let idx = 0;
+      const dots = el('div', 'card-dots');
+      const marks = p.media.map((_, i) => { const d = el('i'); if (!i) d.className = 'on'; dots.append(d); return d; });
+      const go = (n) => {
+        track.querySelector('video')?.pause();
+        idx = (n + p.media.length) % p.media.length;
+        track.style.transform = `translateX(${-idx * 100}%)`;
+        marks.forEach((d, i) => d.classList.toggle('on', i === idx));
+        dots.hidden = !!p.media[idx].clip; // sobre el video pisarían la barra de controles
+      };
+      for (const [cls, d, label] of [['prev', -1, 'Anterior'], ['next', 1, 'Siguiente']]) {
+        const b = el('button', 'card-arrow ' + cls, cls === 'prev' ? '‹' : '›'); b.type = 'button'; b.setAttribute('aria-label', label);
+        b.addEventListener('click', (e) => { e.stopPropagation(); go(idx + d); });
+        media.append(b);
+      }
+      media.append(dots);
+    }
     if (p.overlay) {
       const s = el('div', 'soon');
       const g = el('span', 'ghost', p.ghost); g.setAttribute('aria-hidden', 'true');
@@ -4071,7 +4225,7 @@ function initCards() {
     if (state.page !== 'proyectos') return;
     for (const { card, s } of tilts) {
       s.rx += (s.gx - s.rx) * 0.12; s.ry += (s.gy - s.ry) * 0.12;
-      const inner = card.querySelector('.card-media img, .card-media .ph');
+      const inner = card.querySelector('.card-view');
       if (!s.hot && Math.abs(s.rx) < 0.01 && Math.abs(s.ry) < 0.01) {
         // At rest: hand the card back to the stylesheet.
         if (card.style.transform) { s.rx = s.ry = 0; card.style.transform = ''; if (inner) inner.style.transform = ''; }
