@@ -4,12 +4,17 @@ import type { Lang } from '../i18n/config';
  * A carousel slide. Most are screenshots; a project can also show an embedded
  * YouTube video, which plays inside the carousel instead of leaving the page.
  */
-export type ProjectMediaBase = { kind: 'image'; src: string } | { kind: 'video'; youtubeId: string };
+export type ProjectMediaBase =
+  | { kind: 'image'; src: string }
+  | { kind: 'video'; youtubeId: string }
+  /** A short self-hosted clip (mp4 in `public/proyectos/`), shown with native controls. */
+  | { kind: 'clip'; src: string; poster: string };
 
 export type ProjectMedia =
   | { kind: 'image'; src: string; alt: string }
   /** `alt` is used as the iframe title, which is what a screen reader announces. */
-  | { kind: 'video'; youtubeId: string; alt: string };
+  | { kind: 'video'; youtubeId: string; alt: string }
+  | { kind: 'clip'; src: string; poster: string; alt: string };
 
 export interface ProjectLink {
   label: string;
@@ -29,6 +34,10 @@ export interface ProjectCopy {
   description: string;
   /** Shown as a small pill above the title. Use it to be honest about status. */
   badge?: string;
+  /** Text laid over the carousel, for a project that cannot be shown yet. */
+  overlay?: string;
+  /** Blurred, faded line drawn behind `overlay`, naming what is coming. */
+  overlayGhost?: string;
   /** One alt per image, in the same order as `images`. */
   imageAlts: string[];
   /** One label per link, in the same order as `links`. */
@@ -41,11 +50,46 @@ export interface Project {
   title: string;
   description: string;
   badge?: string;
+  overlay?: string;
+  overlayGhost?: string;
   media: ProjectMedia[];
   links: ProjectLink[];
 }
 
+// Newest first: this order is the order on the page.
 const PROJECT_BASE: ProjectBase[] = [
+  {
+    // Still being built: a stock food photo stands in until there are screenshots.
+    id: 'gestion-restaurante',
+    media: [{ kind: 'image', src: '/proyectos/restaurante-1.webp' }],
+    links: [],
+  },
+  {
+    // First version of this site, kept online at v1.francosolersistemas.com after the redesign.
+    id: 'portfolio-v1',
+    media: [
+      { kind: 'image', src: '/proyectos/portfolio-v1-1.webp' },
+      { kind: 'image', src: '/proyectos/portfolio-v1-2.webp' },
+      { kind: 'image', src: '/proyectos/portfolio-v1-3.webp' },
+      { kind: 'image', src: '/proyectos/portfolio-v1-4.webp' },
+      { kind: 'image', src: '/proyectos/portfolio-v1-5.webp' },
+      { kind: 'image', src: '/proyectos/portfolio-v1-6.webp' },
+      { kind: 'image', src: '/proyectos/portfolio-v1-7.webp' },
+      { kind: 'clip', src: '/proyectos/portfolio-v1-demo.mp4', poster: '/proyectos/portfolio-v1-poster.webp' },
+    ],
+    links: [{ href: 'https://v1.francosolersistemas.com' }, { href: 'https://github.com/franwe-jpg/portfolio-v1' }],
+  },
+  {
+    id: 'aeroclub-trelew',
+    media: [
+      { kind: 'image', src: '/proyectos/aeroclub-1.webp' },
+      { kind: 'image', src: '/proyectos/aeroclub-2.webp' },
+      { kind: 'image', src: '/proyectos/aeroclub-3.webp' },
+      { kind: 'image', src: '/proyectos/aeroclub-4.webp' },
+      { kind: 'image', src: '/proyectos/aeroclub-5.webp' },
+    ],
+    links: [{ href: 'https://aeroclubtrelew.org/' }],
+  },
   {
     id: 'retroalimentacion-academica',
     media: [
@@ -63,17 +107,6 @@ const PROJECT_BASE: ProjectBase[] = [
     ],
   },
   {
-    id: 'aeroclub-trelew',
-    media: [
-      { kind: 'image', src: '/proyectos/aeroclub-1.webp' },
-      { kind: 'image', src: '/proyectos/aeroclub-2.webp' },
-      { kind: 'image', src: '/proyectos/aeroclub-3.webp' },
-      { kind: 'image', src: '/proyectos/aeroclub-4.webp' },
-      { kind: 'image', src: '/proyectos/aeroclub-5.webp' },
-    ],
-    links: [{ href: 'https://aeroclubtrelew.org/' }],
-  },
-  {
     id: 'atmos',
     media: [
       { kind: 'image', src: '/proyectos/atmos-equipo.webp' },
@@ -84,14 +117,6 @@ const PROJECT_BASE: ProjectBase[] = [
       { href: 'https://www.spaceappschallenge.org/2025/find-a-team/notus/?tab=details' },
       { href: 'https://www.youtube.com/watch?v=TdlaQjNjynM' },
     ],
-  },
-  {
-    id: 'landing-tienda-apple',
-    media: [
-      { kind: 'image', src: '/proyectos/apple-1.webp' },
-      { kind: 'image', src: '/proyectos/apple-2.webp' },
-    ],
-    links: [],
   },
 ];
 
@@ -139,16 +164,34 @@ const PROJECT_COPY: Record<Lang, Record<string, ProjectCopy>> = {
       ],
       linkLabels: ['Ver proyecto', '🎬 Ver demo'],
     },
-    'landing-tienda-apple': {
-      title: 'Landing para tienda de tecnología',
-      badge: 'Pieza de demostración',
+    'gestion-restaurante': {
+      title: 'Sistema de Gestión de Restaurante',
+      badge: 'En desarrollo · ISFPP 2026',
+      overlay: 'Próximamente...',
+      overlayGhost: 'App gestión de restaurante',
       description:
-        'Además de los sistemas grandes, hago y comercializo landing pages para negocios e instituciones. Esta es una pieza de muestra, no un trabajo para un cliente real: una tienda ficticia de productos Apple en Trelew, para enseñar el tipo de página que entrego. Una sola pieza HTML, sin dependencias externas, responsive y accesible.',
+        'Un sistema para manejar un restaurante completo desde un solo lugar: la carta, los menús y promociones, el salón y los mozos, las comandas, las reservas y los cobros, cada módulo con sus reportes. Con mi equipo llevamos el 100% del proyecto desde cero: planificación, diseño, desarrollo y pruebas, con Scrum. El objetivo es que al terminarlo quede funcional y listo para comercializar. React y TypeScript, FastAPI y SQLite.',
       imageAlts: [
-        'Portada de la landing de la tienda de tecnología, con titular grande y llamada a la acción',
-        'Grilla de productos de la landing, con nombre, especificación breve y precio de cada equipo',
+        'Platos de restaurante vistos desde arriba sobre una mesa de madera: carne con ensalada, croquetas y salsas',
       ],
       linkLabels: [],
+    },
+    'portfolio-v1': {
+      title: 'Portfolio Personal',
+      badge: 'Primera versión · 2025',
+      description:
+        'La primera versión de este sitio, pensada como un chat de WhatsApp: una versión IA mía responde preguntas sobre mi formación, mis proyectos y cómo trabajo, con las respuestas ancladas en mi CV real. Astro y TypeScript, desplegado en Cloudflare Workers con Llama 3.1 en Workers AI, auditoría de preguntas en D1 y verificación anti-bots con Turnstile. En español e inglés, con tema claro y oscuro. Sigue en línea en su propio subdominio.',
+      imageAlts: [
+        'Portada del primer portfolio: el nombre y la presentación a la izquierda y, a la derecha, un chat estilo WhatsApp con la invitación a hacer clic para chatear',
+        'El chat en tema oscuro, recién abierto: el saludo inicial y la invitación a hacer clic para seguir',
+        'La conversación guionada completa en tema oscuro: a qué me dedico, dónde vivo y mis proyectos, con el campo para preguntar lo que quieras',
+        'Panel de información del contacto en tema oscuro: foto de perfil y la lista de tecnologías con las que estaba hecho el sitio',
+        'Vista de proyectos: tarjeta del sitio del Aeroclub Trelew con su carrusel de capturas, descripción y enlace a producción',
+        'El sitio en un iPhone: la portada con el nombre, la presentación y los botones de proyectos y contacto',
+        'El chat en un iPhone con el teclado abierto: los datos de contacto en burbujas y el campo para preguntar',
+        'Grabación de pantalla del celular recorriendo el chat guionado del primer portfolio',
+      ],
+      linkLabels: ['Ver el sitio', 'Ver el código'],
     },
   },
 
@@ -195,16 +238,34 @@ const PROJECT_COPY: Record<Lang, Record<string, ProjectCopy>> = {
       ],
       linkLabels: ['See the project', '🎬 Watch the demo'],
     },
-    'landing-tienda-apple': {
-      title: 'Landing page for a tech store',
-      badge: 'Demo piece',
+    'gestion-restaurante': {
+      title: 'Restaurant Management System',
+      badge: 'In progress · ISFPP 2026',
+      overlay: 'Coming soon...',
+      overlayGhost: 'Restaurant management app',
       description:
-        'Besides the bigger systems, I build and sell landing pages for businesses and institutions. This one is a sample, not work for a real client: a fictional Apple products store in Trelew, to show the kind of page I deliver. A single HTML piece, no external dependencies, responsive and accessible.',
+        'A system to run a whole restaurant from one place: the menu, set menus and promotions, the floor and the waiters, orders, reservations and payments, each module with its own reports. My team and I own 100% of the project from scratch: planning, design, development and testing, run with Scrum. The goal is for it to be fully working and ready to sell once it is finished. React and TypeScript, FastAPI and SQLite.',
       imageAlts: [
-        'Hero of the tech store landing page, with a large headline and a call to action',
-        'Product grid of the landing page, with the name, a short spec and the price of each device',
+        'Restaurant dishes seen from above on a wooden table: steak with salad, croquettes and sauces',
       ],
       linkLabels: [],
+    },
+    'portfolio-v1': {
+      title: 'Personal Portfolio',
+      badge: 'First version · 2025',
+      description:
+        'The first version of this site, designed as a WhatsApp chat: an AI version of me answers questions about my studies, my projects and how I work, with answers grounded in my real CV. Astro and TypeScript, deployed on Cloudflare Workers with Llama 3.1 on Workers AI, a question audit log in D1 and anti-bot verification with Turnstile. In Spanish and English, with light and dark themes. Still online on its own subdomain.',
+      imageAlts: [
+        'Home page of the first portfolio: name and introduction on the left and, on the right, a WhatsApp-style chat inviting you to click to start chatting',
+        'The chat in dark theme, just opened: the first greeting and the invitation to click to continue',
+        'The full scripted conversation in dark theme: what I do, where I live and my projects, with the field to ask anything',
+        'Contact info panel in dark theme: profile photo and the list of technologies the site was built with',
+        'Projects view: the Aeroclub Trelew site card with its screenshot carousel, description and link to production',
+        'The site on an iPhone: the home page with the name, the introduction and the projects and contact buttons',
+        'The chat on an iPhone with the keyboard open: the contact details in bubbles and the field to ask a question',
+        'Phone screen recording walking through the scripted chat of the first portfolio',
+      ],
+      linkLabels: ['Visit the site', 'View the code'],
     },
   },
 };
@@ -218,6 +279,8 @@ export function projectsFor(lang: Lang): Project[] {
       title: copy.title,
       description: copy.description,
       badge: copy.badge,
+      overlay: copy.overlay,
+      overlayGhost: copy.overlayGhost,
       media: base.media.map((item, index) => ({
         ...item,
         alt: copy.imageAlts[index] ?? '',

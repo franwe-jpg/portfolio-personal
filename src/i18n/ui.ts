@@ -59,6 +59,8 @@ export interface UiCopy {
 
   viewProjects: string;
   viewChat: string;
+  /** Pulsing cue under the mobile cover that leads down to the chat. */
+  swipeHint: string;
 
   avatarAlt: (name: string) => string;
   emailLink: string;
@@ -107,6 +109,7 @@ export const UI: Record<Lang, UiCopy> = {
 
     viewProjects: 'Ver proyectos',
     viewChat: 'Ver el chat',
+    swipeHint: 'Deslizá',
 
     avatarAlt: (name) => `Foto de ${name}`,
     emailLink: 'Correo',
@@ -186,6 +189,7 @@ export const UI: Record<Lang, UiCopy> = {
 
     viewProjects: 'View projects',
     viewChat: 'Back to the chat',
+    swipeHint: 'Swipe',
 
     avatarAlt: (name) => `Photo of ${name}`,
     emailLink: 'Email',

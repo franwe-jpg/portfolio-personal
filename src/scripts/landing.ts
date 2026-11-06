@@ -1006,11 +1006,9 @@ function initConversation(): void {
 
   if (suggestions && suggestionsTrack) {
     input.addEventListener('focus', function () {
-      document.documentElement.classList.add('composer-focused');
       showSuggestions();
     });
     input.addEventListener('blur', function () {
-      document.documentElement.classList.remove('composer-focused');
       hideSuggestionsSoon();
     });
     suggestions.addEventListener('focusout', function (event) {
@@ -1095,7 +1093,6 @@ function initPanels(): void {
     chatScreen!.inert = true;
     profileScreen.classList.add('is-open');
     contactButton?.setAttribute('aria-expanded', 'true');
-    document.documentElement.classList.add('profile-open');
     document.addEventListener('keydown', onProfileKeydown);
     // The phone's back button should close the profile, not leave the site.
     try {
@@ -1115,7 +1112,6 @@ function initPanels(): void {
     profileScreen.inert = true;
     chatScreen!.inert = false;
     contactButton?.setAttribute('aria-expanded', 'false');
-    document.documentElement.classList.remove('profile-open');
     document.removeEventListener('keydown', onProfileKeydown);
     contactButton?.focus({ preventScroll: true });
     if (profileInHistory && !viaHistory) history.back();
@@ -1130,9 +1126,18 @@ function initPanels(): void {
     closeProfile(true);
   });
 
+  /** Mirrors the stylesheet: below this width the panels are stacked pages. */
+  const stackedLayout = window.matchMedia('(max-width: 900px)');
+
   function toggleView(): void {
     // The projects swap happens under the profile, so close it first.
     closeProfile();
+    if (stackedLayout.matches) {
+      // Projects is its own page below the chat: scroll to it, never swap.
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      projectsScreen!.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+      return;
+    }
     if (currentView === 'chat') {
       slideSwap(projectsScreen!, chatScreen!);
       currentView = 'projects';

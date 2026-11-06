@@ -14,7 +14,20 @@ const copy = PROFILE_COPY[lang];
 
 <div class="intro">
   <h1>{profile.name}</h1>
-  <div class="bio">{copy.bio.map((line) => <p>{line}</p>)}</div>
+  <div class="bio">
+    {
+      copy.bio.map((line) =>
+        typeof line === 'string' ? (
+          <p>{line}</p>
+        ) : (
+          <>
+            <p class="bio-wide">{line.wide}</p>
+            <p class="bio-narrow">{line.narrow}</p>
+          </>
+        ),
+      )
+    }
+  </div>
   <div class="links">
     <ViewToggleButton lang={lang} id="viewToggleDesktop" />
     <div class="links-row">
@@ -51,5 +64,10 @@ const copy = PROFILE_COPY[lang];
       {UI[lang].emailLink}</a
     >
     </div>
+  </div>
+  <div class="scroll-cue" aria-hidden="true">
+    <span>{UI[lang].swipeHint}</span>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+      stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12l7 7 7-7"></path></svg>
   </div>
 </div>
