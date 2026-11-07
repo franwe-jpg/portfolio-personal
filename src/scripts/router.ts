@@ -33,7 +33,7 @@ function swap(page: Page): void {
   pageEl(page).querySelector('.page-scroll')?.scrollTo({ top: 0, behavior: 'instant' });
   document.body.classList.toggle('on-paper', page !== 'mundo');
   document.body.dataset.page = page;
-  // The stage (world canvas + dark glyph field) only shows behind mundo; the world (Fase 3) adds its own view changes.
+  // The stage (world canvas + dark glyph field) only shows behind mundo; once built, the world sets its view on `app:pageswap`.
   byId('stage3d').classList.toggle('is-off', page !== 'mundo');
   for (const link of $$<HTMLAnchorElement>('.nav a[data-go]')) {
     if (link.dataset.go === page) link.setAttribute('aria-current', 'page');

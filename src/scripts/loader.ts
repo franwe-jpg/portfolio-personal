@@ -1,20 +1,16 @@
 import { byId } from './dom';
-import { WEBGL } from './env';
 import { t } from './i18n';
 
 /**
  * Gate loader: the thin bar at the top and the percentage reflect real work.
  * Two kinds of jobs feed it:
  *
- * - downloads/fonts (`fractions`, 90 % of the bar): `three` through `loadThree()`
- *   and the two web fonts;
+ * - downloads/fonts (`fractions`, 90 % of the bar): the two web fonts;
  * - boot steps (`build`, the final 10 %): work registered with
- *   `registerBootStep()` before loading starts, each reporting 0..1. The world
- *   (plan, Fase 3) registers its build here, e.g.
- *   `registerBootStep('world', async (report) => initWorld(await loadThree(), report))`.
+ *   `registerBootStep()` before loading starts, each reporting 0..1.
  *
- * `loadThree()` caches the module promise, so a later phase may call it from
- * the gate (honest bar, instant world) or lazily when entering `mundo`.
+ * `three` is not part of this bar: the world chunk downloads on the first visit
+ * to `mundo` (src/scripts/stage.ts), as the plan asks.
  */
 export type LoaderState = 'idle' | 'loading' | 'ready' | 'failed';
 export type BootStep = (report: (fraction: number) => void) => Promise<void>;
@@ -36,15 +32,6 @@ export const loader: Loader = {
   steps: new Map(),
   stepFractions: {},
 };
-
-type ThreeModule = typeof import('three');
-let threePromise: Promise<ThreeModule> | null = null;
-
-/** Dynamic import of `three` from npm, cached; a separate chunk the browser fetches once. */
-export function loadThree(): Promise<ThreeModule> {
-  threePromise ??= import('three');
-  return threePromise;
-}
 
 export function registerBootStep(key: string, step: BootStep): void {
   if (loader.state !== 'idle') throw new Error(`Boot step "${key}" registered after loading started`);
@@ -114,13 +101,8 @@ export async function startLoading(): Promise<void> {
   loader.state = 'loading';
   renderProgress();
   try {
-    const jobs = [
-      WEBGL ? track('three', loadThree()) : null,
-      fontProgress('f1', '500 16px "Instrument Sans"'),
-      fontProgress('f2', '400 12px "JetBrains Mono"'),
-    ];
-    await Promise.all(jobs);
-    // Final ~10 %: the registered boot steps (the world: geometry, textures, shader compile, first render).
+    await Promise.all([fontProgress('f1', '500 16px "Instrument Sans"'), fontProgress('f2', '400 12px "JetBrains Mono"')]);
+    // Final ~10 %: the registered boot steps.
     await runBootSteps();
     loader.build = 1;
     loader.state = 'ready';

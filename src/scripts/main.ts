@@ -10,14 +10,16 @@ import { initRain } from './rain';
 import { initReveals } from './reveals';
 import { initRouter, router } from './router';
 import { initScene } from './scene';
+import { initStage } from './stage';
 import { state } from './state';
 
 /**
  * Client entry. Each module registers its listeners here; later phases add
- * theirs next to these (the world in Fase 3, the panel in Fase 6, the ticket
- * hunt in Fase 8). Modules talk through `state` and the `app:*` events
- * declared in state.ts. A phase that needs work on the gate's loading bar
- * calls `registerBootStep()` from loader.ts before `initGate()` runs.
+ * theirs next to these (the panel in Fase 6, the ticket hunt in Fase 8).
+ * Modules talk through `state` and the `app:*` events declared in state.ts.
+ * The 3D world (src/scripts/world) is not imported here: stage.ts loads it
+ * lazily on the first visit to `mundo`. A phase that needs work on the gate's
+ * loading bar calls `registerBootStep()` from loader.ts before `initGate()` runs.
  */
 initPointer();
 initCursor();
@@ -27,6 +29,7 @@ initGlyphFields();
 initReveals();
 initHero();
 initRouter();
+initStage();
 initAudio();
 initGate();
 
