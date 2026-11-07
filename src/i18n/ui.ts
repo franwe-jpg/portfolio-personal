@@ -51,6 +51,8 @@ export interface UiCopy {
     brandSr: string;
     navLabel: string;
     nav: { mundo: string; proyectos: string; sobre: string };
+    /** Link to the other language: visible short label and its screen-reader name, written in that language. */
+    lang: { label: string; sr: string };
   };
 
   sound: {
@@ -91,6 +93,8 @@ export interface UiCopy {
     statusLine: (scene: SceneCopy, time: string) => string;
     scenes: Record<Scene, SceneCopy>;
     surpriseBack: string;
+    /** Title of the YouTube player embedded on the living-room TV. */
+    tvTitle: string;
   };
 
   proyectos: {
@@ -173,7 +177,7 @@ export interface UiCopy {
       errMessage: string;
       /** The visitor's bubble: message, then name and contact. */
       summary: (message: string, name: string, via: string, handle: string) => string;
-      /** Franco's acknowledgement; `via` is one of `ackVia`. */
+      /** Franco's acknowledgement; `via` is one of `ackVia`, a phrase like "on Telegram". */
       ack: (name: string, via: string) => string;
       ackVia: { telegram: string; mail: string };
       ackTag: string;
@@ -216,6 +220,7 @@ const es: UiCopy = {
     brandSr: 'FrancoSolerSistemas, volver al inicio',
     navLabel: 'Páginas',
     nav: { mundo: 'Mundo', proyectos: 'Proyectos', sobre: 'Sobre mí' },
+    lang: { label: 'EN', sr: 'English version' },
   },
 
   sound: {
@@ -283,6 +288,7 @@ const es: UiCopy = {
       },
     },
     surpriseBack: 'Volver al mundo',
+    tvTitle: 'Video en la tele del living',
   },
 
   proyectos: {
@@ -365,8 +371,8 @@ const es: UiCopy = {
       errMail: 'Ingresá un mail válido.',
       errMessage: 'Escribí tu mensaje.',
       summary: (message, name, via, handle) => `${message}\n\n— ${name} · ${via}: ${handle}`,
-      ack: (name, via) => `Gracias, ${name}. Cuando esté conectado, esto me llega directo y te respondo por ${via}.`,
-      ackVia: { telegram: 'Telegram', mail: 'mail' },
+      ack: (name, via) => `Gracias, ${name}. Cuando esté conectado, esto me llega directo y te respondo ${via}.`,
+      ackVia: { telegram: 'por Telegram', mail: 'por mail' },
       ackTag: 'EJEMPLO · no se envió nada (falta /api/contact)',
     },
     composer: {
@@ -378,14 +384,197 @@ const es: UiCopy = {
   },
 };
 
-// English reuses the Spanish copy until the translation phase (plan, Fase 9);
-// only the locale metadata is already English.
 const en: UiCopy = {
-  ...es,
   locale: 'en-US',
   ogLocale: 'en_US',
   metaDescription: (role) =>
     `${role} based in Trelew, Chubut. Full stack web development with a front-end focus. Step into my world and talk to me.`,
+
+  loader: {
+    loading: (pct) => `LOADING WORLD ${pct}%`,
+    offline: 'OFFLINE · LITE MODE',
+    enterLoading: (pct) => `Loading… ${pct}%`,
+  },
+
+  gate: {
+    label: 'Entrance',
+    markAlt: 'FS logo: a black key cap with the initials and a green dot',
+    name: 'Franco Soler Sistemas',
+    role: '/ Software Analyst',
+    roleNext: 'Licenciatura en Sistemas, in progress',
+    statusNow: 'NOW',
+    enter: 'Enter',
+    mute: 'Enter without audio',
+  },
+
+  header: {
+    backToGate: 'Back to the entrance',
+    brand: 'FrancoSolerSistemas',
+    brandSr: 'FrancoSolerSistemas, back to the start',
+    navLabel: 'Pages',
+    nav: { mundo: 'World', proyectos: 'Projects', sobre: 'About me' },
+    lang: { label: 'ES', sr: 'Versión en español' },
+  },
+
+  sound: {
+    label: 'Sound',
+    sr: ' ambience',
+    on: 'Ambient sound: on',
+    off: 'Ambient sound: off',
+  },
+
+  inicio: {
+    label: 'Home',
+    eyebrow: 'Software Analyst · Trelew, Chubut',
+    titleLine1: 'Franco Soler',
+    titleLine2: 'Sistemas',
+    description:
+      'I build software and study systems in Chubut. Step into my world: you will see where I am right now, and you can talk to me.',
+    explore: 'Explore my world',
+    projects: 'See projects',
+  },
+
+  mundo: {
+    label: 'World: where Franco is right now',
+    fallbackAlt:
+      'Isometric illustration of Franco’s office: a desk with a monitor, a server rack and Franco at work.',
+    fallbackNote: 'Your browser cannot show the 3D world. You can still talk to me.',
+    fallbackOffline: 'The 3D world could not be loaded (offline). You can still talk to me.',
+    talk: 'Talk to Franco',
+    francoLabel: 'Franco · tap to talk',
+    clockLabel: 'Time in Argentina',
+    clockPlaceholder: '--:-- · Argentina time',
+    clock: (time) => `${time} · Argentina time`,
+    switcherLegend: 'Switch scene',
+    switcherLabel: 'Scene',
+    modes: { auto: 'Auto', autoNow: ' (now)', office: 'Office', uni: 'University', home: 'Available' },
+    dragHint: ['Drag to rotate', 'Scroll to zoom'],
+    sceneTag: (scene) => `SCENE ${scene.n} · ${scene.name}`,
+    statusLine: (scene, time) => `NOW · ${scene.status} · ${time} ART`,
+    scenes: {
+      office: {
+        n: '01',
+        name: 'OFFICE',
+        status: 'AT THE OFFICE',
+        title: 'Franco is at the office',
+        where: 'at the office',
+        hello:
+          'I am at the office. In the meantime my AI version answers for me: ask me about my projects, my studies or how I work.',
+      },
+      uni: {
+        n: '02',
+        name: 'UNIVERSITY',
+        status: 'AT UNIVERSITY',
+        title: 'Franco is at university',
+        where: 'at university',
+        hello:
+          'I am in class, at university. In the meantime my AI version answers for me: ask me about my projects, my studies or how I work.',
+      },
+      home: {
+        n: '03',
+        name: 'AVAILABLE',
+        status: 'AVAILABLE',
+        title: 'Franco is available',
+        where: 'available',
+        hello:
+          'My day is done. This is not an AI answering: leave me your message and I will reply myself, on Telegram or by email.',
+      },
+    },
+    surpriseBack: 'Back to the world',
+    tvTitle: 'Video on the living-room TV',
+  },
+
+  proyectos: {
+    eyebrow: 'Projects',
+    title: 'Projects with real people and real problems.',
+    next: 'About me',
+    prevImage: 'Previous',
+    nextImage: 'Next',
+  },
+
+  sobre: {
+    eyebrow: 'About me',
+    jobs: 'Jobs',
+    events: 'Events and training',
+    now: 'Now',
+    photos: {
+      eyebrow: 'Photos',
+      title: 'When I am not coding, I take photos.',
+      note: 'A selection of what I shoot with my phone.',
+    },
+    stack: {
+      eyebrow: 'What I do',
+      title: 'I build what the problem needs.',
+      toolsHead: 'Tools used in projects',
+      toolsNote: 'No fixed stack: I pick according to what has to be built',
+    },
+    contact: {
+      eyebrow: 'Contact',
+      title: 'Write to me',
+      back: 'Back to the start',
+      github: 'GitHub',
+      linkedin: 'LinkedIn',
+      instagram: 'Instagram',
+    },
+    copyright: (year, name) => `© ${year} ${name}`,
+  },
+
+  hunt: {
+    tab: 'Open me',
+    dialogLabel: 'Hidden ticket hunt',
+    intro: 'Find the 5 tickets hidden around the site.',
+    reward: 'Find them all and you win a surprise.',
+    count: (found, total) => `${found}/${total} found`,
+    show: 'See the surprise',
+    reset: 'Start over',
+    found: (found, total) => `You have found ${found}/${total} tickets. Keep looking!`,
+    foundAll: 'You have found all 5 tickets! Taking you to your surprise…',
+    ticketFound: 'FOUND',
+    ticket: 'TICKET',
+    ticketNo: 'No.',
+    screenHeader: (total) => `★  ${total} / ${total} TICKETS  ★`,
+    surprise: 'The best things are always hidden where almost nobody dares to look.',
+  },
+
+  panel: {
+    title: (where) => `Franco (AI) · ${where}`,
+    titleContact: 'Franco · available',
+    subContact: 'I reply myself, not an AI',
+    close: 'Close',
+    checking: '○ checking /api/chat…',
+    live: '● connected to /api/chat',
+    offline: '○ no connection to /api/chat',
+    who: { ai: 'Franco (AI)', franco: 'Franco', me: 'You' },
+    typing: 'typing…',
+    errorStatus: (status) => `I could not answer (error ${status}).`,
+    errorNetwork: 'I could not connect. Try again in a moment, or write to me by email.',
+    form: {
+      name: 'Your name',
+      via: 'Reply to me on',
+      telegram: 'Telegram',
+      mail: 'Email',
+      handle: 'Your Telegram username',
+      handlePlaceholder: '@username',
+      mailHandle: 'Your email',
+      mailPlaceholder: 'name@domain.com',
+      message: 'Message',
+      send: 'Send message',
+      errName: 'Enter your name.',
+      errTelegram: 'Enter a valid Telegram username: 5 to 32 characters, letters, numbers or underscores.',
+      errMail: 'Enter a valid email address.',
+      errMessage: 'Write your message.',
+      summary: (message, name, via, handle) => `${message}\n\n— ${name} · ${via}: ${handle}`,
+      ack: (name, via) => `Thanks, ${name}. Once I am online this reaches me directly and I will reply ${via}.`,
+      ackVia: { telegram: 'on Telegram', mail: 'by email' },
+      ackTag: 'EXAMPLE · nothing was sent (/api/contact is missing)',
+    },
+    composer: {
+      label: 'Your question for Franco',
+      placeholder: 'Ask me something…',
+      send: 'Send question',
+      count: (length, max) => `${length}/${max}`,
+    },
+  },
 };
 
 export const UI: Record<Lang, UiCopy> = { es, en };

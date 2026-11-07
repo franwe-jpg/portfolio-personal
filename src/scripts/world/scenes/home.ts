@@ -1,6 +1,7 @@
 import { gsap } from 'gsap';
 import * as T from 'three';
 import { REDUCE } from '../../env';
+import { t as ui } from '../../i18n';
 import { state } from '../../state';
 import { Batch } from '../batch';
 import { makeClock } from '../clock';
@@ -239,7 +240,7 @@ export function home(scene: T.Scene, css3d: Css3dLayer): HomeDiorama {
     tvEl.style.width = '930px';
     tvEl.style.height = '530px';
     tvFrame = document.createElement('iframe');
-    tvFrame.title = 'Video en la tele del living';
+    tvFrame.title = ui.mundo.tvTitle;
     tvFrame.allow = 'autoplay; encrypted-media; picture-in-picture';
     tvFrame.referrerPolicy = 'strict-origin-when-cross-origin';
     tvFrame.src = `${TV_ORIGIN}/embed/${TV_VIDEO}?autoplay=1&mute=1&loop=1&playlist=${TV_VIDEO}&controls=0&rel=0&playsinline=1&iv_load_policy=3&disablekb=1&enablejsapi=1`;

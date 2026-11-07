@@ -6,6 +6,7 @@ import { initGate } from './gate';
 import { initGlyphFields } from './glyph-field';
 import { initHero } from './hero';
 import { initHunt } from './hunt';
+import { initLangSwitch } from './i18n';
 import { loader } from './loader';
 import { initPanel, panelApi } from './panel';
 import { initPointer } from './pointer';
@@ -24,6 +25,7 @@ import { state } from './state';
  * loading bar calls `registerBootStep()` from loader.ts before `initGate()` runs.
  */
 initPointer();
+initLangSwitch();
 initCursor();
 initScene();
 initRain();
