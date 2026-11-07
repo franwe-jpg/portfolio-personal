@@ -76,6 +76,8 @@ export interface UiCopy {
     label: string;
     fallbackAlt: string;
     fallbackNote: string;
+    /** Note when the world chunk could not be downloaded. */
+    fallbackOffline: string;
     talk: string;
     francoLabel: string;
     clockLabel: string;
@@ -210,6 +212,7 @@ const es: UiCopy = {
     fallbackAlt:
       'Ilustración isométrica de la oficina de Franco: escritorio con monitor, rack de servidores y Franco trabajando.',
     fallbackNote: 'Tu navegador no muestra el mundo 3D. Igual podés hablar conmigo.',
+    fallbackOffline: 'No se pudo cargar el mundo 3D (sin conexión). Igual podés hablar conmigo.',
     talk: 'Hablar con Franco',
     francoLabel: 'Franco · tocá para hablar',
     clockLabel: 'Hora en Argentina',
