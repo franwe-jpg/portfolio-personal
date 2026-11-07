@@ -187,6 +187,7 @@ Cada tarea cierra con capturas y sin errores de consola (ver "Criterios de termi
   - Resultado esperado: README describe el sitio nuevo; sin código muerto.
   - Cómo se verifica: lectura del README; `npm run build` sin advertencias.
 - [ ] **PR y deploy.** PR `develop → main`, deploy por CI, revisión en producción y prueba en un celular real.
+  - 2026-11-07: abiertos el PR #3 (`rediseno/prototipo → develop`) y el PR `rediseno/astro → develop` con toda la migración (34 commits, fases 0 a 10). Pendiente, a cargo del usuario: mergear ambos, abrir y mergear `develop → main`, revisar producción y probar en un celular real.
   - Resultado esperado: francosolersistemas.com sirve el sitio nuevo.
   - Cómo se verifica: capturas de producción en escritorio y celular; chat respondiendo en producción.
 
