@@ -1,0 +1,11 @@
+---
+import Terms from '../components/Terms.astro';
+import Layout from '../layouts/Layout.astro';
+
+/** Joke "terms and conditions" of the ticket-hunt prize; opened in a new tab from the surprise view. */
+const lang = 'es';
+---
+
+<Layout lang={lang} title="Términos y Condiciones del Premio Obtenido · Franco Soler" description="Términos y condiciones de la landing page que te ganaste en la búsqueda de tickets.">
+  <Terms lang={lang} />
+</Layout>

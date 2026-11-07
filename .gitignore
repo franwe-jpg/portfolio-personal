@@ -12,3 +12,9 @@ worker-configuration.d.ts
 # Local tooling cache
 .atl/
 .gstack/
+
+# Redesign reference material (never commit reference videos)
+referencias/
+*.mp4
+# Short demo clips shown on project cards are the one exception.
+!public/proyectos/*.mp4

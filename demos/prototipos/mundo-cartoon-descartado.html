@@ -1,0 +1,594 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>El mundo de Franco</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@500;700;800&display=swap">
+<style>
+/* Layout: cartoon stage as the hero, a "sticker" console beside it; stacks on phones. One deliberate look: flat colors, thick ink outlines, hard offset shadows. */
+:root {
+  --sky: #8fd8ff;
+  --paper: #ffffff;
+  --ink: #1d1a2b;
+  --muted: #4d4866;
+  --sun: #ffd23f;
+  --busy: #ff7a59;
+  --study: #8c6cff;
+  --ok: #2fd17f;
+  --font-display: "Lilita One", "Arial Rounded MT Bold", system-ui, sans-serif;
+  --font-body: "Nunito", system-ui, sans-serif;
+  color-scheme: light;
+}
+[hidden] { display: none !important; }
+html, body { background: var(--sky); color: var(--ink); }
+body {
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 32px;
+  background-image: radial-gradient(rgba(255,255,255,.55) 2px, transparent 2.5px);
+  background-size: 22px 22px;
+}
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 18px; }
+header { display: grid; gap: 8px; }
+.eyebrow { justify-self: start; font: 800 12px var(--font-body); letter-spacing: .08em; text-transform: uppercase; background: var(--ink); color: var(--sun); padding: 3px 10px; border-radius: 999px; }
+h1 {
+  font-family: var(--font-display); font-weight: 400; font-size: clamp(36px, 7vw, 64px); line-height: 1; margin: 0;
+  color: var(--sun); -webkit-text-stroke: 2px var(--ink); paint-order: stroke fill;
+  text-shadow: 4px 4px 0 var(--ink); letter-spacing: .01em; text-wrap: balance;
+}
+.lede { max-width: 64ch; margin: 0; font-weight: 600; }
+
+.modes { display: flex; flex-wrap: wrap; gap: 10px; }
+.modes button {
+  font: 800 14px var(--font-body); color: var(--ink); background: var(--paper);
+  border: 3px solid var(--ink); border-radius: 14px; padding: 8px 14px; cursor: pointer;
+  box-shadow: 3px 3px 0 var(--ink); transition: transform .08s, box-shadow .08s;
+}
+.modes button:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 var(--ink); }
+.modes button[aria-pressed="true"] { background: var(--sun); transform: translate(2px, 2px); box-shadow: 1px 1px 0 var(--ink); }
+.modes button:focus-visible, .stage:focus-visible, .dlg button:focus-visible, .dlg input:focus-visible, .dlg textarea:focus-visible { outline: 3px dashed var(--ink); outline-offset: 3px; }
+
+.grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; align-items: start; }
+@media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+
+.stage {
+  position: relative; width: 100%; max-width: 100%; aspect-ratio: 3 / 2;
+  border: 4px solid var(--ink); border-radius: 22px; overflow: hidden; background: var(--paper);
+  box-shadow: 6px 6px 0 var(--ink); cursor: pointer; touch-action: manipulation;
+}
+.stage canvas { width: 100%; height: 100%; display: block; }
+.tag {
+  position: absolute; transform: translate(-50%, -100%);
+  font: 400 14px var(--font-display); letter-spacing: .02em; white-space: nowrap; pointer-events: none;
+  padding: 1px 9px; border-radius: 999px; background: var(--paper); color: var(--ink); border: 2.5px solid var(--ink);
+}
+.tag .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: 0; border: 2px solid var(--ink); }
+.hint {
+  position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%);
+  font: 800 13px var(--font-body); background: var(--sun); color: var(--ink);
+  padding: 6px 14px; border-radius: 999px; border: 3px solid var(--ink); box-shadow: 3px 3px 0 var(--ink); white-space: nowrap;
+}
+.controls { position: absolute; left: 12px; top: 12px; font: 800 12px var(--font-body); color: var(--ink); background: rgba(255,255,255,.88); border: 2px solid var(--ink); padding: 3px 10px; border-radius: 999px; pointer-events: none; }
+
+.dlg {
+  position: absolute; left: 14px; right: 14px; bottom: 14px;
+  background: var(--paper); border: 4px solid var(--ink); border-radius: 20px; box-shadow: 5px 5px 0 var(--ink);
+  padding: 14px; display: grid; gap: 10px; max-height: calc(100% - 28px); overflow: auto;
+}
+.dlg-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.dlg-who { font: 400 20px var(--font-display); }
+.dlg-badge { font: 700 12px var(--font-body); color: var(--muted); }
+.dlg-close { background: var(--paper); border: 2.5px solid var(--ink); color: var(--ink); border-radius: 999px; cursor: pointer; font: 800 12px var(--font-body); padding: 3px 10px; }
+.bubble { background: #e8f7ff; border: 2.5px solid var(--ink); border-radius: 16px 16px 16px 4px; padding: 8px 12px; max-width: 52ch; font-weight: 600; }
+.bubble.me { background: var(--sun); justify-self: end; border-radius: 16px 16px 4px 16px; }
+.dlg form { display: flex; gap: 8px; flex-wrap: wrap; }
+.dlg input, .dlg textarea { flex: 1 1 180px; min-width: 0; font: 600 14px var(--font-body); background: var(--paper); color: var(--ink); border: 2.5px solid var(--ink); border-radius: 12px; padding: 7px 11px; }
+.dlg textarea { flex-basis: 100%; min-height: 54px; resize: vertical; }
+.dlg button.send { font: 400 16px var(--font-display); letter-spacing: .02em; background: var(--ok); color: var(--ink); border: 3px solid var(--ink); border-radius: 12px; padding: 6px 14px; cursor: pointer; box-shadow: 2px 2px 0 var(--ink); }
+
+aside { display: grid; gap: 16px; }
+.card { background: var(--paper); border: 3px solid var(--ink); border-radius: 18px; padding: 14px 16px; display: grid; gap: 10px; min-width: 0; box-shadow: 4px 4px 0 var(--ink); }
+.card h2 { font: 400 18px var(--font-display); letter-spacing: .02em; margin: 0; }
+.status { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.status .big { font: 400 26px var(--font-display); }
+.pill { font: 800 12px var(--font-body); padding: 3px 10px; border-radius: 999px; color: var(--ink); border: 2.5px solid var(--ink); }
+.clock { font: 700 13px var(--font-body); color: var(--muted); font-variant-numeric: tabular-nums; }
+
+.timeline { position: relative; height: 28px; border-radius: 10px; overflow: hidden; display: flex; border: 3px solid var(--ink); }
+.timeline span { height: 100%; }
+.timeline span + span { border-left: 2px solid var(--ink); }
+.tl-now { position: absolute; top: -3px; bottom: -3px; width: 4px; background: var(--ink); border-radius: 2px; }
+.tl-axis { display: flex; justify-content: space-between; font: 700 11px var(--font-body); color: var(--muted); font-variant-numeric: tabular-nums; }
+.legend { display: grid; gap: 5px; font-size: 13.5px; font-weight: 600; }
+.legend div { display: flex; align-items: center; gap: 8px; }
+.sw { width: 13px; height: 13px; border-radius: 4px; flex: none; border: 2px solid var(--ink); }
+
+.flow { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 14px; font-weight: 600; color: var(--muted); }
+.flow b { color: var(--ink); font-weight: 800; }
+code { font-family: ui-monospace, monospace; font-size: 12.5px; background: #f0ecff; color: var(--ink); padding: 0 4px; border-radius: 4px; }
+.note { font-size: 12.5px; color: var(--muted); margin: 0; font-weight: 600; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Maqueta · estilo cartoon</div>
+    <h1>El mundo de Franco</h1>
+    <p class="lede">Llegás con tu personaje y encontrás a Franco donde está ahora, según la hora en Argentina: en la oficina, en la uni o libre para charlar. Acercate y hablale.</p>
+  </header>
+
+  <div class="modes" role="group" aria-label="Elegir escena">
+    <button type="button" data-mode="auto" aria-pressed="true">Ahora (automático)</button>
+    <button type="button" data-mode="office" aria-pressed="false">Mañana · Oficina</button>
+    <button type="button" data-mode="uni" aria-pressed="false">Tarde · Universidad</button>
+    <button type="button" data-mode="home" aria-pressed="false">Noche · Disponible</button>
+  </div>
+
+  <div class="grid">
+    <div class="stage" id="stage" tabindex="0" aria-label="Mundo de Franco: movete con las flechas o tocando el piso">
+      <canvas id="cv" width="960" height="640"></canvas>
+      <div class="controls">Flechas / WASD · o tocá el piso</div>
+      <div class="tag" id="tagFranco"><span class="dot" id="tagDot"></span>Franco</div>
+      <div class="tag" id="tagYou">Vos</div>
+      <div class="hint" id="hint" hidden>Presioná E o tocá a Franco</div>
+      <div class="dlg" id="dlg" hidden></div>
+    </div>
+
+    <aside>
+      <div class="card">
+        <h2>¿Dónde está Franco?</h2>
+        <div class="status"><span class="big" id="stBig">—</span><span class="pill" id="stPill">—</span></div>
+        <div class="clock" id="clock">—</div>
+        <p class="note" id="stNote"></p>
+      </div>
+
+      <div class="card">
+        <h2>Su día (lun a vie)</h2>
+        <div class="timeline" id="tl" aria-hidden="true"></div>
+        <div class="tl-axis"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></div>
+        <div class="legend">
+          <div><span class="sw" style="background:var(--busy)"></span>07–13 · Oficina, responde Franco IA</div>
+          <div><span class="sw" style="background:var(--study)"></span>14–19 · Universidad, responde Franco IA</div>
+          <div><span class="sw" style="background:var(--ok)"></span>Resto y fines de semana · Disponible</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Cómo se conecta</h2>
+        <ol class="flow">
+          <li><b>La escena</b> sale de <code>/api/status</code>: el horario más un override en D1 para feriados o vacaciones.</li>
+          <li><b>Oficina y uni</b> usan tu <code>/api/chat</code> de ahora (Llama 3.1), con la escena como contexto.</li>
+          <li><b>Disponible</b> usa <code>/api/contact</code>, que te avisa por Telegram o mail.</li>
+        </ol>
+        <p class="note">Maqueta dibujada en canvas con personajes originales. Las respuestas son de ejemplo y no hay ninguna IA conectada.</p>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<script>
+(() => {
+  const W = 192, H = 128, S = 5;
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  const stage = document.getElementById('stage');
+  const tagF = document.getElementById('tagFranco');
+  const tagDot = document.getElementById('tagDot');
+  const tagY = document.getElementById('tagYou');
+  const hint = document.getElementById('hint');
+  const dlg = document.getElementById('dlg');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ---------- cartoon drawing helpers (logical 192x128 units, scaled x5) ----------
+  const OL = '#1d1a2b', LW = 0.9;
+  function ink() { ctx.lineWidth = LW; ctx.strokeStyle = OL; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.stroke(); }
+  function flat(x, y, w, h, c) { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); }
+  function rr(x, y, w, h, rad, fill, line = true) { ctx.beginPath(); ctx.roundRect(x, y, w, h, rad); ctx.fillStyle = fill; ctx.fill(); if (line) ink(); }
+  function el(cx, cy, rx, ry, fill, line = true) { ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); ctx.fillStyle = fill; ctx.fill(); if (line) ink(); }
+  function ln(x1, y1, x2, y2, w = LW, c = OL) { ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.lineWidth = w; ctx.strokeStyle = c; ctx.lineCap = 'round'; ctx.stroke(); }
+  function txt(s, x, y, size, fill, opts = {}) {
+    ctx.font = `${size}px ${opts.font || '"Lilita One", sans-serif'}`; ctx.textAlign = opts.align || 'left'; ctx.textBaseline = 'middle';
+    if (opts.stroke) { ctx.lineWidth = opts.stroke; ctx.strokeStyle = OL; ctx.lineJoin = 'round'; ctx.strokeText(s, x, y); }
+    ctx.fillStyle = fill; ctx.fillText(s, x, y);
+  }
+  function floorLine() { ln(0, 34, W, 34, 1.1); }
+
+  // ---------- schedule ----------
+  const TZ = 'America/Argentina/Buenos_Aires';
+  function argNow() {
+    const p = new Intl.DateTimeFormat('es-AR', { timeZone: TZ, hour: '2-digit', minute: '2-digit', weekday: 'short', hourCycle: 'h23' }).formatToParts(new Date());
+    const get = (t) => p.find((x) => x.type === t)?.value ?? '';
+    const wd = new Intl.DateTimeFormat('en-US', { timeZone: TZ, weekday: 'short' }).format(new Date());
+    return { h: +get('hour'), m: +get('minute'), weekday: get('weekday'), weekend: wd === 'Sat' || wd === 'Sun' };
+  }
+  function sceneFor(t) {
+    if (t.weekend) return 'home';
+    if (t.h >= 7 && t.h < 13) return 'office';
+    if (t.h >= 14 && t.h < 19) return 'uni';
+    return 'home';
+  }
+
+  const META = {
+    office: { big: 'En la oficina', pill: 'Ocupado · IA activa', color: 'var(--busy)', dot: '#ff7a59',
+      note: 'Estoy trabajando. Mi versión IA responde por mí con lo que sabe de mis proyectos y mi experiencia.',
+      who: 'Franco (IA) · en la oficina', badge: 'responde: Llama 3.1 via /api/chat',
+      hello: '¡Hola! Estoy en la oficina metido con el laburo 💻. Preguntame por mis proyectos, mi stack o lo que estoy haciendo ahora.' },
+    uni: { big: 'En la uni', pill: 'En clase · IA activa', color: 'var(--study)', dot: '#8c6cff',
+      note: 'Estoy en clase. Te contesta mi versión IA y, si querés hablar conmigo en persona, me dejás un mensaje.',
+      who: 'Franco (IA) · en la uni', badge: 'responde: Llama 3.1 via /api/chat',
+      hello: 'Ahora estoy en clase 🧠, pero mi versión IA te atiende. ¿Querés saber qué estudio o en qué ando?' },
+    home: { big: 'Disponible', pill: 'Libre · contacto directo', color: 'var(--ok)', dot: '#2fd17f',
+      note: 'Terminé el día. El mensaje no lo responde la IA: me llega directo al celular y te contesto yo.',
+      who: 'Franco · disponible', badge: 'envía: /api/contact → Telegram / mail',
+      hello: '¡Ya terminé el día! 🙌 Dejame tu mensaje y me llega directo al celular. Te respondo yo.' },
+  };
+
+  // ---------- scenes ----------
+  function cloud(x, y, s) { el(x, y, 5 * s, 3 * s, '#fff', false); el(x + 4 * s, y - 1.5 * s, 4 * s, 3.2 * s, '#fff', false); el(x + 8 * s, y, 4 * s, 2.6 * s, '#fff', false); }
+  function plant(x, y) {
+    el(x + 6, y - 8, 4, 6, '#3fbf5a'); el(x + 2, y - 4, 4, 5, '#2fa84a'); el(x + 10, y - 4, 4, 5, '#2fa84a');
+    rr(x, y - 1, 12, 9, 3, '#ff7a59');
+  }
+
+  const SCENES = {
+    office: {
+      franco: { x: 150, y: 58, sit: true, shirt: '#2f8cff', dir: 'down' },
+      solids: [[120, 52, 46, 14], [20, 52, 46, 14], [2, 34, 15, 20], [174, 36, 16, 16], [64, 84, 64, 14]],
+      start: { x: 96, y: 118 },
+      bubbles: ['💻', '☕', '🚀'],
+      draw(t) {
+        flat(0, 0, W, 34, '#6fd0d8');
+        for (let x = 6; x < W; x += 14) flat(x, 0, 5, 34, '#62c3cc');
+        flat(0, 34, W, H - 34, '#ffcf5c');
+        for (let y = 34; y < H; y += 16) for (let x = ((y - 34) / 16) % 2 ? 0 : 16; x < W; x += 32) flat(x, y, 16, 16, '#ffc23d');
+        floorLine();
+        for (const wx of [16, 144]) {
+          rr(wx, 5, 32, 21, 3, '#bdefff'); ctx.save(); ctx.beginPath(); ctx.roundRect(wx, 5, 32, 21, 3); ctx.clip();
+          cloud(wx + 5 + (reduce ? 0 : (t / 400) % 40) - 10, 13, 0.7); ctx.restore();
+          rr(wx, 5, 32, 21, 3, 'transparent'); ln(wx + 16, 5, wx + 16, 26); ln(wx, 15.5, wx + 32, 15.5);
+        }
+        rr(70, 5, 52, 22, 3, '#fff');
+        rr(74, 9, 12, 8, 1.5, '#ff5d8f'); rr(90, 12, 12, 8, 1.5, '#ffd23f'); rr(106, 8, 12, 8, 1.5, '#2fd17f');
+        ln(86, 13, 90, 15); ln(102, 15, 106, 12);
+        txt('DEPLOY', 96, 24, 3.4, OL, { align: 'center' });
+        // coffee machine
+        rr(2, 34, 15, 20, 3, '#e9475f'); rr(5, 38, 9, 6, 2, '#2b2b3d'); rr(6, 46, 7, 6, 1.5, '#fff');
+        el(14.5, 36.5, 1.2, 1.2, (t / 500 | 0) % 2 ? '#2fd17f' : '#145c37', false);
+        if (!reduce) { const s = (t / 300) % 6; ctx.globalAlpha = 1 - s / 6; el(9.5, 44 - s, 1.2, 1.6, '#fff', false); ctx.globalAlpha = 1; }
+        plant(176, 46);
+        // desks
+        for (const dx of [20, 120]) { rr(dx + 3, 60, 3, 7, 1, '#b2493a'); rr(dx + 40, 60, 3, 7, 1, '#b2493a'); rr(dx, 52, 46, 10, 3, '#ff7a59'); flat(dx + 2, 53, 42, 1.4, '#ffa38a'); }
+        // empty desk monitor
+        rr(33, 41, 18, 12, 2, '#2b2b3d'); rr(35, 43, 14, 8, 1.5, '#4b4c6b', false); rr(40, 52, 4, 2, 1, '#2b2b3d');
+        // meeting table
+        for (const cx of [70, 88, 106]) { rr(cx + 2, 79, 10, 6, 2.5, '#2f8cff'); rr(cx + 2, 97, 10, 6, 2.5, '#2f8cff'); }
+        rr(64, 84, 64, 12, 5, '#8c6cff'); flat(68, 85.5, 56, 1.4, '#a991ff');
+        el(84, 89, 3, 2, '#fff'); rr(100, 87, 9, 4, 1, '#fff');
+      },
+      front(t) {
+        rr(120, 52, 46, 10, 3, '#ff7a59'); flat(122, 53, 42, 1.4, '#ffa38a');
+        rr(124, 39, 18, 13, 2, '#2b2b3d'); el(133, 45.5, 1.6, 1.6, '#6fd0d8', false); rr(131, 51, 4, 2, 1, '#2b2b3d');
+        rr(158, 48, 5, 5, 1.5, '#fff'); ctx.beginPath(); ctx.arc(163.5, 50.5, 1.4, -1.4, 1.4); ink();
+        rr(144, 55, 12, 3, 1, '#e8e8f0');
+      },
+    },
+    uni: {
+      franco: { x: 136, y: 64, sit: true, shirt: '#8c6cff', dir: 'down' },
+      solids: [[36, 60, 44, 12], [112, 60, 44, 12], [36, 90, 44, 12], [112, 90, 44, 12], [0, 34, 18, 44], [174, 34, 18, 44]],
+      start: { x: 96, y: 120 },
+      bubbles: ['📚', '🧠', '✏️'],
+      draw(t) {
+        flat(0, 0, W, 34, '#ffb547');
+        flat(0, 26, W, 8, '#f39a2a');
+        flat(0, 34, W, H - 34, '#e6defc');
+        for (let y = 34; y < H; y += 12) for (let x = ((y - 34) / 12) % 2 ? 0 : 12; x < W; x += 24) flat(x, y, 12, 12, '#d6caff');
+        floorLine();
+        rr(34, 3, 124, 26, 3, '#a8643a'); rr(37, 6, 118, 20, 2, '#2f6b4f');
+        txt('if (cafe) estudiar();', 42, 12, 4.6, '#f2fff6', { font: 'ui-monospace, monospace' });
+        txt('O(n log n) ✓', 42, 20.5, 4.6, '#ffe58a', { font: 'ui-monospace, monospace' });
+        rr(118, 21, 10, 3, 1, '#fff');
+        el(171, 14, 7, 7, '#fff'); ln(171, 14, 171, 9.5); ln(171, 14, 174.5, 15.5); el(171, 14, 0.8, 0.8, OL, false);
+        for (const bx of [0, 174]) {
+          rr(bx, 34, 18, 44, 2, '#a8643a');
+          for (let s = 0; s < 4; s++) {
+            flat(bx + 2, 46 + s * 10, 14, 1.4, '#7a4524');
+            for (let b = 0; b < 4; b++) rr(bx + 2.5 + b * 3.4, 38 + s * 10, 2.8, 7.6, 0.8, ['#ff5d8f', '#2f8cff', '#ffd23f', '#2fd17f', '#8c6cff'][(b + s) % 5]);
+          }
+        }
+        for (const [dx, dy] of [[36, 60], [36, 90], [112, 90]]) {
+          rr(dx + 3, dy + 8, 3, 6, 1, '#c99b2c'); rr(dx + 38, dy + 8, 3, 6, 1, '#c99b2c');
+          rr(dx, dy, 44, 10, 3, '#ffd23f'); flat(dx + 2, dy + 1, 40, 1.4, '#ffe58a');
+        }
+        rr(115, 68, 3, 6, 1, '#c99b2c'); rr(150, 68, 3, 6, 1, '#c99b2c');
+        rr(46, 62, 10, 6, 1, '#fff'); ln(51, 62, 51, 68); rr(58, 92, 10, 6, 1, '#fff'); rr(130, 92, 10, 6, 1, '#fff'); ln(135, 92, 135, 98);
+        el(66, 95, 2.4, 2.4, '#ff5d8f');
+      },
+      front(t) {
+        rr(112, 60, 44, 10, 3, '#ffd23f'); flat(114, 61, 40, 1.4, '#ffe58a');
+        rr(116, 51, 14, 10, 2, '#cfd3e6'); el(123, 56, 1.8, 1.8, '#fff', false);
+        rr(145, 57, 7, 5, 1, '#ff7a59');
+      },
+    },
+    home: {
+      franco: { x: 96, y: 78, sit: false, shirt: '#2fd17f', dir: 'down' },
+      solids: [[116, 36, 64, 20], [80, 94, 32, 10], [2, 34, 16, 22], [174, 88, 16, 16]],
+      start: { x: 40, y: 114 },
+      bubbles: ['🙌', '💬', '✨'],
+      draw(t) {
+        flat(0, 0, W, 34, '#5b46b8');
+        for (let x = 0; x < W; x += 12) flat(x, 0, 6, 34, '#5340ad');
+        flat(0, 34, W, H - 34, '#e08a4f');
+        for (let y = 34; y < H; y += 9) { ln(0, y, W, y, 0.4, '#c56f37'); for (let x = ((y / 9) % 2) * 18; x < W; x += 36) ln(x, y, x, y + 9, 0.4, '#c56f37'); }
+        floorLine();
+        rr(18, 4, 36, 22, 3, '#1f2a6b');
+        el(45, 11, 4, 4, '#fff3b0', false); el(46.6, 10, 3.2, 3.6, '#1f2a6b', false);
+        for (const [sx, sy] of [[24, 9], [30, 18], [36, 8], [26, 22], [49, 21]]) el(sx, sy, 0.7, 0.7, '#fff', false);
+        rr(18, 4, 36, 22, 3, 'transparent'); ln(36, 4, 36, 26);
+        const on = reduce || (t / 900 | 0) % 7 !== 0;
+        rr(80, 7, 52, 16, 4, '#2a1f4f');
+        ctx.save(); if (on) { ctx.shadowColor = '#2fd17f'; ctx.shadowBlur = 12; }
+        txt('ONLINE', 106, 15.5, 9, on ? '#7dffb6' : '#2c6b4a', { align: 'center' }); ctx.restore();
+        rr(144, 6, 12, 15, 2, '#ffd23f'); rr(146, 8, 8, 11, 1, '#2f8cff', false); rr(160, 9, 12, 11, 2, '#ff5d8f'); rr(162, 11, 8, 7, 1, '#fff3b0', false);
+        // rug
+        el(96, 88, 44, 20, '#ffd23f'); el(96, 88, 34, 14, '#ff9f43', false); el(96, 88, 22, 8, '#ffd23f', false);
+        // sofa
+        rr(116, 36, 64, 14, 6, '#ff5d8f'); rr(116, 44, 64, 12, 5, '#ff7aa4'); rr(112, 40, 10, 16, 5, '#ff5d8f'); rr(174, 40, 10, 16, 5, '#ff5d8f');
+        rr(132, 42, 12, 8, 3, '#ffd23f'); rr(152, 42, 12, 8, 3, '#2fd17f');
+        // table + mate
+        rr(83, 100, 3, 5, 1, '#5a3420'); rr(106, 100, 3, 5, 1, '#5a3420'); rr(80, 94, 32, 8, 3, '#7a4b2e');
+        el(90, 92, 2.6, 2.6, '#b5793d'); ln(90.8, 91, 92, 87, 0.7, '#cfcfd8'); rr(97, 90, 9, 4, 1, '#2b2b3d');
+        // lamp
+        rr(9, 34, 3, 20, 1, '#cfcfd8'); rr(5, 53, 11, 3, 1.5, '#2b2b3d');
+        ctx.beginPath(); ctx.moveTo(4, 36); ctx.lineTo(17, 36); ctx.lineTo(14, 26); ctx.lineTo(7, 26); ctx.closePath(); ctx.fillStyle = '#ffe58a'; ctx.fill(); ink();
+        plant(176, 96);
+        const g = ctx.createRadialGradient(10, 36, 4, 10, 36, 130);
+        g.addColorStop(0, 'rgba(255,220,130,.30)'); g.addColorStop(1, 'rgba(40,20,90,.22)');
+        ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+      },
+      front() {},
+    },
+  };
+
+  // ---------- characters (original designs: big head, flat colors, ink outline) ----------
+  function person(x, y, look, o, t) {
+    const { moving = false, dir = 'down', sit = false, wave = false } = o;
+    const bob = moving ? Math.abs(Math.sin(t / 90)) * 1.2 : (reduce ? 0 : Math.sin(t / 420) * 0.4);
+    el(x, y, 6.5, 1.8, 'rgba(29,26,43,.2)', false);
+    if (!sit) {
+      const step = moving ? Math.sin(t / 90) * 1.4 : 0;
+      rr(x - 4, y - 6 + step * 0.3, 3, 5.5 - step * 0.3, 1.3, look.pants);
+      rr(x + 1, y - 6 - step * 0.3, 3, 5.5 + step * 0.3, 1.3, look.pants);
+      el(x - 2.6, y - 0.4 + step * 0.3, 2.4, 1.3, OL, false); el(x + 2.6, y - 0.4 - step * 0.3, 2.4, 1.3, OL, false);
+    }
+    const by = (sit ? y - 13 : y - 14) - bob;
+    // arms
+    if (wave) {
+      const a = reduce ? 0 : Math.sin(t / 140) * 0.5;
+      ctx.save(); ctx.translate(x + 5, by + 2); ctx.rotate(-2.4 + a); rr(-1.3, 0, 2.6, 7, 1.3, look.shirt); el(0, 7.5, 1.7, 1.7, look.skin); ctx.restore();
+    } else {
+      rr(x + 4, by + 2, 2.6, 6.5, 1.3, look.shirt); el(x + 5.3, by + 9, 1.6, 1.6, look.skin);
+    }
+    rr(x - 6.6, by + 2, 2.6, 6.5, 1.3, look.shirt); el(x - 5.3, by + 9, 1.6, 1.6, look.skin);
+    rr(x - 5, by, 10, 10, 4, look.shirt);
+    if (look.logo) txt(look.logo, x, by + 5, 4.5, '#fff', { align: 'center', stroke: 0.6 });
+    // head
+    const hx = x, hy = by - 6.5;
+    el(hx, hy, 7.6, 7, look.skin);
+    look.hairFn(hx, hy, dir);
+    if (dir !== 'up') {
+      const off = dir === 'left' ? -1.3 : dir === 'right' ? 1.3 : 0;
+      const blink = !reduce && (t % 3200) < 120;
+      for (const sx of [-2.7, 2.7]) {
+        if (blink) ln(hx + sx + off - 1.4, hy + 0.5, hx + sx + off + 1.4, hy + 0.5, 0.7);
+        else { el(hx + sx + off, hy + 0.3, 1.9, 2.5, '#fff', true); el(hx + sx + off * 1.5 + 0.3, hy + 0.8, 0.9, 1.2, OL, false); }
+      }
+      ctx.beginPath(); ctx.arc(hx + off, hy + 3.6, 1.8, 0.2, Math.PI - 0.2); ctx.lineWidth = 0.7; ctx.strokeStyle = OL; ctx.stroke();
+      if (look.cheeks) { el(hx - 4.8 + off, hy + 3, 1.3, 0.8, 'rgba(255,93,143,.45)', false); el(hx + 4.8 + off, hy + 3, 1.3, 0.8, 'rgba(255,93,143,.45)', false); }
+    }
+  }
+
+  const francoHair = (hx, hy, dir) => {
+    ctx.beginPath();
+    ctx.moveTo(hx - 7.8, hy - 0.5);
+    ctx.quadraticCurveTo(hx - 8.6, hy - 8.4, hx - 3.5, hy - 9.6);
+    ctx.lineTo(hx - 2.2, hy - 11.6); ctx.lineTo(hx + 0.4, hy - 9.8);
+    ctx.lineTo(hx + 3.2, hy - 11.2); ctx.lineTo(hx + 4.2, hy - 8.8);
+    ctx.quadraticCurveTo(hx + 8.8, hy - 7.6, hx + 7.8, hy - 0.5);
+    if (dir === 'up') ctx.quadraticCurveTo(hx, hy + 8, hx - 7.8, hy - 0.5);
+    else ctx.quadraticCurveTo(hx + 4, hy - 5.2, hx - 1, hy - 4.6), ctx.quadraticCurveTo(hx - 6, hy - 4, hx - 7.8, hy - 0.5);
+    ctx.closePath(); ctx.fillStyle = '#4a2f22'; ctx.fill(); ink();
+  };
+  const visitorHair = (hx, hy, dir) => {
+    ctx.beginPath(); ctx.arc(hx, hy - 1, 7.9, Math.PI * 1.02, Math.PI * 1.98); ctx.closePath();
+    ctx.fillStyle = '#2f8cff'; ctx.fill(); ink();
+    if (dir !== 'up') { const bx = dir === 'left' ? hx - 11 : dir === 'right' ? hx + 2 : hx - 4.5; rr(bx, hy - 2.6, 9, 2.4, 1.2, '#2f8cff'); }
+    el(hx, hy - 8.6, 1.3, 1.3, '#ffd23f');
+  };
+
+  const VISITOR = { skin: '#ffd8b0', shirt: '#ff7a59', pants: '#3a3f6b', hairFn: visitorHair, cheeks: true };
+  const FRANCO_BASE = { skin: '#f0bf96', pants: '#2b3256', hairFn: francoHair, logo: '</>' };
+
+  // ---------- state ----------
+  let mode = 'auto';
+  let current = 'office';
+  const you = { x: 0, y: 0, dir: 'up', moving: false, tx: null, ty: null, autoOpen: false };
+  const keys = new Set();
+  let open = false;
+
+  function setScene(s) {
+    current = s;
+    const sc = SCENES[s];
+    you.x = sc.start.x; you.y = sc.start.y; you.tx = you.ty = null; you.dir = 'up';
+    closeDlg();
+    const m = META[s];
+    document.getElementById('stBig').textContent = m.big;
+    const pill = document.getElementById('stPill'); pill.textContent = m.pill; pill.style.background = m.color;
+    document.getElementById('stNote').textContent = m.note;
+    tagDot.style.background = m.dot;
+  }
+
+  function blocked(x, y) {
+    if (x < 5 || x > W - 5 || y < 40 || y > H - 2) return true;
+    const sc = SCENES[current];
+    const fr = sc.franco;
+    const boxes = [...sc.solids, [fr.x - 6, fr.y - 4, 12, 6]];
+    for (const [bx, by, bw, bh] of boxes) if (x + 3.5 > bx && x - 3.5 < bx + bw && y > by && y - 3 < by + bh) return true;
+    return false;
+  }
+  function nearFranco() { const fr = SCENES[current].franco; return Math.hypot(you.x - fr.x, you.y - fr.y) < 28; }
+
+  // ---------- dialog ----------
+  const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  function openDlg() {
+    if (open) return;
+    open = true; hint.hidden = true;
+    const m = META[current];
+    const head = `<div class="dlg-head"><div><div class="dlg-who">${m.who}</div><div class="dlg-badge">${m.badge}</div></div><button class="dlg-close" type="button" id="dlgClose">cerrar ✕</button></div>`;
+    const form = current === 'home'
+      ? `<form id="dlgForm"><input id="fName" placeholder="Tu nombre" autocomplete="name"><input id="fReply" placeholder="Mail o @usuario para responderte"><textarea id="fMsg" placeholder="Tu mensaje para Franco"></textarea><button class="send" type="submit">Enviar a Franco</button></form>`
+      : `<form id="dlgForm"><input id="fQ" placeholder="Preguntale algo a Franco…" autocomplete="off"><button class="send" type="submit">Enviar</button></form>`;
+    dlg.innerHTML = head + `<div id="log" style="display:grid;gap:8px"><div class="bubble">${m.hello}</div></div>` + form;
+    dlg.hidden = false;
+    document.getElementById('dlgClose').onclick = closeDlg;
+    document.getElementById('dlgForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const log = document.getElementById('log');
+      if (current === 'home') {
+        const msg = document.getElementById('fMsg').value.trim();
+        if (!msg) { document.getElementById('fMsg').focus(); return; }
+        log.insertAdjacentHTML('beforeend', `<div class="bubble me">${esc(msg)}</div><div class="bubble">En la web real, este mensaje le llegaría a Franco por Telegram o mail. Esto es solo la maqueta, así que no se envió nada.</div>`);
+      } else {
+        const q = document.getElementById('fQ').value.trim();
+        if (!q) return;
+        log.insertAdjacentHTML('beforeend', `<div class="bubble me">${esc(q)}</div><div class="bubble">Respuesta de ejemplo. En la web real, acá contesta Llama con tu persona y sabe que estás ${current === 'office' ? 'en la oficina' : 'en la uni'}.</div>`);
+      }
+      e.target.reset();
+      dlg.scrollTop = dlg.scrollHeight;
+    });
+    setTimeout(() => dlg.querySelector('input,textarea')?.focus({ preventScroll: true }), 0);
+  }
+  function closeDlg() { open = false; dlg.hidden = true; dlg.innerHTML = ''; }
+
+  // ---------- input ----------
+  addEventListener('keydown', (e) => {
+    if (open) { if (e.key === 'Escape') closeDlg(); return; }
+    const k = e.key.toLowerCase();
+    if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd'].includes(k)) {
+      if (document.activeElement === stage || document.activeElement === document.body) { keys.add(k); you.tx = null; e.preventDefault(); }
+    }
+    if ((k === 'e' || k === 'enter') && nearFranco()) { openDlg(); e.preventDefault(); }
+  });
+  addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase()));
+
+  cv.addEventListener('click', (e) => {
+    if (open) return;
+    stage.focus({ preventScroll: true });
+    const rect = cv.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width * W;
+    const y = (e.clientY - rect.top) / rect.height * H;
+    const fr = SCENES[current].franco;
+    if (Math.abs(x - fr.x) < 10 && y > fr.y - 30 && y < fr.y + 4) {
+      if (nearFranco()) { openDlg(); return; }
+      if (current === 'home') { you.tx = fr.x - 16; you.ty = fr.y + 6; }
+      else { you.tx = fr.x; you.ty = Math.min(H - 4, fr.y + 20); }
+      you.autoOpen = true;
+      return;
+    }
+    you.tx = x; you.ty = Math.max(42, y); you.autoOpen = false;
+  });
+
+  document.querySelectorAll('.modes button').forEach((b) => b.addEventListener('click', () => {
+    document.querySelectorAll('.modes button').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
+    mode = b.dataset.mode;
+    setScene(mode === 'auto' ? sceneFor(argNow()) : mode);
+  }));
+
+  // ---------- timeline ----------
+  const tl = document.getElementById('tl');
+  [[7, 'var(--ok)'], [6, 'var(--busy)'], [1, 'var(--ok)'], [5, 'var(--study)'], [5, 'var(--ok)']].forEach(([h, c]) => {
+    const s = document.createElement('span'); s.style.width = (h / 24 * 100) + '%'; s.style.background = c; tl.appendChild(s);
+  });
+  const nowMark = document.createElement('div'); nowMark.className = 'tl-now'; tl.appendChild(nowMark);
+
+  function tickClock() {
+    const t = argNow();
+    const hh = String(t.h).padStart(2, '0'), mm = String(t.m).padStart(2, '0');
+    document.getElementById('clock').textContent = `Ahora en Argentina: ${t.weekday} ${hh}:${mm}${mode === 'auto' ? '' : ' · vista forzada'}`;
+    nowMark.style.left = `calc(${(t.h + t.m / 60) / 24 * 100}% - 2px)`;
+    if (mode === 'auto') { const s = sceneFor(t); if (s !== current) setScene(s); }
+  }
+
+  // ---------- loop ----------
+  let last = 0;
+  function update(dt) {
+    let dx = 0, dy = 0;
+    if (keys.has('arrowleft') || keys.has('a')) dx -= 1;
+    if (keys.has('arrowright') || keys.has('d')) dx += 1;
+    if (keys.has('arrowup') || keys.has('w')) dy -= 1;
+    if (keys.has('arrowdown') || keys.has('s')) dy += 1;
+    if (!dx && !dy && you.tx !== null) {
+      const vx = you.tx - you.x, vy = you.ty - you.y, d = Math.hypot(vx, vy);
+      if (d < 1.2) { you.tx = null; if (you.autoOpen && nearFranco()) openDlg(); you.autoOpen = false; }
+      else { dx = vx / d; dy = vy / d; }
+    }
+    you.moving = !!(dx || dy);
+    if (you.moving) {
+      const len = Math.hypot(dx, dy) || 1; dx /= len; dy /= len;
+      if (Math.abs(dx) > Math.abs(dy)) you.dir = dx > 0 ? 'right' : 'left'; else you.dir = dy > 0 ? 'down' : 'up';
+      const sp = 0.06 * dt;
+      const nx = you.x + dx * sp, ny = you.y + dy * sp;
+      let moved = false;
+      if (!blocked(nx, you.y)) { you.x = nx; moved = true; }
+      if (!blocked(you.x, ny)) { you.y = ny; moved = true; }
+      if (!moved && you.tx !== null) { you.tx = null; if (you.autoOpen && nearFranco()) openDlg(); you.autoOpen = false; }
+    }
+    hint.hidden = open || !nearFranco();
+  }
+
+  function place(el2, x, y) { el2.style.left = (x / W * 100) + '%'; el2.style.top = (y / H * 100) + '%'; }
+
+  function thought(x, y, icon, t) {
+    const f = reduce ? 0 : Math.sin(t / 500) * 0.8;
+    el(x - 3, y + 6 + f, 1.1, 1.1, '#fff'); el(x - 1, y + 3.5 + f, 1.6, 1.6, '#fff');
+    el(x + 5, y - 2 + f, 7, 5.6, '#fff');
+    txt(icon, x + 5, y - 1.6 + f, 6.4, OL, { align: 'center', font: 'system-ui, "Apple Color Emoji", "Segoe UI Emoji", sans-serif' });
+  }
+
+  function render(t) {
+    ctx.setTransform(S, 0, 0, S, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    const sc = SCENES[current];
+    sc.draw(t);
+    const fr = sc.franco;
+    const look = { ...FRANCO_BASE, shirt: fr.shirt };
+    const near = nearFranco();
+    const actors = [
+      { y: fr.y, draw: () => person(fr.x, fr.y, look, { sit: fr.sit, dir: fr.dir, wave: current === 'home' && !reduce && ((t / 2200 | 0) % 2 === 0 || near) }, t) },
+      { y: you.y, draw: () => person(you.x, you.y, VISITOR, { moving: you.moving, dir: you.dir }, t) },
+    ].sort((a, b) => a.y - b.y);
+    // Franco sits behind his desk: draw him, then the desk front over his lap.
+    actors.forEach((a) => { a.draw(); if (a.y === fr.y && fr.sit) sc.front(t); });
+    if (!fr.sit) sc.front(t);
+    const ty = fr.y - (fr.sit ? 30 : 32);
+    if (!open) thought(fr.x + 8, ty, near ? '💬' : sc.bubbles[(t / 2600 | 0) % sc.bubbles.length], t);
+    place(tagF, fr.x - 3, fr.y - (fr.sit ? 31 : 33));
+    place(tagY, you.x, you.y - 30);
+  }
+
+  function frame(t) {
+    const dt = Math.min(50, t - (last || t)); last = t;
+    update(dt);
+    render(t);
+    requestAnimationFrame(frame);
+  }
+
+  setScene(sceneFor(argNow()));
+  tickClock(); setInterval(tickClock, 20000);
+  (document.fonts?.ready ?? Promise.resolve()).finally(() => requestAnimationFrame(frame));
+})();
+</script>
+
+</body></html>

@@ -1,0 +1,37 @@
+---
+import type { UiCopy } from '../i18n/ui';
+import Icon from './Icon.astro';
+import Ticket from './Ticket.astro';
+
+/** Landing page: matrix rain behind the hero and the two calls to action. */
+interface Props {
+  t: UiCopy;
+}
+
+const { t } = Astro.props;
+---
+
+<section class="page page-inicio" data-page="inicio" id="inicio" aria-label={t.inicio.label}>
+  <canvas id="rain" aria-hidden="true"></canvas>
+  <div class="rain-shade" aria-hidden="true"></div>
+  <div class="hero">
+    <span class="hero-eyebrow" data-depth="-0.3">{t.inicio.eyebrow}</span>
+    <h1 class="hero-title" id="heroTitle" data-glitch data-depth="0.5" tabindex="-1">
+      <span class="l1">{t.inicio.titleLine1}</span><span class="l2">{t.inicio.titleLine2}</span>
+    </h1>
+    <p class="hero-desc" data-depth="0.3">{t.inicio.description}</p>
+    <div class="hero-actions" data-depth="0.6">
+      <button class="pill-btn pill-world" type="button" data-go="mundo">
+        <span class="ws-mini" aria-hidden="true"></span>{t.inicio.explore}
+        <Icon name="arrow-ne" size={16} />
+      </button>
+      <span class="tk-host tk-host--flush">
+        <button class="pill-btn" type="button" data-go="proyectos">
+          {t.inicio.projects}
+          <Icon name="arrow-ne" size={14} />
+        </button>
+        <Ticket id="inicio" dir="right" />
+      </span>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,111 @@
+/* World: the fixed 3D stage behind every page and the mundo page widgets. */
+
+/* ===== B) 3D stage: one fixed canvas behind every page ===== */
+#stage3d { position: fixed; inset: 0; z-index: 0; background: var(--g0); overflow: hidden; visibility: hidden; transition: opacity .5s var(--e-out); }
+body.entered #stage3d { visibility: visible; }
+#stage3d.is-off { opacity: 0; }
+#world-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; outline: none; }
+.fallback-bg { position: absolute; inset: -40px; background: center / contain no-repeat; filter: blur(12px) brightness(.45) saturate(.8); opacity: .9; pointer-events: none; }
+.vignette { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(120% 90% at 50% 45%, transparent 55%, rgba(5,6,8,.6) 100%); }
+/* Film grain: an SVG noise tile whose position jumps 8 times per second. */
+.grain {
+  position: absolute; inset: -160px; pointer-events: none; opacity: .07;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 320px 320px; animation: grain .8s steps(1) infinite;
+}
+@keyframes grain {
+  0% { background-position: 0 0; } 12.5% { background-position: -90px 40px; } 25% { background-position: 60px -110px; } 37.5% { background-position: -140px -70px; }
+  50% { background-position: 110px 90px; } 62.5% { background-position: -30px 150px; } 75% { background-position: 150px -40px; } 87.5% { background-position: -120px 120px; }
+}
+.inicio-shade { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .7s var(--e-out); background: linear-gradient(90deg, rgba(14,16,19,.9) 0%, rgba(14,16,19,.58) 42%, rgba(14,16,19,0) 80%), linear-gradient(180deg, rgba(14,16,19,.45), transparent 28%, transparent 72%, rgba(14,16,19,.55)); }
+#stage3d.is-inicio .inicio-shade { opacity: 1; }
+.focus-vig { position: absolute; inset: 0; pointer-events: none; opacity: 0; --fx: 50%; --fy: 50%; background: radial-gradient(48% 58% at var(--fx) var(--fy), transparent 55%, rgba(5,6,8,.5) 100%); }
+/* CSS3D layer over the world canvas: DOM elements (the living-room TV) placed with the same camera. */
+.css3d { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.css3d-cam { position: absolute; left: 0; top: 0; width: 100%; height: 100%; transform-style: preserve-3d; pointer-events: none; }
+.css3d-obj { position: absolute; left: 0; top: 0; pointer-events: none; }
+/* Transparent: if the player is blocked, the colour bands drawn on the WebGL screen show through. */
+.css3d-obj iframe { display: block; width: 100%; height: 100%; border: 0; pointer-events: none; background: transparent; }
+
+/* ----- mundo ----- */
+.fallback { position: absolute; inset: 0; display: grid; place-items: center; padding: 180px var(--gr) 96px var(--gl); }
+@media (max-width: 767px) {
+  .fallback { padding-top: 270px; padding-bottom: 120px; }
+  .fallback .fallback-inner img { max-height: max(140px, calc(100svh - 540px)); }
+  /* Over long paper text the clock pill only gets in the way; the status line lives in the footer. */
+}
+.fallback-inner { display: grid; gap: 16px; justify-items: center; text-align: center; max-width: 720px; width: 100%; }
+.fallback img { width: 100%; max-height: max(150px, calc(100vh - 420px)); max-height: max(150px, calc(100svh - 420px)); object-fit: contain; }
+.fallback .talk { justify-self: center; }
+.fallback p { margin: 0; color: var(--tmuted); max-width: 440px; }
+.franco-label {
+  position: absolute; left: 0; top: 0; z-index: 2; pointer-events: none; white-space: nowrap;
+  font: 500 11px var(--font-mono); letter-spacing: .06em; color: var(--text);
+  padding: 6px 10px; border: 1px solid rgba(58,66,80,.9); border-radius: 999px; background: rgba(14,16,19,.72);
+  -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  opacity: 0; transition: opacity .35s, border-color .25s, color .25s;
+  will-change: transform;
+}
+.franco-label::after { content: ""; position: absolute; left: 50%; top: 100%; width: 1px; height: 16px; background: rgba(138,148,163,.6); }
+.franco-label.is-on { opacity: 1; }
+.franco-label.is-hot { border-color: #c9ced6; color: #fff; }
+.franco-label b { color: var(--signal); font-weight: 500; }
+
+.wtop { position: absolute; z-index: 3; left: var(--gl); right: var(--gr); top: calc(76px + var(--st)); display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 14px 24px; pointer-events: none; }
+.wtop > * { pointer-events: auto; }
+.scene-info { display: grid; gap: 8px; max-width: 420px; }
+.scene-tag { font: 500 11px var(--font-mono); letter-spacing: .14em; color: var(--signal); min-height: 1em; }
+.scene-title { margin: 0; font: 500 clamp(24px, 3.4vw, 38px)/1.05 var(--font-body); letter-spacing: -.015em; }
+.scene-clock { font: 400 12px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--tmuted); font-variant-numeric: tabular-nums; }
+.talk { justify-self: start; display: inline-flex; align-items: center; gap: 10px; margin-top: 6px; min-height: 40px; padding: 8px 16px 8px 12px; border-radius: 999px; border: 1px solid var(--line); background: rgba(28,32,39,.7); color: var(--text); font: 500 14px var(--font-body); transition: border-color .25s, background-color .25s; }
+.talk:hover { border-color: var(--signal); background: rgba(31,191,117,.1); }
+/* The scene tag stays in the DOM for the checks but is not shown. */
+.scene-tag { display: none; }
+/* The scene switcher is the keyboard path to another diorama (the pointer uses the wall clock):
+   visually hidden until one of its buttons has focus, then it shows at the right of the HUD. */
+.switcher { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.switcher:focus-within { position: static; width: auto; height: auto; overflow: visible; clip: auto; white-space: normal; display: grid; }
+.switcher { border: 0; margin: 0; padding: 0; gap: 8px; justify-items: end; }
+.switcher legend { float: left; width: 100%; text-align: right; padding: 0; margin-bottom: 8px; font: 400 10px var(--font-mono); letter-spacing: .12em; color: var(--tmuted); text-transform: uppercase; }
+.seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 10px; padding: 3px; background: rgba(14,16,19,.6); gap: 2px; }
+.seg button { border: 0; background: none; color: var(--tmuted); font: 500 10.5px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; padding: 8px 10px; border-radius: 7px; min-height: 32px; transition: background-color .2s, color .2s; }
+.seg button:hover { color: var(--text); }
+.seg button[aria-pressed="true"] { background: var(--s3); color: var(--text); }
+.seg button[aria-pressed="true"]::before { content: ""; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--signal); margin-right: 7px; vertical-align: 1px; }
+@media (max-width: 767px) {
+  .wtop { top: calc(66px + var(--st)); }
+  .switcher { justify-items: start; }
+  .switcher legend { text-align: left; }
+  .scene-title { font-size: 24px; }
+  .hide-sm { display: none; }
+  .seg button { padding: 8px 7px; letter-spacing: .04em; }
+}
+.wtop, .drag-hint { transition: opacity .5s var(--e-out); }
+body.panel-open .wtop, body.panel-open .drag-hint { opacity: .12; }
+@media (max-width: 767px) { body.panel-open .wtop { opacity: 0; } }
+.drag-hint { position: absolute; z-index: 3; right: var(--gr); bottom: calc(86px + var(--sb)); font: 400 10px var(--font-mono); letter-spacing: .12em; color: var(--tmuted); text-transform: uppercase; pointer-events: none; text-align: right; }
+@media (max-width: 767px) { .drag-hint { display: none; } }
+
+/* cell mask for scene switches */
+.cellmask { position: absolute; inset: 0; z-index: 4; display: grid; pointer-events: none; }
+.cellmask span { background: var(--g0); transform: scale(0); box-shadow: inset 0 0 0 1px rgba(31,191,117,.12); }
+.cellmask.is-fade span { transform: none; opacity: 0; }
+
+/* surprise view: camera framed on the screen, HUD dimmed, the prize line, the terms link and a way back */
+.surprise-hud { position: fixed; z-index: 41; left: 50%; bottom: calc(16px + var(--sb)); transform: translateX(-50%); display: grid; justify-items: center; gap: 12px; width: min(92vw, 720px); text-align: center; }
+.surprise-hud[hidden] { display: none; }
+/* The prize line sits in a framed box so it reads as part of the screenshot. */
+.surprise-prize { margin: 0; padding: 12px 18px; border: 1.5px solid rgba(243,245,247,.85); border-radius: 6px; background: rgba(14,16,19,.55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); color: var(--text); font: 500 15px/1.4 var(--font-body); text-shadow: 0 1px 8px rgba(0,0,0,.6); }
+.surprise-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.surprise-back, .surprise-terms { color: var(--text); font: 500 11px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; text-decoration: none; }
+.surprise-back:hover { border-color: #c9ced6; }
+.surprise-terms { color: var(--signal); border-color: rgba(31,191,117,.55); }
+.surprise-terms:hover { border-color: var(--signal); background: rgba(31,191,117,.12); }
+/* Desktop: a pointer sits further from the screen than a thumb, so everything grows. */
+@media (min-width: 768px) {
+  .surprise-hud { gap: 16px; bottom: calc(28px + var(--sb)); }
+  .surprise-prize { padding: 16px 26px; font-size: clamp(18px, 1.7vw, 22px); border-width: 2px; }
+  .surprise-row { gap: 14px; }
+  .surprise-back, .surprise-terms { min-height: 48px; padding: 10px 22px; font-size: 14px; }
+}
+body.surprise-view .wtop, body.surprise-view .drag-hint { opacity: 0; pointer-events: none; }

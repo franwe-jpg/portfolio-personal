@@ -1,0 +1,79 @@
+---
+import type { UiCopy } from '../i18n/ui';
+import Icon from './Icon.astro';
+
+/** Chat / direct-contact side panel. Static markup until Fase 6 wires it to /api/chat. */
+interface Props {
+  t: UiCopy;
+}
+
+const { t } = Astro.props;
+const MAX_QUESTION = 500;
+---
+
+<div class="panel-backdrop" id="panelBackdrop" hidden></div>
+<aside class="panel" id="panel" role="dialog" aria-modal="true" aria-labelledby="panelTitle" aria-describedby="panelSub" hidden>
+  <button class="panel-handle" id="panelHandle" type="button" tabindex="-1" aria-hidden="true"></button>
+  <header class="panel-head">
+    <div>
+      <h2 class="panel-title" id="panelTitle">{t.panel.title(t.mundo.scenes.office.where)}</h2>
+      <p class="panel-sub" id="panelSub"></p>
+    </div>
+    <button class="icon-btn" type="button" id="panelClose" aria-label={t.panel.close}>
+      <Icon name="close" size={14} />
+    </button>
+    <span class="conn" id="conn" role="status" hidden>{t.panel.checking}</span>
+  </header>
+  <div class="panel-body" id="panelBody">
+    <ol class="msgs" id="msgs" aria-live="polite" aria-relevant="additions"></ol>
+    <form class="cform" id="contactForm" novalidate hidden>
+      <div class="field">
+        <label for="cName">{t.panel.form.name}</label>
+        <input id="cName" name="name" autocomplete="name" maxlength="80" aria-describedby="cNameErr" />
+        <span class="err" id="cNameErr" aria-live="polite"></span>
+      </div>
+      <div class="field">
+        <span class="lbl" id="cViaLbl">{t.panel.form.via}</span>
+        <div class="segctl" role="radiogroup" aria-labelledby="cViaLbl">
+          <input type="radio" name="via" id="viaTg" value="telegram" checked /><label for="viaTg">{t.panel.form.telegram}</label>
+          <input type="radio" name="via" id="viaMail" value="mail" /><label for="viaMail">{t.panel.form.mail}</label>
+        </div>
+      </div>
+      <div class="field">
+        <label for="cHandle" id="cHandleLbl">{t.panel.form.handle}</label>
+        <input
+          id="cHandle"
+          name="handle"
+          autocomplete="off"
+          maxlength="120"
+          placeholder={t.panel.form.handlePlaceholder}
+          aria-describedby="cHandleErr"
+          autocapitalize="off"
+          spellcheck="false"
+        />
+        <span class="err" id="cHandleErr" aria-live="polite"></span>
+      </div>
+      <div class="field">
+        <label for="cMsg">{t.panel.form.message}</label>
+        <textarea id="cMsg" name="message" maxlength="1000" aria-describedby="cMsgErr"></textarea>
+        <span class="err" id="cMsgErr" aria-live="polite"></span>
+      </div>
+      <button class="btn-primary" type="submit">{t.panel.form.send}</button>
+    </form>
+  </div>
+  <form class="composer" id="chatForm">
+    <label class="sr-only" for="q">{t.panel.composer.label}</label>
+    <div class="composer-row">
+      <textarea id="q" rows="1" maxlength={MAX_QUESTION} placeholder={t.panel.composer.placeholder} aria-describedby="qCount"></textarea>
+      <button class="send" type="submit" id="sendBtn" aria-label={t.panel.composer.send} disabled>
+        <Icon name="send" size={16} />
+      </button>
+    </div>
+    <div class="composer-meta"><span id="qCount">{t.panel.composer.count(0, MAX_QUESTION)}</span></div>
+  </form>
+</aside>
+
+<div class="tk-toast" id="tkToast" role="status" aria-live="polite">
+  <div class="tk-toast-ticket" id="tkToastTicket"></div>
+  <p class="tk-toast-msg" id="tkToastMsg"></p>
+</div>

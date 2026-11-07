@@ -1,0 +1,37 @@
+---
+import type { UiCopy } from '../i18n/ui';
+
+/** Ticket hunt: the "ábreme" tab, its panel and the surprise HUD (prize line, terms link, back button; behaviour in src/scripts/hunt.ts). */
+interface Props {
+  t: UiCopy;
+}
+
+const { t } = Astro.props;
+/** Mirrors HUNT_TOTAL in src/scripts/state.ts (the scripts cannot be imported at build time). */
+const TOTAL = 5;
+---
+
+<div class="hunt" id="hunt">
+  <button class="hunt-tab" id="huntTab" type="button" aria-expanded="false" aria-controls="huntPanel">{t.hunt.tab}</button>
+  <div class="hunt-panel" id="huntPanel" role="dialog" aria-label={t.hunt.dialogLabel} hidden>
+    <p>{t.hunt.intro}</p>
+    <p>{t.hunt.reward}</p>
+    <ol class="hunt-pips" id="huntPips" aria-hidden="true">
+      {Array.from({ length: TOTAL }, () => <li />)}
+    </ol>
+    <div class="hunt-foot">
+      <span id="huntCount">{t.hunt.count(0, TOTAL)}</span>
+      <span>
+        <button class="hunt-reset" id="huntShow" type="button" hidden>{t.hunt.show}</button>
+        <button class="hunt-reset" id="huntReset" type="button" hidden>{t.hunt.reset}</button>
+      </span>
+    </div>
+  </div>
+</div>
+<div class="surprise-hud" id="surpriseHud" hidden>
+  <p class="surprise-prize">{t.hunt.prize}</p>
+  <div class="surprise-row">
+    <a class="pill surprise-terms" href={t.hunt.termsHref} target="_blank" rel="noopener">{t.hunt.terms}</a>
+    <button class="pill surprise-back" id="surpriseBack" type="button">{t.mundo.surpriseBack}</button>
+  </div>
+</div>

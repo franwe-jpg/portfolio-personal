@@ -1,0 +1,37 @@
+/* Entrance gate: logo canvas, name, enter button, audio choice and blackout. */
+
+/* ===== A) entrance gate ===== */
+.gate-screen { position: fixed; inset: 0; z-index: 50; display: grid; justify-items: center; align-items: center; background: var(--g0); padding: 0 var(--gr) 16vh var(--gl); transition: background-color .7s var(--e-out); }
+/* Boot: the screen is black and only the particles exist; everything else fades in once the cap is solid. */
+body.booted .gate-screen { background: var(--paper); }
+.gate-copy, .mute, .loadbar, .loadtxt { opacity: 0; transition: opacity .6s var(--e-out) .15s, transform .6s var(--e-out) .15s; }
+.gate-copy { transform: translateY(10px); }
+.mark-sky { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+body.booted .gate-copy, body.booted .mute, body.booted .loadbar, body.booted .loadtxt { opacity: 1; }
+body.booted .gate-copy { transform: none; }
+/* Once the enter animation starts, GSAP owns these properties. */
+body.leaving .gate-copy, body.leaving .mute, body.leaving .loadbar, body.leaving .loadtxt { transition: none; }
+.gate { text-align: center; display: grid; justify-items: center; gap: 10px; max-width: none; width: 100%; }
+.gate-copy { display: grid; justify-items: center; gap: 14px; transform-origin: 50% 40%; will-change: transform, filter, opacity; }
+#mark { width: min(80vw, 560px, calc(36vh * 19 / 11)); aspect-ratio: 19 / 11; display: block; cursor: default; touch-action: none; margin-bottom: -2vh; }
+.name { display: grid; gap: 5px; margin: 0; font: 600 clamp(16px, 1.9vw, 24px)/1.05 var(--font-body); letter-spacing: .06em; text-transform: uppercase; }
+.name .role { font: 500 clamp(12px, 1.1vw, 15px)/1.2 var(--font-body); letter-spacing: .12em; color: var(--muted); }
+.name > span > .role { font-size: .62em; letter-spacing: .08em; white-space: nowrap; }
+@media (max-width: 640px) { .name > span > .role { display: block; margin-top: 4px; } }
+.desc { font: 400 17px/1.45 var(--font-body); margin: 0; text-wrap: balance; }
+.status { display: inline-flex; align-items: center; gap: 8px; font: 400 12px var(--font-mono); color: var(--muted); letter-spacing: .04em; font-variant-numeric: tabular-nums; }
+.enter {
+  margin-top: 16px;
+  display: inline-flex; align-items: center; gap: 10px; min-height: 44px;
+  font: 500 16px var(--font-body); color: var(--ink); background: #fff;
+  border: 1px solid transparent; border-radius: 999px; padding: 10px 24px;
+  box-shadow: 0 1px 0 rgba(0,0,0,.04), 0 8px 24px -12px rgba(21,24,29,.35);
+  transition: transform .2s ease, box-shadow .2s ease, background-color .25s, color .25s;
+  font-variant-numeric: tabular-nums;
+}
+.enter:hover { transform: translateY(-2px); background: var(--ink); color: var(--paper); box-shadow: 0 1px 0 rgba(0,0,0,.04), 0 14px 30px -12px rgba(21,24,29,.45); }
+.enter svg { transition: transform .2s ease; }
+.enter:hover svg { transform: translate(2px, 2px); }
+.enter[aria-busy="true"] { background: var(--paper-2); color: var(--muted); transform: none; }
+.mute { position: fixed; z-index: 51; left: 50%; transform: translateX(-50%); bottom: calc(36px + var(--sb)); font: 500 12px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink); background: none; border: 0; border-bottom: 1px solid var(--ink); padding: 6px 0 2px; }
+.blackout { position: fixed; inset: 0; z-index: 60; background: var(--g0); opacity: 0; pointer-events: none; }

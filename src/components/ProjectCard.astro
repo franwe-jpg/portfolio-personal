@@ -1,68 +1,109 @@
 ---
 import type { Project } from '../data/projects';
-import type { Lang } from '../i18n/config';
-import { UI } from '../i18n/ui';
+import type { UiCopy } from '../i18n/ui';
 
+/**
+ * One project card rendered at build time. The gallery track holds every slide
+ * (screenshots, the demo clip, the YouTube embed, which only gets its `src` the first
+ * time the gallery reaches it); src/scripts/gallery.ts moves it with the arrows and
+ * keeps the dots in sync.
+ */
 interface Props {
-  lang: Lang;
   project: Project;
+  t: UiCopy;
 }
 
-const { lang, project } = Astro.props;
-const t = UI[lang];
-const hasCarousel = project.media.length > 1;
+const { project, t } = Astro.props;
+const initials = project.title
+  .split(/\s+/)
+  .slice(0, 2)
+  .map((word) => word[0])
+  .join('')
+  .toUpperCase();
+const hasGallery = project.media.length > 1;
 ---
 
-<article class="proj-card">
-  <div class="proj-carousel">
-    <div class="proj-track">
-      {
-        project.media.map((item) =>
-          item.kind === 'video' ? (
-            <iframe
-              class="proj-video"
-              src={`https://www.youtube-nocookie.com/embed/${item.youtubeId}`}
-              title={item.alt}
-              loading="lazy"
-              allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowfullscreen
-            />
-          ) : (
-            <img src={item.src} alt={item.alt} loading="lazy" />
-          ),
-        )
-      }
+<article class="card reveal-card" data-project={project.id}>
+  <div class="card-media">
+    <div class="card-view">
+      <div class="card-track">
+        {
+          project.media.map((item, index) =>
+            item.kind === 'image' ? (
+              <img
+                src={item.src}
+                alt={item.alt}
+                width="1280"
+                height="800"
+                loading={index ? 'lazy' : 'eager'}
+                decoding="async"
+                data-initials={initials}
+              />
+            ) : item.kind === 'clip' ? (
+              <video src={item.src} poster={item.poster} controls muted playsinline preload="none" aria-label={item.alt} />
+            ) : (
+              <iframe
+                data-src={`https://www.youtube-nocookie.com/embed/${item.youtubeId}?enablejsapi=1&rel=0`}
+                title={item.alt}
+                referrerpolicy="strict-origin-when-cross-origin"
+                allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen
+              />
+            ),
+          )
+        }
+      </div>
     </div>
+    {project.badge && <span class="badge">{project.badge}</span>}
     {
-      hasCarousel && (
+      hasGallery && (
         <>
-          <button type="button" class="proj-arrow prev" aria-label={t.previousImage}>
+          <button class="card-arrow prev" type="button" aria-label={t.proyectos.prevImage}>
             ‹
           </button>
-          <button type="button" class="proj-arrow next" aria-label={t.nextImage}>
+          <button class="card-arrow next" type="button" aria-label={t.proyectos.nextImage}>
             ›
           </button>
-          <div class="proj-dots">
-            {project.media.map((_, index) => (
-              <span class={index === 0 ? 'active' : undefined} />
-            ))}
+          <div class="card-dots">
+            {
+              project.media.map((_, index) => (
+                <button type="button" aria-label={t.proyectos.slide(index + 1, project.media.length)} aria-current={index === 0 ? 'true' : undefined} />
+              ))
+            }
           </div>
         </>
       )
     }
+    {
+      project.overlay && (
+        <div class="soon">
+          <span class="ghost" aria-hidden="true">
+            {project.overlayGhost}
+          </span>
+          <strong>{project.overlay}</strong>
+        </div>
+      )
+    }
   </div>
-  {project.badge && <p class="proj-badge">{project.badge}</p>}
-  <h3 class="proj-title">{project.title}</h3>
-  <p class="proj-desc">{project.description}</p>
-  {
-    project.links.length > 0 && (
-      <div class="proj-links">
-        {project.links.map((link) => (
-          <a href={link.href} target="_blank" rel="noopener">
-            {link.label}
-          </a>
-        ))}
-      </div>
-    )
-  }
+  <div class="card-body">
+    <h3>{project.title}</h3>
+    <p>{project.description}</p>
+    {
+      project.links.length > 0 && (
+        <div class="card-links">
+          {project.links.map((link) =>
+            /^https?:/.test(link.href) ? (
+              <a class="lnk" href={link.href} target="_blank" rel="noopener noreferrer">
+                {link.label}
+              </a>
+            ) : (
+              <a class="lnk" href={link.href}>
+                {link.label}
+              </a>
+            ),
+          )}
+        </div>
+      )
+    }
+  </div>
 </article>

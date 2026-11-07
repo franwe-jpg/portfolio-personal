@@ -1,5 +1,13 @@
 ---
-import LandingPage from '../components/LandingPage.astro';
+import App from '../components/App.astro';
+import { PROFILE_COPY } from '../data/profile';
+import Layout from '../layouts/Layout.astro';
+import { UI } from '../i18n/ui';
+
+const lang = 'es';
+const copy = PROFILE_COPY[lang];
 ---
 
-<LandingPage lang="es" />
+<Layout lang={lang} title={copy.tagline} description={UI[lang].metaDescription(copy.role)}>
+  <App lang={lang} />
+</Layout>

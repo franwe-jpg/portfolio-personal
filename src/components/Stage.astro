@@ -1,0 +1,17 @@
+---
+/**
+ * The fixed 3D stage behind every page. The WebGL canvas stays empty until the
+ * world is built (plan, Fase 3); the glyph field and the overlays are already live.
+ */
+---
+
+<div id="stage3d" class="is-off" aria-hidden="true">
+  <canvas class="glyph-field" data-field="mundo" data-theme="dark" aria-hidden="true"></canvas>
+  <canvas id="world-canvas"></canvas>
+  <div class="css3d" id="css3d"><div class="css3d-cam" id="css3dCam"></div></div>
+  <div class="fallback-bg" id="fallbackBg" hidden></div>
+  <div class="vignette"></div>
+  <div class="grain"></div>
+  <div class="inicio-shade"></div>
+  <div class="focus-vig" id="focusVig"></div>
+</div>

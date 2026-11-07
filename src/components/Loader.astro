@@ -1,0 +1,13 @@
+---
+import type { UiCopy } from '../i18n/ui';
+
+/** Thin progress bar at the top and its percentage; driven by the gate loader (plan, Fase 2). */
+interface Props {
+  t: UiCopy;
+}
+
+const { t } = Astro.props;
+---
+
+<div class="loadbar" id="loadbar" aria-hidden="true"><b id="bar"></b></div>
+<div class="loadtxt" id="loadtxt" role="status" aria-live="polite">{t.loader.loading(0)}</div>
