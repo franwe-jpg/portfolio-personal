@@ -43,6 +43,8 @@ const t = UI[lang];
 <Stage />
 
 <div id="app">
+  {/* src/scripts/router.ts moves the focus to the active page's heading (a hash change would go through the router). */}
+  <a class="skip-link" id="skip" href="#pages">{t.header.skip}</a>
   <Header lang={lang} t={t} />
 
   <main class="pages" id="pages">

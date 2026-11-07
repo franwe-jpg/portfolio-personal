@@ -62,6 +62,24 @@ export function initRain(): void {
     ctx!.fillStyle = BG;
     ctx!.fillRect(0, 0, W, H);
   }
+  /** Reduced motion: one frozen frame of the rain (heads, necks and fading tails), never redrawn. */
+  function drawStill(): void {
+    ctx!.textBaseline = 'top';
+    for (const s of streams) {
+      const fs = s.fs;
+      const gy = Math.floor((Math.random() * H) / fs) * fs;
+      ctx!.font = `600 ${fs}px ${mono}`;
+      const tail = Math.min(s.len, 9) | 0;
+      for (let i = 2; i < tail; i++) {
+        ctx!.fillStyle = `rgba(31,191,117,${(s.a * 0.4 * (1 - i / tail)).toFixed(3)})`;
+        ctx!.fillText(randomGlyph(), s.x, gy - fs * i);
+      }
+      ctx!.fillStyle = `rgba(23,149,91,${s.a * 0.95})`;
+      ctx!.fillText(randomGlyph(), s.x, gy - fs);
+      ctx!.fillStyle = `rgba(21,24,29,${s.a})`;
+      ctx!.fillText(randomGlyph(), s.x, gy);
+    }
+  }
   function frame(now: number): void {
     if (!running) return;
     const dt = Math.min(0.05, (now - last) / 1000 || 0.016);
@@ -70,9 +88,8 @@ export function initRain(): void {
     ctx!.fillStyle = 'rgba(231,234,238,.085)';
     ctx!.fillRect(0, 0, W, H);
     ctx!.textBaseline = 'top';
-    const slow = REDUCE ? 0.4 : 1;
     for (const s of streams) {
-      s.y += s.v * dt * slow;
+      s.y += s.v * dt;
       const fs = s.fs;
       const gy = Math.floor(s.y / fs) * fs;
       ctx!.font = `600 ${fs}px ${mono}`;
@@ -93,6 +110,10 @@ export function initRain(): void {
     if (running || document.hidden) return;
     running = true;
     size();
+    if (REDUCE) {
+      drawStill();
+      return;
+    }
     last = performance.now();
     raf = requestAnimationFrame(frame);
   }
@@ -101,7 +122,9 @@ export function initRain(): void {
     cancelAnimationFrame(raf);
   }
   addEventListener('resize', () => {
-    if (running) size();
+    if (!running) return;
+    size();
+    if (REDUCE) drawStill();
   });
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) stop();

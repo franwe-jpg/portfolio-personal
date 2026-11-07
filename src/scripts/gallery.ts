@@ -32,6 +32,7 @@ function bindCard(card: HTMLElement): void {
   const marks = dots ? ([...dots.children] as HTMLElement[]) : [];
   if (slides.length < 2 || !dots) return;
   let idx = 0;
+  slides.forEach((slide, i) => (slide.inert = i !== 0));
   const go = (n: number) => {
     for (const slide of slides) {
       if (slide instanceof HTMLVideoElement) slide.pause();
@@ -39,13 +40,24 @@ function bindCard(card: HTMLElement): void {
     }
     idx = (n + slides.length) % slides.length;
     track.style.transform = `translateX(${-idx * 100}%)`;
-    marks.forEach((d, i) => d.classList.toggle('on', i === idx));
+    // Only the visible slide exists for the keyboard and assistive tech.
+    slides.forEach((slide, i) => (slide.inert = i !== idx));
+    marks.forEach((d, i) => {
+      if (i === idx) d.setAttribute('aria-current', 'true');
+      else d.removeAttribute('aria-current');
+    });
     const slide = slides[idx];
     // The embed loads the first time the gallery reaches it, never behind the gate.
     if (slide instanceof HTMLIFrameElement && !slide.src && slide.dataset.src) slide.src = slide.dataset.src;
     // Over a video the dots would sit on the controls bar.
     dots.hidden = slide instanceof HTMLVideoElement || slide instanceof HTMLIFrameElement;
   };
+  marks.forEach((d, i) =>
+    d.addEventListener('click', (e) => {
+      e.stopPropagation();
+      go(i);
+    }),
+  );
   for (const [cls, d] of [
     ['prev', -1],
     ['next', 1],

@@ -64,7 +64,13 @@ const hasGallery = project.media.length > 1;
           <button class="card-arrow next" type="button" aria-label={t.proyectos.nextImage}>
             ›
           </button>
-          <div class="card-dots">{project.media.map((_, index) => <i class:list={{ on: index === 0 }} />)}</div>
+          <div class="card-dots">
+            {
+              project.media.map((_, index) => (
+                <button type="button" aria-label={t.proyectos.slide(index + 1, project.media.length)} aria-current={index === 0 ? 'true' : undefined} />
+              ))
+            }
+          </div>
         </>
       )
     }

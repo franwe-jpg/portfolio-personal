@@ -62,6 +62,8 @@ export function home(scene: T.Scene, css3d: Css3dLayer): HomeDiorama {
   b.box(1.3, 0.54, -4.5, 0.3, 0.065, 0.16, mat.catW);
   b.cyl(1.38, 0.605, -4.5, 0.045, 0.006, mat.black, 16);
   const bands = createTvBands();
+  // Reduced motion never mounts the player nor animates the bands: leave one still frame on the screen.
+  if (REDUCE) bands.draw(0);
   const tvScreen = tv(b, 0, 1.19, -4.56, 1.86, 1.06, bands.tex.tex);
   root.add(tvScreen);
   // Tapping the screen opens the video on YouTube; on hover, a static border.
@@ -241,6 +243,8 @@ export function home(scene: T.Scene, css3d: Css3dLayer): HomeDiorama {
     tvEl.style.height = '530px';
     tvFrame = document.createElement('iframe');
     tvFrame.title = ui.mundo.tvTitle;
+    // Scenery, not a control: it must not be a Tab stop (the stage is aria-hidden anyway).
+    tvFrame.tabIndex = -1;
     tvFrame.allow = 'autoplay; encrypted-media; picture-in-picture';
     tvFrame.referrerPolicy = 'strict-origin-when-cross-origin';
     tvFrame.src = `${TV_ORIGIN}/embed/${TV_VIDEO}?autoplay=1&mute=1&loop=1&playlist=${TV_VIDEO}&controls=0&rel=0&playsinline=1&iv_load_policy=3&disablekb=1&enablejsapi=1`;

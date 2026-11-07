@@ -75,6 +75,11 @@ export async function go(target: string | null | undefined, { instant = false, p
 export const router = { go };
 
 export function initRouter(): void {
+  // Skip link: straight to the active page's heading, without touching the hash.
+  byId('skip').addEventListener('click', (event: MouseEvent) => {
+    event.preventDefault();
+    if (state.page) heading(state.page)?.focus({ preventScroll: true });
+  });
   addEventListener('popstate', (event: PopStateEvent) => {
     if (!state.entered) return;
     mancha().origin(pointer.x, pointer.y);

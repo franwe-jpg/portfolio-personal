@@ -59,8 +59,12 @@ body.entered #stage3d { visibility: visible; }
 .scene-clock { font: 400 12px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--tmuted); font-variant-numeric: tabular-nums; }
 .talk { justify-self: start; display: inline-flex; align-items: center; gap: 10px; margin-top: 6px; min-height: 40px; padding: 8px 16px 8px 12px; border-radius: 999px; border: 1px solid var(--line); background: rgba(28,32,39,.7); color: var(--text); font: 500 14px var(--font-body); transition: border-color .25s, background-color .25s; }
 .talk:hover { border-color: var(--signal); background: rgba(31,191,117,.1); }
-/* Test-only: the scene forcer and the scene tag stay in the DOM for the checks but are not shown. */
-.switcher, .scene-tag { display: none; }
+/* The scene tag stays in the DOM for the checks but is not shown. */
+.scene-tag { display: none; }
+/* The scene switcher is the keyboard path to another diorama (the pointer uses the wall clock):
+   visually hidden until one of its buttons has focus, then it shows at the right of the HUD. */
+.switcher { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.switcher:focus-within { position: static; width: auto; height: auto; overflow: visible; clip: auto; white-space: normal; display: grid; }
 .switcher { border: 0; margin: 0; padding: 0; gap: 8px; justify-items: end; }
 .switcher legend { float: left; width: 100%; text-align: right; padding: 0; margin-bottom: 8px; font: 400 10px var(--font-mono); letter-spacing: .12em; color: var(--tmuted); text-transform: uppercase; }
 .seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 10px; padding: 3px; background: rgba(14,16,19,.6); gap: 2px; }

@@ -22,7 +22,7 @@ const MAX_QUESTION = 500;
     <button class="icon-btn" type="button" id="panelClose" aria-label={t.panel.close}>
       <Icon name="close" size={14} />
     </button>
-    <span class="conn" id="conn" hidden>{t.panel.checking}</span>
+    <span class="conn" id="conn" role="status" hidden>{t.panel.checking}</span>
   </header>
   <div class="panel-body" id="panelBody">
     <ol class="msgs" id="msgs" aria-live="polite" aria-relevant="additions"></ol>
@@ -30,7 +30,7 @@ const MAX_QUESTION = 500;
       <div class="field">
         <label for="cName">{t.panel.form.name}</label>
         <input id="cName" name="name" autocomplete="name" maxlength="80" aria-describedby="cNameErr" />
-        <span class="err" id="cNameErr"></span>
+        <span class="err" id="cNameErr" aria-live="polite"></span>
       </div>
       <div class="field">
         <span class="lbl" id="cViaLbl">{t.panel.form.via}</span>
@@ -51,12 +51,12 @@ const MAX_QUESTION = 500;
           autocapitalize="off"
           spellcheck="false"
         />
-        <span class="err" id="cHandleErr"></span>
+        <span class="err" id="cHandleErr" aria-live="polite"></span>
       </div>
       <div class="field">
         <label for="cMsg">{t.panel.form.message}</label>
         <textarea id="cMsg" name="message" maxlength="1000" aria-describedby="cMsgErr"></textarea>
-        <span class="err" id="cMsgErr"></span>
+        <span class="err" id="cMsgErr" aria-live="polite"></span>
       </div>
       <button class="btn-primary" type="submit">{t.panel.form.send}</button>
     </form>

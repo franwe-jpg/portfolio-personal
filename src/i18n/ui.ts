@@ -53,6 +53,8 @@ export interface UiCopy {
     brandSr: string;
     navLabel: string;
     nav: { mundo: string; proyectos: string; sobre: string };
+    /** Skip link: first Tab stop after entering, jumps to the active page's heading. */
+    skip: string;
     /** Link to the other language: visible short label and its screen-reader name, written in that language. */
     lang: { label: string; sr: string };
   };
@@ -105,6 +107,8 @@ export interface UiCopy {
     next: string;
     prevImage: string;
     nextImage: string;
+    /** aria-label of each gallery dot. */
+    slide: (n: number, total: number) => string;
   };
 
   sobre: {
@@ -223,6 +227,7 @@ const es: UiCopy = {
     brandSr: 'FrancoSolerSistemas, volver al inicio',
     navLabel: 'Páginas',
     nav: { mundo: 'Mundo', proyectos: 'Proyectos', sobre: 'Sobre mí' },
+    skip: 'Saltar al contenido',
     lang: { label: 'EN', sr: 'English version' },
   },
 
@@ -255,7 +260,7 @@ const es: UiCopy = {
     clockLabel: 'Hora en Argentina',
     clockPlaceholder: '--:-- · Hora Argentina',
     clock: (time) => `${time} · Hora Argentina`,
-    switcherLegend: 'Forzar escena (prueba)',
+    switcherLegend: 'Cambiar de escena',
     switcherLabel: 'Escena',
     modes: { auto: 'Auto', autoNow: ' (ahora)', office: 'Oficina', uni: 'Universidad', home: 'Disponible' },
     dragHint: ['Arrastrá para girar', 'Rueda para acercar'],
@@ -300,6 +305,7 @@ const es: UiCopy = {
     next: 'Sobre mí',
     prevImage: 'Anterior',
     nextImage: 'Siguiente',
+    slide: (n, total) => `Imagen ${n} de ${total}`,
   },
 
   sobre: {
@@ -417,6 +423,7 @@ const en: UiCopy = {
     brandSr: 'FrancoSolerSistemas, back to the start',
     navLabel: 'Pages',
     nav: { mundo: 'World', proyectos: 'Projects', sobre: 'About me' },
+    skip: 'Skip to content',
     lang: { label: 'ES', sr: 'Versión en español' },
   },
 
@@ -494,6 +501,7 @@ const en: UiCopy = {
     next: 'About me',
     prevImage: 'Previous',
     nextImage: 'Next',
+    slide: (n, total) => `Image ${n} of ${total}`,
   },
 
   sobre: {

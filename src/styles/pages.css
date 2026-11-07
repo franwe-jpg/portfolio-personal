@@ -133,9 +133,11 @@
 .card-arrow.prev { left: 10px; }
 .card-arrow.next { right: 10px; }
 .card-arrow:hover { background: rgba(31,191,117,.85); color: #0b0d10; }
-.card-dots { position: absolute; left: 0; right: 0; bottom: 10px; z-index: 2; display: flex; justify-content: center; gap: 6px; pointer-events: none; }
-.card-dots i { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.45); }
-.card-dots i.on { background: #1fbf75; }
+.card-dots { position: absolute; left: 0; right: 0; bottom: 6px; z-index: 2; display: flex; justify-content: center; gap: 2px; pointer-events: none; }
+/* Each dot is a button with a 14 px hit area around the 6 px mark. */
+.card-dots button { pointer-events: auto; width: 14px; height: 14px; padding: 0; border: 0; border-radius: 50%; background: none; display: grid; place-items: center; }
+.card-dots button::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,.45); }
+.card-dots button[aria-current="true"]::before { background: #1fbf75; }
 .ph { position: absolute; inset: 0; display: grid; place-items: center; background: linear-gradient(135deg, var(--s2), var(--g0)); color: var(--tmuted); font: 500 clamp(36px, 6vw, 56px) var(--font-mono); letter-spacing: .06em; }
 .ph::after { content: "IMAGEN NO DISPONIBLE"; position: absolute; bottom: 14px; left: 16px; font: 400 10px var(--font-mono); letter-spacing: .12em; color: var(--line); }
 html[lang="en"] .ph::after { content: "IMAGE NOT AVAILABLE"; }
@@ -150,6 +152,11 @@ html[lang="en"] .ph::after { content: "IMAGE NOT AVAILABLE"; }
 .lnk { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 8px 14px; border-radius: 999px; border: 1px solid rgba(21,24,29,.18); text-decoration: none; font: 500 14px var(--font-body); transition: background-color .2s, color .2s, border-color .2s; }
 .lnk:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 .page-next { margin-top: 64px; display: flex; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pill-btn, .pill-btn svg, .lnk, .card, .photo img, .photo figcaption, .about-photo img, .w, .enter, .enter svg { transition: none !important; }
+  .pill-btn:hover, .pill-btn:hover svg, .photo:hover img, .about-photo:hover img, .enter:hover, .enter:hover svg { transform: none; }
+}
 
 .contact { padding-bottom: 40px; }
 .contact-big { margin-top: 36px; display: grid; gap: 28px; justify-items: start; }

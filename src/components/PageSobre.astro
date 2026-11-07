@@ -100,7 +100,7 @@ const year = new Date().getFullYear();
                 <figure class:list={['photo', 'reveal-card', photo.shape]}>
                   <img
                     src={photo.src}
-                    alt={photo.alt}
+                    alt={photo.alt ?? photo.caption}
                     width={photo.width}
                     height={photo.height}
                     loading="lazy"
