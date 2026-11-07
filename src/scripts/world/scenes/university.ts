@@ -1,18 +1,22 @@
 import * as T from 'three';
+import { REDUCE } from '../../env';
 import { Batch } from '../batch';
+import { makeClock } from '../clock';
 import { MOBILE, SCENE_X } from '../config';
 import { makeFranco, makePerson, person, type Person } from '../figure';
 import { floorGlow, windowGlow, windowLight } from '../lights';
 import { mat, pm } from '../materials';
-import { at, UNIT_BOX, unitCyl } from '../primitives';
+import { at, toWorld, UNIT_BOX, unitCyl } from '../primitives';
 import { backpack, bookcase, classChair, notebook, plant, studentDesk } from '../props';
+import { createBoard } from '../screens';
 import type { Diorama } from '../types';
 import { base } from '../walls';
 
 /**
- * University diorama: blackboard with the Databases II slides, projection screen, teacher at
- * the lectern, 3×3 desks with notebooks and notebooks, Franco's desk with his lunch box. The
- * board and screen animate (plan, Fase 5).
+ * University diorama: blackboard with the three Databases II slides (and the "PARISE CRACK"
+ * graffiti), projection screen in sync with the board, projector with its light cone, teacher
+ * at the lectern, 3×3 desks with notebooks and exercise books, Franco's desk with his lunch
+ * box, and the wall clock. Board and screen change slide every 6 s.
  */
 export function university(scene: T.Scene): Diorama {
   const root = new T.Group();
@@ -26,15 +30,53 @@ export function university(scene: T.Scene): Diorama {
   b.box(-4.68, 0.93, BZ, 0.16, 0.04, 4.2, mat.furnL);
   b.box(-4.62, 0.97, BZ - 1.6, 0.06, 0.025, 0.12, mat.paper);
   b.box(-4.62, 0.97, BZ - 1.4, 0.06, 0.025, 0.12, mat.pale);
+  const slides = createBoard();
+  const boardMesh = new T.Mesh(
+    new T.PlaneGeometry(4.3, 1.86),
+    new T.MeshBasicMaterial({ map: slides.board.tex, toneMapped: false, color: 0xd0d4d9 }),
+  );
+  boardMesh.position.set(-4.72, 1.9, BZ);
+  boardMesh.rotation.y = Math.PI / 2;
+  root.add(boardMesh);
   // Projection screen (roll-up) to the right of the board, and the projector aimed at it.
   const PZ = 1.5;
   b.add(unitCyl(10), mat.dark, -4.7, 2.3, PZ, 0.05, 2.34, 0.05, Math.PI / 2, 0, 0);
   b.box(-4.7, 0.86, PZ, 0.03, 0.04, 2.24, mat.dark);
+  const screenMesh = new T.Mesh(
+    new T.PlaneGeometry(2.2, 1.3),
+    new T.MeshBasicMaterial({ map: slides.slide.tex, toneMapped: false, color: 0xe8ecf0 }),
+  );
+  screenMesh.position.set(-4.7, 1.55, PZ);
+  screenMesh.rotation.y = Math.PI / 2;
+  root.add(screenMesh);
   // Ceiling projector (lens faces -x, toward the screen).
   b.box(0.3, 2.84, PZ, 0.04, 0.18, 0.04, mat.metal);
   b.box(0.3, 2.66, PZ, 0.42, 0.16, 0.36, mat.pale);
   b.add(unitCyl(10), mat.dark, 0.08, 2.74, PZ, 0.06, 0.05, 0.06, 0, 0, Math.PI / 2);
   b.box(0.3, 2.7, PZ + 0.182, 0.02, 0.02, 0.006, mat.signal);
+  let cone: T.Mesh | null = null;
+  if (!MOBILE) {
+    // Faint light cone from the projector to the screen (hidden in the POV view so it does not wash the frame).
+    const lens = new T.Vector3(0.06, 2.74, PZ);
+    const scr = new T.Vector3(-4.7, 1.55, PZ);
+    const len = lens.distanceTo(scr);
+    cone = new T.Mesh(
+      new T.ConeGeometry(1.1, len, 24, 1, true),
+      new T.MeshBasicMaterial({
+        color: 0xcfe6ff,
+        transparent: true,
+        opacity: 0.08,
+        blending: T.AdditiveBlending,
+        depthWrite: false,
+        side: T.DoubleSide,
+      }),
+    );
+    cone.position.copy(lens).add(scr).multiplyScalar(0.5);
+    cone.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), lens.clone().sub(scr).normalize());
+    cone.scale.x = 0.6;
+    cone.renderOrder = 2;
+    root.add(cone);
+  }
   // Desks in a 3×3 facing the board (-x), with an aisle between rows.
   const cols = [-1.9, -0.4, 1.1];
   const rows = [-1.9, 0, 1.9];
@@ -124,14 +166,34 @@ export function university(scene: T.Scene): Diorama {
   floorGlow(root, -2.5, -3.5, 2.8, 2.4, '230,236,255', 0.28);
   const sunIn = windowLight(root, 0xf1f4ff, [-2.4, 4.4, -7.2], [-2.6, 0, -2.0]);
 
+  // POV: between the teacher's head and the centre of the screen, so both and the board fit.
+  const pov = {
+    target: toWorld(root, (-3.95 - 4.7) / 2, (1.72 + 1.55) / 2, (0.45 + PZ) / 2),
+    wide: { back: 1.1, up: 0.22, side: -0.32, fov: 50 },
+  };
+  const onFocus = (on: boolean) => {
+    if (cone) cone.visible = !on;
+  };
+  const clock = makeClock(root, 0, 2.5, -4.77);
+  // Surprise shot (plan, Fase 8): projection screen seen from the side away from the teacher (+z).
+  const shot = { mesh: screenMesh, dist: 2.3, yaw: -0.6, lift: 0.15 };
+  // Hunt ticket (plan, Fase 8): out of the bookcase's front-left edge, at the third shelf.
+  const tkSpot = new T.Vector3(1.68, 1.35, -4.22);
+
   const update = (t: number) => {
     franco.update(t);
     for (const p of people) p.update(t);
+    if (!REDUCE) slides.tick(t);
   };
   return {
     root,
     franco,
     update,
+    pov,
+    onFocus,
+    shot,
+    tkSpot,
+    clock,
     lights: [[sunIn, 60]],
     light: { hemi: 1.6, sun: 2.2, sunColor: 0xf3f6fa },
   };
