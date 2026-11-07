@@ -97,7 +97,7 @@ Cada tarea cierra con capturas y sin errores de consola (ver "Criterios de termi
 - [ ] **Estilos.** Mover el CSS del prototipo a `src/styles`, separado por área (base, entrada, mundo, páginas, panel).
   - Resultado esperado: el esqueleto se ve igual al prototipo en las páginas ya migradas.
   - Cómo se verifica: comparación de capturas prototipo vs. Astro.
-- [ ] **Textos.** Extraer los textos del prototipo a `src/i18n/ui.ts` (español primero; inglés en la fase 9).
+- [x] **Textos.** Hecho el 2026-11-07: `src/i18n/ui.ts` reescrito con todos los textos de interfaz del prototipo (inglés reutiliza el español hasta la fase 9); el contenido pasa a `src/data/profile.ts` (bio, datos, trayectoria, servicios, herramientas) y `src/data/photos.ts`; `grep` de textos en `src/components` y `src/scripts` no encuentra copys sueltos. Extraer los textos del prototipo a `src/i18n/ui.ts` (español primero; inglés en la fase 9).
   - Resultado esperado: ningún texto de interfaz hardcodeado en componentes.
   - Cómo se verifica: `grep` de textos en `src/components` y `src/scripts` no encuentra copys sueltos.
 

@@ -1,17 +1,24 @@
 import type { Lang } from './config';
 
-/** Icon keys for the "how this site is built" list; the SVGs live in ProfilePanel. */
-export type BuiltWithIcon = 'code' | 'cloud' | 'model' | 'assistant' | 'repo' | 'audit';
+/** The three dioramas; `home` is the "available" evening scene. */
+export type Scene = 'office' | 'uni' | 'home';
 
-export interface BuiltWithItem {
-  icon: BuiltWithIcon;
+export interface SceneCopy {
+  /** Scene tag number shown next to the name ("ESCENA 01 · OFICINA"). */
+  n: string;
   name: string;
-  description: string;
+  status: string;
+  title: string;
+  /** Appended to the chat panel title ("Franco (IA) · en la oficina"). */
+  where: string;
+  /** First message in the panel when it opens on this scene. */
+  hello: string;
 }
 
 /**
  * Every UI string that is not content data. Typed as a closed interface so a
  * key missing from one language is a compile error, not a Spanish leak.
+ * Content (profile, projects, photos) lives in src/data.
  */
 export interface UiCopy {
   /** BCP 47 tag for Intl formatting. */
@@ -21,215 +28,304 @@ export interface UiCopy {
   /** Built from the per-language role, so the tag stays in one place. */
   metaDescription: (role: string) => string;
 
-  emoji: {
-    /** emoji-picker-element locale code. */
-    locale: string;
-    /** Self-hosted dataset, fetched only when the picker opens. */
-    dataSource: string;
+  loader: {
+    loading: (pct: number) => string;
+    offline: string;
+    enterLoading: (pct: number) => string;
   };
 
-  statusOnline: string;
-  /** Markup: the <b> is authored here, never network input. */
-  statusTyping: string;
+  gate: {
+    label: string;
+    markAlt: string;
+    name: string;
+    role: string;
+    roleNext: string;
+    statusNow: string;
+    enter: string;
+    mute: string;
+  };
 
-  menuLabel: string;
-  themeDark: string;
-  themeLight: string;
-  /** Names the language it switches TO, like the theme item does. */
-  langMenuItem: string;
+  header: {
+    backToGate: string;
+    brand: string;
+    brandSr: string;
+    navLabel: string;
+    nav: { mundo: string; proyectos: string; sobre: string };
+  };
 
-  disclaimer: string;
-  todayChip: string;
-  /** Shown on touch screens; `clickHint` replaces it with a fine pointer. */
-  tapHint: string;
-  clickHint: string;
-  suggestionsLabel: string;
-  openPromptTitle: string;
-  openPromptText: string;
+  sound: {
+    label: string;
+    /** Screen-reader suffix after the visible label. */
+    sr: string;
+  };
 
-  composerLabel: (name: string) => string;
-  composerPlaceholderOpen: string;
-  emojiButtonLabel: string;
-  sendButtonLabel: string;
-  networkError: string;
+  inicio: {
+    label: string;
+    eyebrow: string;
+    titleLine1: string;
+    titleLine2: string;
+    description: string;
+    explore: string;
+    projects: string;
+  };
 
-  projectsTitle: string;
-  previousImage: string;
-  nextImage: string;
+  mundo: {
+    label: string;
+    fallbackAlt: string;
+    fallbackNote: string;
+    talk: string;
+    francoLabel: string;
+    clockLabel: string;
+    clockPlaceholder: string;
+    clock: (time: string) => string;
+    switcherLegend: string;
+    switcherLabel: string;
+    modes: { auto: string; autoNow: string; office: string; uni: string; home: string };
+    dragHint: [string, string];
+    sceneTag: (scene: SceneCopy) => string;
+    statusLine: (scene: SceneCopy, time: string) => string;
+    scenes: Record<Scene, SceneCopy>;
+    surpriseBack: string;
+  };
 
-  viewProjects: string;
-  viewChat: string;
-  /** Pulsing cue under the mobile cover that leads down to the chat. */
-  swipeHint: string;
+  proyectos: {
+    eyebrow: string;
+    title: string;
+    next: string;
+    prevImage: string;
+    nextImage: string;
+  };
 
-  avatarAlt: (name: string) => string;
-  emailLink: string;
+  sobre: {
+    eyebrow: string;
+    jobs: string;
+    events: string;
+    now: string;
+    photos: { eyebrow: string; title: string; note: string };
+    stack: { eyebrow: string; title: string; toolsHead: string; toolsNote: string };
+    contact: {
+      eyebrow: string;
+      title: string;
+      back: string;
+      github: string;
+      linkedin: string;
+      instagram: string;
+    };
+    copyright: (year: number, name: string) => string;
+  };
 
-  openProfileLabel: (name: string) => string;
-  contactInfoTitle: string;
-  backToChat: string;
-  builtWithTitle: string;
-  builtWith: BuiltWithItem[];
+  hunt: {
+    tab: string;
+    dialogLabel: string;
+    intro: string;
+    reward: string;
+    count: (found: number, total: number) => string;
+    show: string;
+    reset: string;
+    found: (found: number, total: number) => string;
+    foundAll: string;
+    ticketFound: string;
+    ticket: string;
+    /** Shown on the screen Franco is looking at once every ticket is found. */
+    surprise: string;
+  };
+
+  panel: {
+    title: (where: string) => string;
+    close: string;
+    checking: string;
+    form: {
+      name: string;
+      via: string;
+      telegram: string;
+      mail: string;
+      handle: string;
+      handlePlaceholder: string;
+      message: string;
+      send: string;
+    };
+    composer: {
+      label: string;
+      placeholder: string;
+      send: string;
+      count: (length: number, max: number) => string;
+    };
+  };
 }
 
-export const UI: Record<Lang, UiCopy> = {
-  es: {
-    locale: 'es-AR',
-    ogLocale: 'es_AR',
-    metaDescription: (role) =>
-      `${role} en Trelew, Chubut. Desarrollo web full stack con foco en front-end. Abrí el chat y preguntame lo que quieras.`,
+const es: UiCopy = {
+  locale: 'es-AR',
+  ogLocale: 'es_AR',
+  metaDescription: (role) =>
+    `${role} en Trelew, Chubut. Desarrollo web full stack con foco en front-end. Entrá a mi mundo y hablá conmigo.`,
 
-    emoji: { locale: 'es', dataSource: '/emoji/emoji-es.json' },
-
-    statusOnline: 'en línea',
-    statusTyping: '<b>escribiendo…</b>',
-
-    menuLabel: 'Más opciones',
-    themeDark: 'Tema oscuro',
-    themeLight: 'Tema claro',
-    langMenuItem: 'English',
-
-    disclaimer: 'Este chat es una simulación. El CV, los links y las ganas de trabajar son reales.',
-    todayChip: 'HOY',
-    tapHint: 'Tocá la pantalla para continuar',
-    clickHint: 'Hacé clic para chatear',
-    suggestionsLabel: 'Preguntas sugeridas',
-    openPromptTitle: 'Ahora te toca a vos',
-    openPromptText: 'Escribime lo que quieras acá abajo y te respondo.',
-
-    composerLabel: (name) => `Escribile un mensaje a ${name}`,
-    composerPlaceholderOpen: 'Preguntame lo que quieras',
-    emojiButtonLabel: 'Elegir un emoji',
-    sendButtonLabel: 'Enviar mensaje',
-    networkError: 'No pude conectarme. Probá de nuevo en un momento, o escribime por mail.',
-
-    projectsTitle: 'Proyectos',
-    previousImage: 'Imagen anterior',
-    nextImage: 'Imagen siguiente',
-
-    viewProjects: 'Ver proyectos',
-    viewChat: 'Ver el chat',
-    swipeHint: 'Deslizá',
-
-    avatarAlt: (name) => `Foto de ${name}`,
-    emailLink: 'Correo',
-
-    openProfileLabel: (name) => `Ver el perfil de ${name}`,
-    contactInfoTitle: 'Info. del contacto',
-    backToChat: 'Volver al chat',
-    builtWithTitle: 'Cómo está hecho este sitio',
-    builtWith: [
-      {
-        icon: 'code',
-        name: 'Astro + TypeScript',
-        description: 'Páginas estáticas, rápidas y con tipado de punta a punta.',
-      },
-      {
-        icon: 'cloud',
-        name: 'Cloudflare',
-        description: 'Hosting en Workers, base de datos D1 y verificación anti-bots con Turnstile.',
-      },
-      {
-        icon: 'model',
-        name: 'Llama 3.1',
-        description: 'El modelo de IA que responde en el chat, corriendo en Workers AI.',
-      },
-      {
-        icon: 'assistant',
-        name: 'Claude',
-        description: 'Mi copiloto para programar, revisar y documentar el código.',
-      },
-      {
-        icon: 'repo',
-        name: 'GitHub',
-        description: 'Repositorio y control de versiones.',
-      },
-      {
-        icon: 'audit',
-        name: 'Auditoría de preguntas y respuestas',
-        description:
-          'Cada pregunta y su respuesta quedan registradas, con la IP anonimizada, para revisar y mejorar el chat.',
-      },
-    ],
+  loader: {
+    loading: (pct) => `CARGANDO MUNDO ${pct}%`,
+    offline: 'SIN CONEXIÓN · MODO LIVIANO',
+    enterLoading: (pct) => `Cargando… ${pct}%`,
   },
 
-  en: {
-    locale: 'en-US',
-    ogLocale: 'en_US',
-    metaDescription: (role) =>
-      `${role} based in Trelew, Chubut. Full stack web development with a front-end focus. Open the chat and ask me anything.`,
+  gate: {
+    label: 'Entrada',
+    markAlt: 'Logo FS: una tecla negra con las iniciales y un punto verde',
+    name: 'Franco Soler Sistemas',
+    role: '/ Analista Programador',
+    roleNext: 'Futuro Licenciado en Sistemas',
+    statusNow: 'AHORA',
+    enter: 'Ingresar',
+    mute: 'Entrar sin audio',
+  },
 
-    emoji: { locale: 'en', dataSource: '/emoji/emoji-en.json' },
+  header: {
+    backToGate: 'Volver a la entrada',
+    brand: 'FrancoSolerSistemas',
+    brandSr: 'FrancoSolerSistemas, volver al inicio',
+    navLabel: 'Páginas',
+    nav: { mundo: 'Mundo', proyectos: 'Proyectos', sobre: 'Sobre mí' },
+  },
 
-    statusOnline: 'online',
-    statusTyping: '<b>typing…</b>',
+  sound: { label: 'Sonido', sr: ' ambiente' },
 
-    menuLabel: 'More options',
-    themeDark: 'Dark theme',
-    themeLight: 'Light theme',
-    langMenuItem: 'Español',
+  inicio: {
+    label: 'Inicio',
+    eyebrow: 'Analista Programador · Trelew, Chubut',
+    titleLine1: 'Franco Soler',
+    titleLine2: 'Sistemas',
+    description:
+      'Desarrollo software y estudio sistemas en Chubut. Entrá a mi mundo: vas a ver dónde estoy ahora y podés hablar conmigo.',
+    explore: 'Explorar mi mundo',
+    projects: 'Ver proyectos',
+  },
 
-    disclaimer: 'This chat is a simulation. The CV, the links and the willingness to work are real.',
-    todayChip: 'TODAY',
-    tapHint: 'Tap the screen to continue',
-    clickHint: 'Click to chat',
-    suggestionsLabel: 'Suggested questions',
-    openPromptTitle: 'Your turn',
-    openPromptText: 'Ask me anything below and I will reply.',
-
-    composerLabel: (name) => `Write a message to ${name}`,
-    composerPlaceholderOpen: 'Ask me anything',
-    emojiButtonLabel: 'Pick an emoji',
-    sendButtonLabel: 'Send message',
-    networkError: "I couldn't connect. Try again in a moment, or drop me an email.",
-
-    projectsTitle: 'Projects',
-    previousImage: 'Previous image',
-    nextImage: 'Next image',
-
-    viewProjects: 'View projects',
-    viewChat: 'Back to the chat',
-    swipeHint: 'Swipe',
-
-    avatarAlt: (name) => `Photo of ${name}`,
-    emailLink: 'Email',
-
-    openProfileLabel: (name) => `View ${name}'s profile`,
-    contactInfoTitle: 'Contact info',
-    backToChat: 'Back to the chat',
-    builtWithTitle: 'How this site is built',
-    builtWith: [
-      {
-        icon: 'code',
-        name: 'Astro + TypeScript',
-        description: 'Static, fast pages, typed end to end.',
+  mundo: {
+    label: 'Mundo: dónde está Franco ahora',
+    fallbackAlt:
+      'Ilustración isométrica de la oficina de Franco: escritorio con monitor, rack de servidores y Franco trabajando.',
+    fallbackNote: 'Tu navegador no muestra el mundo 3D. Igual podés hablar conmigo.',
+    talk: 'Hablar con Franco',
+    francoLabel: 'Franco · tocá para hablar',
+    clockLabel: 'Hora en Argentina',
+    clockPlaceholder: '--:-- · Hora Argentina',
+    clock: (time) => `${time} · Hora Argentina`,
+    switcherLegend: 'Forzar escena (prueba)',
+    switcherLabel: 'Escena',
+    modes: { auto: 'Auto', autoNow: ' (ahora)', office: 'Oficina', uni: 'Universidad', home: 'Disponible' },
+    dragHint: ['Arrastrá para girar', 'Rueda para acercar'],
+    sceneTag: (scene) => `ESCENA ${scene.n} · ${scene.name}`,
+    statusLine: (scene, time) => `AHORA · ${scene.status} · ${time} ART`,
+    scenes: {
+      office: {
+        n: '01',
+        name: 'OFICINA',
+        status: 'EN LA OFICINA',
+        title: 'Franco está en la oficina',
+        where: 'en la oficina',
+        hello:
+          'Estoy en la oficina. Mientras tanto te responde mi versión IA: preguntame por mis proyectos, mi formación o cómo trabajo.',
       },
-      {
-        icon: 'cloud',
-        name: 'Cloudflare',
-        description: 'Hosting on Workers, a D1 database and bot checks with Turnstile.',
+      uni: {
+        n: '02',
+        name: 'UNIVERSIDAD',
+        status: 'EN LA UNIVERSIDAD',
+        title: 'Franco está en la universidad',
+        where: 'en la universidad',
+        hello:
+          'Estoy en clase, en la universidad. Mientras tanto te responde mi versión IA: preguntame por mis proyectos, mi formación o cómo trabajo.',
       },
-      {
-        icon: 'model',
-        name: 'Llama 3.1',
-        description: 'The AI model that answers in the chat, running on Workers AI.',
+      home: {
+        n: '03',
+        name: 'DISPONIBLE',
+        status: 'DISPONIBLE',
+        title: 'Franco está disponible',
+        where: 'disponible',
+        hello:
+          'Ya terminé el día. Esto no lo contesta una IA: dejame tu mensaje y te respondo yo, por Telegram o por mail.',
       },
-      {
-        icon: 'assistant',
-        name: 'Claude',
-        description: 'My copilot for writing, reviewing and documenting the code.',
-      },
-      {
-        icon: 'repo',
-        name: 'GitHub',
-        description: 'Repository and version control.',
-      },
-      {
-        icon: 'audit',
-        name: 'Question and answer audit',
-        description:
-          'Every question and its answer are logged, with the IP anonymised, to review and improve the chat.',
-      },
-    ],
+    },
+    surpriseBack: 'Volver al mundo',
+  },
+
+  proyectos: {
+    eyebrow: 'Proyectos',
+    title: 'Proyectos con gente y problemas reales.',
+    next: 'Sobre mí',
+    prevImage: 'Anterior',
+    nextImage: 'Siguiente',
+  },
+
+  sobre: {
+    eyebrow: 'Sobre mí',
+    jobs: 'Trabajos',
+    events: 'Eventos y capacitaciones',
+    now: 'Ahora',
+    photos: {
+      eyebrow: 'Fotos',
+      title: 'Cuando no programo, saco fotos.',
+      note: 'Una selección de lo que voy sacando con el celular.',
+    },
+    stack: {
+      eyebrow: 'Qué hago',
+      title: 'Construyo lo que el problema necesita.',
+      toolsHead: 'Herramientas usadas en proyectos',
+      toolsNote: 'No hay un stack fijo: elijo según lo que haya que construir',
+    },
+    contact: {
+      eyebrow: 'Contacto',
+      title: 'Escribime',
+      back: 'Volver al inicio',
+      github: 'GitHub',
+      linkedin: 'LinkedIn',
+      instagram: 'Instagram',
+    },
+    copyright: (year, name) => `© ${year} ${name}`,
+  },
+
+  hunt: {
+    tab: 'Ábreme',
+    dialogLabel: 'Búsqueda de tickets escondidos',
+    intro: 'Busca los 5 tickets escondidos por la web.',
+    reward: 'Si encuentras todos, te ganas una sorpresa.',
+    count: (found, total) => `${found}/${total} encontrados`,
+    show: 'Ver sorpresa',
+    reset: 'Reiniciar',
+    found: (found, total) => `Has encontrado ${found}/${total} tickets. ¡Sigue buscando!`,
+    foundAll: '¡Has encontrado los 5 tickets! Te llevo a tu sorpresa…',
+    ticketFound: 'ENCONTRADO',
+    ticket: 'TICKET',
+    surprise: 'Lo mejor siempre está escondido donde casi nadie se anima a mirar.',
+  },
+
+  panel: {
+    title: (where) => `Franco (IA) · ${where}`,
+    close: 'Cerrar',
+    checking: '○ verificando /api/chat…',
+    form: {
+      name: 'Tu nombre',
+      via: 'Respondeme por',
+      telegram: 'Telegram',
+      mail: 'Mail',
+      handle: 'Tu usuario de Telegram',
+      handlePlaceholder: '@usuario',
+      message: 'Mensaje',
+      send: 'Enviar mensaje',
+    },
+    composer: {
+      label: 'Tu pregunta para Franco',
+      placeholder: 'Preguntame algo…',
+      send: 'Enviar pregunta',
+      count: (length, max) => `${length}/${max}`,
+    },
   },
 };
+
+// English reuses the Spanish copy until the translation phase (plan, Fase 9);
+// only the locale metadata is already English.
+const en: UiCopy = {
+  ...es,
+  locale: 'en-US',
+  ogLocale: 'en_US',
+  metaDescription: (role) =>
+    `${role} based in Trelew, Chubut. Full stack web development with a front-end focus. Step into my world and talk to me.`,
+};
+
+export const UI: Record<Lang, UiCopy> = { es, en };
