@@ -3,9 +3,10 @@ import type { Project } from '../data/projects';
 import type { UiCopy } from '../i18n/ui';
 
 /**
- * One project card rendered at build time. The gallery track holds every slide;
- * the arrows and dots get their behaviour in Fase 7 (for now only the first
- * slide is in view).
+ * One project card rendered at build time. The gallery track holds every slide
+ * (screenshots, the demo clip, the YouTube embed, which only gets its `src` the first
+ * time the gallery reaches it); src/scripts/gallery.ts moves it with the arrows and
+ * keeps the dots in sync.
  */
 interface Props {
   project: Project;
@@ -41,9 +42,13 @@ const hasGallery = project.media.length > 1;
             ) : item.kind === 'clip' ? (
               <video src={item.src} poster={item.poster} controls muted playsinline preload="none" aria-label={item.alt} />
             ) : (
-              <div class="ph" role="img" aria-label={item.alt} data-youtube={item.youtubeId}>
-                {initials}
-              </div>
+              <iframe
+                data-src={`https://www.youtube-nocookie.com/embed/${item.youtubeId}?enablejsapi=1&rel=0`}
+                title={item.alt}
+                referrerpolicy="strict-origin-when-cross-origin"
+                allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen
+              />
             ),
           )
         }

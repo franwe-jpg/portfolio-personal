@@ -1,6 +1,7 @@
 import { audio, initAudio } from './audio';
 import { initCursor } from './cursor';
 import { DEBUG } from './env';
+import { initGalleries } from './gallery';
 import { initGate } from './gate';
 import { initGlyphFields } from './glyph-field';
 import { initHero } from './hero';
@@ -29,6 +30,7 @@ initRain();
 initGlyphFields();
 initReveals();
 initHero();
+initGalleries();
 initRouter();
 initStage();
 initPanel();
