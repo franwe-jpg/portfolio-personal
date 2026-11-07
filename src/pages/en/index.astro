@@ -1,16 +1,13 @@
 ---
+import App from '../../components/App.astro';
+import { PROFILE_COPY } from '../../data/profile';
 import Layout from '../../layouts/Layout.astro';
-import { profile, PROFILE_COPY } from '../../data/profile';
 import { UI } from '../../i18n/ui';
 
-// Placeholder page while the redesign is migrated (docs/rediseno/plan.md).
 const lang = 'en';
 const copy = PROFILE_COPY[lang];
 ---
 
 <Layout lang={lang} title={copy.tagline} description={UI[lang].metaDescription(copy.role)}>
-  <main>
-    <h1>{profile.name}</h1>
-    <p>{copy.role}</p>
-  </main>
+  <App lang={lang} />
 </Layout>

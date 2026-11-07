@@ -1,0 +1,67 @@
+---
+import '../styles/base.css';
+import '../styles/gate.css';
+import '../styles/world.css';
+import '../styles/pages.css';
+import '../styles/panel.css';
+
+import type { Lang } from '../i18n/config';
+import { UI } from '../i18n/ui';
+import Cursor from './Cursor.astro';
+import Gate from './Gate.astro';
+import Header from './Header.astro';
+import Hunt from './Hunt.astro';
+import Loader from './Loader.astro';
+import Mancha from './Mancha.astro';
+import PageInicio from './PageInicio.astro';
+import PageMundo from './PageMundo.astro';
+import PageProyectos from './PageProyectos.astro';
+import PageSobre from './PageSobre.astro';
+import Panel from './Panel.astro';
+import SoundToggle from './SoundToggle.astro';
+import Stage from './Stage.astro';
+import TicketSymbol from './TicketSymbol.astro';
+
+/**
+ * The whole site is one document: the gate, the fixed 3D stage and four pages
+ * that act as states (inicio, mundo, proyectos, sobre). The client entry in
+ * src/scripts/main.ts picks the language from <html lang>.
+ */
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = UI[lang];
+---
+
+<TicketSymbol t={t} />
+<Loader t={t} />
+
+<Gate t={t} />
+
+<Stage />
+
+<div id="app">
+  <Header t={t} />
+
+  <main class="pages" id="pages">
+    <PageInicio t={t} />
+    <PageMundo t={t} />
+    <PageProyectos lang={lang} t={t} />
+    <PageSobre lang={lang} t={t} />
+  </main>
+
+  <SoundToggle t={t} />
+  <Hunt t={t} />
+</div>
+
+<Mancha />
+
+<Panel t={t} />
+
+<Cursor />
+
+<script>
+  import '../scripts/main';
+</script>

@@ -1,0 +1,42 @@
+---
+import { projectsFor } from '../data/projects';
+import type { Lang } from '../i18n/config';
+import type { UiCopy } from '../i18n/ui';
+import Icon from './Icon.astro';
+import ProjectCard from './ProjectCard.astro';
+import Ticket from './Ticket.astro';
+
+/** Paper page with the project cards, rendered from src/data/projects.ts. */
+interface Props {
+  lang: Lang;
+  t: UiCopy;
+}
+
+const { lang, t } = Astro.props;
+const projects = projectsFor(lang);
+---
+
+<section class="page page-paper" data-page="proyectos" id="proyectos" aria-labelledby="proyH">
+  <canvas class="glyph-field" data-field="proyectos" aria-hidden="true"></canvas>
+  <div class="field-shade" aria-hidden="true"></div>
+  <div class="page-scroll">
+    <div class="sec">
+      <div class="wrap">
+        <span class="eyebrow" data-scramble>{t.proyectos.eyebrow}</span>
+        <h2 class="h2" id="proyH" data-glitch data-depth="0.3" tabindex="-1">{t.proyectos.title}</h2>
+        <div class="tk-host tk-host--block">
+          <div class="projects" id="projects">
+            {projects.map((project) => <ProjectCard project={project} t={t} />)}
+          </div>
+          <Ticket id="proyectos" dir="up" />
+        </div>
+        <div class="page-next reveal">
+          <button class="pill-btn" type="button" data-go="sobre">
+            {t.proyectos.next}
+            <Icon name="arrow-right" size={14} />
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

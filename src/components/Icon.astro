@@ -1,0 +1,31 @@
+---
+/** Inline stroke icons used by the buttons; decorative, so always aria-hidden. */
+interface Props {
+  name: 'arrow-ne' | 'arrow-right' | 'arrow-nw' | 'back' | 'close' | 'send';
+  size?: number;
+}
+
+const { name, size = 14 } = Astro.props;
+
+const ICONS: Record<Props['name'], { box: number; d: string; width: number; fill: boolean }> = {
+  'arrow-ne': { box: 14, d: 'M2 2l9 9M11 4v7H4', width: 1.6, fill: true },
+  'arrow-right': { box: 14, d: 'M2 7h10M7.5 2.5L12 7l-4.5 4.5', width: 1.6, fill: true },
+  'arrow-nw': { box: 14, d: 'M12 12L3 3M3 10V3h7', width: 1.6, fill: true },
+  back: { box: 16, d: 'M10 3L5 8l5 5', width: 1.8, fill: true },
+  close: { box: 14, d: 'M2 2l10 10M12 2L2 12', width: 1.6, fill: false },
+  send: { box: 16, d: 'M8 13V3M3.5 7.5L8 3l4.5 4.5', width: 1.8, fill: true },
+};
+
+const icon = ICONS[name];
+---
+
+<svg width={size} height={size} viewBox={`0 0 ${icon.box} ${icon.box}`} aria-hidden="true">
+  <path
+    d={icon.d}
+    fill={icon.fill ? 'none' : undefined}
+    stroke="currentColor"
+    stroke-width={icon.width}
+    stroke-linecap="round"
+    stroke-linejoin={icon.fill ? 'round' : undefined}
+  />
+</svg>

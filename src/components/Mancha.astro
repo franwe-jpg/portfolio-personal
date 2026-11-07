@@ -1,0 +1,16 @@
+---
+/** "Mancha": the organic blob that covers the screen between pages (src/scripts/transitions.ts). */
+---
+
+<svg class="mancha" id="mancha" aria-hidden="true" focusable="false">
+  <defs>
+    <filter id="manchaFilter" filterUnits="userSpaceOnUse" x="-300" y="-300" width="2600" height="1800" color-interpolation-filters="sRGB">
+      <feTurbulence id="manchaTurb" type="fractalNoise" baseFrequency="0.012" numOctaves="3" seed="2" result="ruido"></feTurbulence>
+      <feDisplacementMap id="manchaDisp" in="SourceGraphic" in2="ruido" scale="140" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap>
+    </filter>
+  </defs>
+  <g filter="url(#manchaFilter)">
+    <circle id="manchaRim" cx="0" cy="0" r="0" fill="#dfe6ef"></circle>
+    <circle id="manchaBlob" cx="0" cy="0" r="0" fill="#10120d"></circle>
+  </g>
+</svg>

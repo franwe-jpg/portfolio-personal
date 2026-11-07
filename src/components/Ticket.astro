@@ -1,0 +1,18 @@
+---
+/**
+ * A hidden ticket slot for the hunt (plan, Fase 8). It sits inside a `.tk-host`
+ * and slides out from behind the host's edge given by `dir`.
+ */
+interface Props {
+  id: 'entrada' | 'inicio' | 'mundo' | 'proyectos' | 'sobre';
+  dir: 'right' | 'left' | 'up';
+  class?: string;
+}
+
+const { id, dir, class: className } = Astro.props;
+---
+
+<span class:list={['tk', className]} data-tk={id} data-dir={dir} aria-hidden="true">
+  <span class="tk-fx"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+  <span class="tk-i"><svg viewBox="0 0 400 190"><use href="#tkSym"></use></svg></span>
+</span>

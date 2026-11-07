@@ -1,0 +1,30 @@
+---
+import type { UiCopy } from '../i18n/ui';
+import Icon from './Icon.astro';
+import Ticket from './Ticket.astro';
+
+/** Entrance gate: particle logo, name and the enter buttons. */
+interface Props {
+  t: UiCopy;
+}
+
+const { t } = Astro.props;
+---
+
+<section class="gate-screen" id="gate" aria-label={t.gate.label}>
+  <div class="gate">
+    <canvas id="mark" role="img" aria-label={t.gate.markAlt}></canvas>
+    <div class="gate-copy" id="gateCopy">
+      <p class="name" data-depth="0.3">
+        <span>{t.gate.name} <span class="role">{t.gate.role}</span></span><span class="role">{t.gate.roleNext}</span>
+      </p>
+      <div class="status" hidden><i class="dot" aria-hidden="true"></i><span id="statusTxt">{t.gate.statusNow}</span></div>
+      <span class="tk-host tk-host--gate">
+        <button class="enter" id="enter" type="button"><span id="enterTxt">{t.gate.enter}</span><Icon name="arrow-ne" size={14} /></button>
+        <Ticket id="entrada" dir="right" />
+      </span>
+    </div>
+  </div>
+</section>
+<button class="mute" id="mute" type="button">{t.gate.mute}</button>
+<div class="blackout" id="blackout" aria-hidden="true"></div>

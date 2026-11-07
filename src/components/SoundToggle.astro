@@ -1,0 +1,16 @@
+---
+import type { UiCopy } from '../i18n/ui';
+
+/** Bottom-left ambient sound toggle; the audio engine arrives in Fase 2. */
+interface Props {
+  t: UiCopy;
+}
+
+const { t } = Astro.props;
+---
+
+<div class="hud-bottom left">
+  <button class="pill audio-btn" type="button" id="audioBtn" aria-pressed="false">
+    <span class="eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span class="audio-label">{t.sound.label}</span><span class="sr-only">{t.sound.sr}</span>
+  </button>
+</div>

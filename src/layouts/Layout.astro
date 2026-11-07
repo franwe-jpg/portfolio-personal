@@ -23,14 +23,20 @@ const enHref = new URL(pathForLang('en'), base).href;
 const spanishCountries = Array.from(SPANISH_COUNTRIES);
 /** Marks the automatic redirect as already attempted for this session. */
 const langAutoKey = 'lang-auto';
+/** Key-cap "FS" mark with the green dot, same as the prototype. */
+const FAVICON =
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%2310120d'/%3E%3Ctext x='31' y='42' font-family='Instrument Sans,Inter,Arial,sans-serif' font-weight='700' font-size='30' fill='%23fff' text-anchor='middle'%3EFS%3C/text%3E%3Ccircle cx='52' cy='12' r='6' fill='%231fbf75'/%3E%3C/svg%3E";
 ---
 
 <!doctype html>
 <html lang={lang}>
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="color-scheme" content="dark" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light" />
+    {/* Paper while the gate shows; src/scripts/gate.ts switches it to the dark stage on enter. */}
+    <meta name="theme-color" content="#0e1013" />
+    <link rel="icon" type="image/svg+xml" href={FAVICON} />
 
     {/*
       Resolves the language before the first paint: inline and out of the
@@ -93,6 +99,12 @@ const langAutoKey = 'lang-auto';
 
     {/* The chat panel loads the Turnstile widget from here; warm the connection. */}
     <link rel="preconnect" href="https://challenges.cloudflare.com" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    />
 
     <title>{title}</title>
     <meta name="description" content={description} />

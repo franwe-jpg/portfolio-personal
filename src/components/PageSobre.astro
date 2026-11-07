@@ -1,0 +1,174 @@
+---
+import perfil from '../assets/perfil-profile.webp';
+import { photosFor } from '../data/photos';
+import { profile, PROFILE_COPY } from '../data/profile';
+import type { Lang } from '../i18n/config';
+import type { UiCopy } from '../i18n/ui';
+import Icon from './Icon.astro';
+import Ticket from './Ticket.astro';
+
+/** Paper page: bio, timeline, photos, services, tools and contact, from src/data. */
+interface Props {
+  lang: Lang;
+  t: UiCopy;
+}
+
+const { lang, t } = Astro.props;
+const copy = PROFILE_COPY[lang];
+const photos = photosFor(lang);
+const year = new Date().getFullYear();
+---
+
+<section class="page page-paper" data-page="sobre" id="sobre" aria-labelledby="sobreH">
+  <canvas class="glyph-field" data-field="sobre" aria-hidden="true"></canvas>
+  <div class="field-shade" aria-hidden="true"></div>
+  <div class="page-scroll">
+    <div class="sec">
+      <div class="wrap">
+        <span class="eyebrow" data-scramble>{t.sobre.eyebrow}</span>
+        <h2 class="h2" id="sobreH" data-glitch data-depth="0.3" tabindex="-1">{copy.headline}</h2>
+        <p class="quote">{copy.quote}</p>
+        <div class="about-grid">
+          <div>
+            <p class="lead reveal">{copy.lead}</p>
+            <dl class="facts reveal">
+              {
+                copy.facts.map((fact) => (
+                  <div>
+                    <dt>{fact.label}</dt>
+                    <dd>{fact.value}</dd>
+                  </div>
+                ))
+              }
+            </dl>
+          </div>
+          <div>
+            <div class="tk-host tk-host--photo">
+              <figure class="about-photo reveal">
+                <img src={perfil.src} alt={copy.photoAlt} width="480" height="480" loading="lazy" />
+              </figure>
+              <Ticket id="sobre" dir="left" />
+            </div>
+          </div>
+        </div>
+        <div class="exp">
+          <div>
+            <p class="subhead" data-scramble>{t.sobre.jobs}</p>
+            <ol class="timeline">
+              {
+                copy.jobs.map((item) => (
+                  <li class="reveal">
+                    <span class:list={['when', { now: item.now }]}>{item.when}</span>
+                    <div>
+                      <h3>{item.title}</h3>
+                      <p>{item.text}</p>
+                    </div>
+                  </li>
+                ))
+              }
+            </ol>
+          </div>
+          <div>
+            <p class="subhead" data-scramble>{t.sobre.events}</p>
+            <ol class="timeline">
+              {
+                copy.events.map((item) => (
+                  <li class="reveal">
+                    <span class:list={['when', { now: item.now }]}>{item.when}</span>
+                    <div>
+                      <h3>{item.title}</h3>
+                      <p>{item.text}</p>
+                    </div>
+                  </li>
+                ))
+              }
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="wrap">
+        <span class="eyebrow" data-scramble>{t.sobre.photos.eyebrow}</span>
+        <h2 class="h2 split" id="fotosH">{t.sobre.photos.title}</h2>
+        <p class="photos-note">{t.sobre.photos.note}</p>
+        <div class="photos" id="photos">
+          {
+            photos.map((photo) =>
+              photo.src ? (
+                <figure class:list={['photo', 'reveal-card', photo.shape]}>
+                  <img
+                    src={photo.src}
+                    alt={photo.alt}
+                    width={photo.width}
+                    height={photo.height}
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <figcaption>{photo.caption}</figcaption>
+                </figure>
+              ) : (
+                <figure class:list={['photo', 'slot', 'reveal-card', photo.shape]}>{photo.caption}</figure>
+              ),
+            )
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="wrap">
+        <span class="eyebrow" data-scramble>{t.sobre.stack.eyebrow}</span>
+        <h2 class="h2 split" id="stackH">{t.sobre.stack.title}</h2>
+        <div class="services" id="services">
+          {
+            copy.services.map((service, index) => (
+              <article class="svc reveal-card">
+                <span class="n">{String(index + 1).padStart(2, '0')}</span>
+                <div>
+                  <h3>{service.title}</h3>
+                  <p>{service.text}</p>
+                </div>
+              </article>
+            ))
+          }
+        </div>
+        <div class="tools">
+          <div class="tools-head">
+            <p class="subhead" data-scramble>{t.sobre.stack.toolsHead}</p>
+            <span class="tools-note">{t.sobre.stack.toolsNote}</span>
+          </div>
+          <ul class="chips" id="chips">
+            {profile.tools.map((tool) => <li class="chip">{tool}</li>)}
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec contact">
+      <div class="wrap">
+        <span class="eyebrow" data-scramble>{t.sobre.contact.eyebrow}</span>
+        <h2 class="h2 split" id="contH">{t.sobre.contact.title}</h2>
+        <div class="contact-big">
+          <a class="mail" href={`mailto:${profile.links.email}`}>{profile.links.email}</a>
+          <ul class="socials">
+            <li><a class="lnk" href={profile.links.github} target="_blank" rel="noopener noreferrer">{t.sobre.contact.github}</a></li>
+            <li><a class="lnk" href={profile.links.linkedin} target="_blank" rel="noopener noreferrer">{t.sobre.contact.linkedin}</a></li>
+            <li><a class="lnk" href={profile.links.instagram} target="_blank" rel="noopener noreferrer">{t.sobre.contact.instagram}</a></li>
+          </ul>
+          <span class="tk-host tk-host--flush">
+            <button class="pill-btn" type="button" data-go="inicio">
+              {t.sobre.contact.back}
+              <Icon name="arrow-nw" size={14} />
+            </button>
+            <Ticket id="entrada" dir="right" />
+          </span>
+        </div>
+        <footer class="footer">
+          <span id="copy">{t.sobre.copyright(year, profile.name)}</span>
+        </footer>
+      </div>
+    </div>
+  </div>
+</section>

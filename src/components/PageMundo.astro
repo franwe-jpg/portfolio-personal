@@ -1,0 +1,47 @@
+---
+import type { UiCopy } from '../i18n/ui';
+import Ticket from './Ticket.astro';
+
+/**
+ * World page shell: HUD over the (still empty) 3D stage. The scene title and
+ * clock are painted by src/scripts/scene.ts; the WebGL world arrives in Fase 3.
+ */
+interface Props {
+  t: UiCopy;
+}
+
+const { t } = Astro.props;
+const office = t.mundo.scenes.office;
+---
+
+<section class="page page-mundo" data-page="mundo" id="mundo" aria-label={t.mundo.label}>
+  <div class="fallback" id="fallback" hidden>
+    <div class="fallback-inner">
+      <img data-src="/fallback-mundo.svg" alt={t.mundo.fallbackAlt} width="960" height="580" />
+      <p id="fallbackNote">{t.mundo.fallbackNote}</p>
+      <button class="talk" type="button" id="fallbackTalk"><span class="dot" aria-hidden="true"></span>{t.mundo.talk}</button>
+    </div>
+  </div>
+  <div class="franco-label" id="francoLabel" aria-hidden="true"><b>●</b> {t.mundo.francoLabel}</div>
+  <Ticket id="mundo" dir="left" class="tk-world is-off" />
+  <div class="cellmask" id="cellmask" aria-hidden="true"></div>
+
+  <div class="wtop">
+    <div class="scene-info">
+      <span class="scene-tag" id="sceneTag" aria-hidden="true">{t.mundo.sceneTag(office)}</span>
+      <h1 class="scene-title" id="sceneTitle" data-glitch tabindex="-1">{office.title}</h1>
+      <span class="scene-clock" id="clock" aria-label={t.mundo.clockLabel}>{t.mundo.clockPlaceholder}</span>
+      <button class="talk" type="button" id="talk"><span class="dot" aria-hidden="true"></span>{t.mundo.talk}</button>
+    </div>
+    <fieldset class="switcher">
+      <legend>{t.mundo.switcherLegend}</legend>
+      <div class="seg" role="group" aria-label={t.mundo.switcherLabel}>
+        <button type="button" data-mode="auto" aria-pressed="true">{t.mundo.modes.auto}<span class="hide-sm">{t.mundo.modes.autoNow}</span></button>
+        <button type="button" data-mode="office" aria-pressed="false">{t.mundo.modes.office}</button>
+        <button type="button" data-mode="uni" aria-pressed="false">{t.mundo.modes.uni}</button>
+        <button type="button" data-mode="home" aria-pressed="false">{t.mundo.modes.home}</button>
+      </div>
+    </fieldset>
+  </div>
+  <p class="drag-hint" id="dragHint">{t.mundo.dragHint[0]}<br />{t.mundo.dragHint[1]}</p>
+</section>
