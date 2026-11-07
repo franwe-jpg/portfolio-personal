@@ -113,7 +113,12 @@ body.entered #stage3d { visibility: visible; }
 .inicio-shade { position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .7s var(--e-out); background: linear-gradient(90deg, rgba(14,16,19,.9) 0%, rgba(14,16,19,.58) 42%, rgba(14,16,19,0) 80%), linear-gradient(180deg, rgba(14,16,19,.45), transparent 28%, transparent 72%, rgba(14,16,19,.55)); }
 #stage3d.is-inicio .inicio-shade { opacity: 1; }
 .focus-vig { position: absolute; inset: 0; pointer-events: none; opacity: 0; --fx: 50%; --fy: 50%; background: radial-gradient(48% 58% at var(--fx) var(--fy), transparent 55%, rgba(5,6,8,.5) 100%); }
-.tv-src { position: fixed; left: 0; top: 0; width: 2px; height: 2px; opacity: 0; pointer-events: none; }
+/* CSS3D layer over the world canvas: DOM elements (the living-room TV) placed with the same camera. */
+.css3d { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.css3d-cam { position: absolute; left: 0; top: 0; width: 100%; height: 100%; transform-style: preserve-3d; pointer-events: none; }
+.css3d-obj { position: absolute; left: 0; top: 0; pointer-events: none; }
+/* Transparent: if the player is blocked, the colour bands drawn on the WebGL screen show through. */
+.css3d-obj iframe { display: block; width: 100%; height: 100%; border: 0; pointer-events: none; background: transparent; }
 
 /* ===== app shell ===== */
 #app { visibility: hidden; }
@@ -166,6 +171,10 @@ body.on-paper .brand-name { --b1: var(--ink); --b2: var(--signal-dim); --b3: var
 .page-mundo.is-active { pointer-events: none; }
 .page-mundo.is-active > .fallback { pointer-events: auto; }
 .page-paper { background: var(--paper); color: var(--ink); }
+/* Glyph field behind the paper pages: dormant mono glyphs that the pointer decodes as it passes. */
+.glyph-field { position: absolute; inset: 0; width: 100%; height: 100%; display: block; pointer-events: none; }
+/* Paper veil over the content column: the field shows in full at the margins and softened under the text. */
+.field-shade { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, rgba(231,234,238,0) 0%, rgba(231,234,238,.6) 16%, rgba(231,234,238,.6) 84%, rgba(231,234,238,0) 100%); }
 .page-scroll { position: absolute; inset: 0; overflow-y: auto; overflow-x: clip; overscroll-behavior: contain; scroll-behavior: smooth; -webkit-overflow-scrolling: touch; }
 [data-glitch]:focus { outline: none; }
 
@@ -321,14 +330,50 @@ body.on-paper .pill { background: rgba(243,245,247,.85); border-color: rgba(21,2
 .cursor.is-grabbing { width: 18px; height: 18px; margin: -9px 0 0 -9px; background: #fff; }
 .cursor.is-grabbing::before { transform: translate(-3px, -50%) rotate(45deg); opacity: 1; }
 .cursor.is-grabbing::after { transform: translate(3px, -50%) rotate(-135deg); opacity: 1; }
-.cursor.is-hot { width: 44px; height: 44px; margin: -22px 0 0 -22px; mix-blend-mode: normal; border-color: #c9ced6; background: rgba(201,206,214,.12); }
+.cursor.is-hot { mix-blend-mode: normal; border-color: #c9ced6; background: rgba(201,206,214,.12); }
 .cursor.is-hot::before, .cursor.is-hot::after { opacity: 0; }
-.cursor.is-link { width: 40px; height: 40px; margin: -20px 0 0 -20px; }
-/* Lagging ring behind the dot; it lags more on the home page. */
-.cursor-ring { position: fixed; left: 0; top: 0; z-index: 99; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%; border: 1px solid rgba(255,255,255,.5); mix-blend-mode: difference; pointer-events: none; opacity: 0; transition: opacity .3s, width .3s var(--e-out), height .3s var(--e-out), margin .3s var(--e-out); }
-.cursor-ring.is-on { opacity: 1; }
-.cursor-ring.is-link { width: 60px; height: 60px; margin: -30px 0 0 -30px; }
-@media (pointer: fine) { #stage3d.has-3d #world-canvas { cursor: none; } }
+.cursor.is-link { border-color: #c9ced6; }
+/* Windows 7 cursor set (demos/prototipos/cursores, PNG + hotspot). `--cur` is inherited, so a
+   rule on a button also covers the icon inside it; the universal rule beats the browser defaults. */
+@media (pointer: fine) {
+  :root {
+    --cur-normal: url("cursores/normal.png") 0 0, auto;
+    --cur-link: url("cursores/link.png") 5 0, pointer;
+    --cur-text: url("cursores/text.png") 15 16, text;
+    --cur-handwrite: url("cursores/handwrite.png") 0 0, text;
+    --cur-unavailable: url("cursores/unavailable.png") 16 16, not-allowed;
+    --cur-move: url("cursores/move.png") 15 15, move;
+    --cur-person: url("cursores/person.png") 6 0, pointer;
+    --cur-location: url("cursores/location.png") 6 0, pointer;
+    --cur-precision: url("cursores/precision.png") 14 15, crosshair;
+    --cur-help: url("cursores/help.png") 0 0, help;
+    --cur-alternate: url("cursores/alternate.png") 15 4, pointer;
+    --cur-resize-v: url("cursores/resize-v.png") 15 15, ns-resize;
+    --cur-resize-h: url("cursores/resize-h.png") 15 15, ew-resize;
+    --cur: var(--cur-normal);
+  }
+  * { cursor: var(--cur) !important; }
+  a, button, label, [data-go], .tk, .lnk, .card-arrow, .seg button, .segctl label, .brand, .hunt-tab, .tk-toast { --cur: var(--cur-link); }
+  input, textarea { --cur: var(--cur-text); }
+  textarea { --cur: var(--cur-handwrite); }
+  button:disabled, .send:disabled, .enter[aria-busy="true"] { --cur: var(--cur-unavailable); }
+  .panel-handle { --cur: var(--cur-resize-v); }
+  .hunt-tab { --cur: var(--cur-help); }
+  .back-gate, .surprise-back, .page-next .pill-btn { --cur: var(--cur-alternate); }
+  .card-arrow { --cur: var(--cur-resize-h); }
+  /* The world canvas says what is under the pointer. */
+  #world-canvas.cur-person { --cur: var(--cur-person); }
+  #world-canvas.cur-location { --cur: var(--cur-location); }
+  #world-canvas.cur-precision { --cur: var(--cur-precision); }
+  #world-canvas.cur-link { --cur: var(--cur-link); }
+  #world-canvas.cur-move { --cur: var(--cur-move); }
+  /* While busy the native pointer hides and the animated frames take its place. */
+  body.is-busy, body.is-busy * { cursor: none !important; }
+}
+/* Windows 7 busy / working-in-background animations: 18 frames each, pinned to the pointer (no easing). */
+.busy-cursor { position: fixed; left: 0; top: 0; z-index: 101; width: 32px; height: 32px; pointer-events: none; opacity: 0; transition: opacity .15s; }
+.busy-cursor.is-on { opacity: 1; }
+.busy-cursor img { display: block; width: 32px; height: 32px; }
 @media (pointer: coarse) { .kbd-hint { visibility: hidden; } }
 
 /* ===== panel (chat / contact) ===== */
@@ -434,21 +479,32 @@ body.on-paper .pill { background: rgba(243,245,247,.85); border-color: rgba(21,2
 .svc .n { font: 500 11px var(--font-mono); letter-spacing: .1em; color: var(--muted); }
 .svc h3 { margin: 0; font: 500 19px/1.25 var(--font-body); }
 .svc p { margin: 6px 0 0; color: var(--muted); font-size: 15px; }
+.photos-note { margin: 18px 0 0; font: 400 18px var(--font-body); color: var(--muted); }
+/* Photo grid: dense auto-fill, landscape shots take two columns, portrait ones two rows. */
+.photos { display: grid; gap: 12px; margin-top: 40px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); grid-auto-rows: 190px; grid-auto-flow: dense; }
+.photo { position: relative; margin: 0; border-radius: 14px; overflow: hidden; background: var(--paper-3); border: 1px solid rgba(21,24,29,.08); }
+.photo.wide { grid-column: span 2; }
+.photo.tall { grid-row: span 2; }
+.photo img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .6s var(--e-out); }
+.photo:hover img { transform: scale(1.04); }
+.photo figcaption { position: absolute; left: 12px; bottom: 10px; font: 500 10.5px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: #fff; text-shadow: 0 1px 8px rgba(0,0,0,.6); opacity: 0; transition: opacity .3s; }
+.photo:hover figcaption { opacity: 1; }
+/* Empty slot shown until the photo exists. */
+.photo.slot { display: grid; place-items: center; border: 1px dashed rgba(21,24,29,.22); background: transparent; font: 500 11px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+/* Phones: two fixed columns, so a wide photo takes the full row instead of forcing a sliver column. */
+@media (max-width: 600px) { .photos { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 140px; gap: 10px; } }
 .tools { margin-top: 56px; display: grid; gap: 14px; }
 .tools-head { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: baseline; justify-content: space-between; }
 .tools-note { font: 400 10.5px var(--font-mono); letter-spacing: .08em; color: var(--muted); text-transform: uppercase; }
 .chips { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin: 0; padding: 0; }
 .chip { font: 500 13px var(--font-mono); padding: 8px 14px; border-radius: 999px; border: 1px solid rgba(21,24,29,.16); background: transparent; }
 
-.projects { display: grid; gap: 22px; margin-top: 48px; perspective: 900px; }
+.projects { display: grid; gap: 22px; margin-top: 48px; }
 @media (min-width: 860px) { .projects { grid-template-columns: 1fr 1fr; gap: 26px; } }
 .card { display: flex; flex-direction: column; border-radius: 16px; overflow: hidden; background: var(--paper-3); border: 1px solid rgba(21,24,29,.08); transition: box-shadow .4s var(--e-out); }
-.card.is-tilt { will-change: transform; }
-.card.is-tilt:hover { box-shadow: 0 34px 60px -34px rgba(21,24,29,.5); }
+.card:hover { box-shadow: 0 24px 48px -30px rgba(21,24,29,.4); }
 .card-media { position: relative; aspect-ratio: 16 / 10; background: var(--s2); overflow: hidden; }
-.card-view { position: absolute; inset: 0; transition: transform 1.2s var(--e-out); }
-.card:hover .card-view { transform: scale(1.03); }
-.card.is-tilt .card-view { transition: none; will-change: transform; }
+.card-view { position: absolute; inset: 0; }
 .card-track { display: flex; height: 100%; transition: transform .35s var(--e-out); }
 .card-track img, .card-track video { flex: none; width: 100%; height: 100%; }
 .card-track img { object-fit: cover; }
@@ -486,7 +542,7 @@ body.on-paper .pill { background: rgba(243,245,247,.85); border-color: rgba(21,2
 @media (prefers-reduced-motion: reduce) {
   .dot, .audio-btn[aria-pressed="true"] .eq i, .msg.typing span, .grain, .glitch-layer { animation: none !important; }
   .glitch-layer { display: none; }
-  .enter, .enter svg, .card-view, .card-track { transition: none !important; }
+  .enter, .enter svg, .card-track { transition: none !important; }
   .page-scroll { scroll-behavior: auto; }
   .panel, .panel.is-open { transition: opacity .2s linear !important; transform: none !important; opacity: 0; }
   .panel.is-open { opacity: 1; }
@@ -615,14 +671,14 @@ body.surprise-view .wtop, body.surprise-view .drag-hint { opacity: 0; pointer-ev
 
 <!-- ===== B) 3D stage (behind every page) ===== -->
 <div id="stage3d" class="is-off" aria-hidden="true">
+  <canvas class="glyph-field" data-field="mundo" data-theme="dark" aria-hidden="true"></canvas>
   <canvas id="world-canvas"></canvas>
+  <div class="css3d" id="css3d"><div class="css3d-cam" id="css3dCam"></div></div>
   <div class="fallback-bg" id="fallbackBg" hidden></div>
   <div class="vignette"></div>
   <div class="grain"></div>
   <div class="inicio-shade"></div>
   <div class="focus-vig" id="focusVig"></div>
-  <!-- Película de la tele del living: Big Buck Bunny © 2008 Blender Foundation, CC BY 3.0 (bigbuckbunny.org). -->
-  <video class="tv-src" id="tvVideo" src="tv.mp4" muted loop playsinline preload="auto" aria-hidden="true"></video>
 </div>
 
 <!-- ===== app ===== -->
@@ -692,10 +748,12 @@ body.surprise-view .wtop, body.surprise-view .drag-hint { opacity: 0; pointer-ev
           </div>
         </fieldset>
       </div>
-      <p class="drag-hint" id="dragHint">Arrastrá para girar<br>Ctrl + rueda para acercar</p>
+      <p class="drag-hint" id="dragHint">Arrastrá para girar<br>Rueda para acercar</p>
     </section>
 
     <section class="page page-paper" data-page="proyectos" id="proyectos" aria-labelledby="proyH">
+      <canvas class="glyph-field" data-field="proyectos" aria-hidden="true"></canvas>
+      <div class="field-shade" aria-hidden="true"></div>
       <div class="page-scroll">
         <div class="sec"><div class="wrap">
           <span class="eyebrow" data-scramble>Proyectos</span>
@@ -714,6 +772,8 @@ body.surprise-view .wtop, body.surprise-view .drag-hint { opacity: 0; pointer-ev
     </section>
 
     <section class="page page-paper" data-page="sobre" id="sobre" aria-labelledby="sobreH">
+      <canvas class="glyph-field" data-field="sobre" aria-hidden="true"></canvas>
+      <div class="field-shade" aria-hidden="true"></div>
       <div class="page-scroll">
         <div class="sec"><div class="wrap">
           <span class="eyebrow" data-scramble>Sobre mí</span>
@@ -754,6 +814,13 @@ body.surprise-view .wtop, body.surprise-view .drag-hint { opacity: 0; pointer-ev
               </ol>
             </div>
           </div>
+        </div></div>
+
+        <div class="sec"><div class="wrap">
+          <span class="eyebrow" data-scramble>Fotos</span>
+          <h2 class="h2 split" id="fotosH">Cuando no programo, saco fotos.</h2>
+          <p class="photos-note">Una selección de lo que voy sacando con el celular.</p>
+          <div class="photos" id="photos"></div>
         </div></div>
 
         <div class="sec"><div class="wrap">
@@ -881,8 +948,8 @@ body.surprise-view .wtop, body.surprise-view .drag-hint { opacity: 0; pointer-ev
 
 <div class="tk-toast" id="tkToast" role="status" aria-live="polite"><div class="tk-toast-ticket" id="tkToastTicket"></div><p class="tk-toast-msg" id="tkToastMsg"></p></div>
 
-<div class="cursor-ring" id="cursorRing" aria-hidden="true"></div>
 <div class="cursor" id="cursor" aria-hidden="true"></div>
+<div class="busy-cursor" id="busyCursor" aria-hidden="true"><img id="busyImg" alt="" width="32" height="32"></div>
 <script type="module">
 // =====================================================================
 // Core: environment, schedule, helpers
@@ -953,6 +1020,18 @@ const state = {
   audio: false,
 };
 const resolveScene = () => (state.mode === 'auto' ? sceneFor(argNow()) : state.mode);
+// Wall clocks: the real time in Argentina (UTC-3 all year) while the scene follows the schedule;
+// a hand-picked scene shows its signature hour, the seconds hand keeps ticking either way.
+const SCENE_HOUR = { office: 9, uni: 16, home: 21 };
+const CLOCK_NEXT = { home: 'office', office: 'uni', uni: 'home' };
+function realMinutes() {
+  const d = new Date(Date.now() - 3 * 3600e3);
+  return d.getUTCHours() * 60 + d.getUTCMinutes() + d.getUTCSeconds() / 60;
+}
+function clockMinutes() {
+  const real = realMinutes();
+  return state.mode === 'auto' ? real : SCENE_HOUR[state.mode] * 60 + (real % 1);
+}
 state.scene = resolveScene();
 const statusLine = (scene = state.scene) => `AHORA · ${META[scene].status} · ${argNow().time} ART`;
 
@@ -1522,6 +1601,7 @@ function requestEnter(withAudio) {
   pending = { audio: withAudio };
   if (loader.state === 'ready' || loader.state === 'failed') { doEnter(); return; }
   enterBtn.setAttribute('aria-busy', 'true');
+  busyCursor.begin('working');
   renderProgress();
 }
 enterBtn.addEventListener('click', () => requestEnter(true));
@@ -1531,6 +1611,7 @@ function doEnter() {
   if (state.entered || !pending) return;
   state.entered = true;
   document.body.classList.add('leaving');
+  if (enterBtn.hasAttribute('aria-busy')) busyCursor.end();
   enterBtn.removeAttribute('aria-busy');
   audio.set(pending.audio);
   const { gsap } = loader.libs;
@@ -1606,10 +1687,37 @@ async function createWorld(T, progress) {
   const canvas = $('#world-canvas');
   const stage = $('#stage3d');
   const MOBILE = COARSE || innerWidth < 768;
-  const renderer = new T.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+  // Transparent clear: the glyph field canvas underneath shows around the diorama.
+  const renderer = new T.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
+  // CSS3D layer: DOM elements placed in the scene with the same camera (the TV's YouTube player).
+  // Same matrices as three's CSS3DRenderer; 1 scene unit = 1 CSS px before the object's scale.
+  const css3d = (() => {
+    const dom = $('#css3d'), cam = $('#css3dCam');
+    const objs = [];
+    const e = (v) => (Math.abs(v) < 1e-10 ? 0 : v);
+    const camMatrix = (m) => { const a = m.elements; return `matrix3d(${e(a[0])},${e(-a[1])},${e(a[2])},${e(a[3])},${e(a[4])},${e(-a[5])},${e(a[6])},${e(a[7])},${e(a[8])},${e(-a[9])},${e(a[10])},${e(a[11])},${e(a[12])},${e(-a[13])},${e(a[14])},${e(a[15])})`; };
+    const objMatrix = (m) => { const a = m.elements; return `translate(-50%,-50%)matrix3d(${e(a[0])},${e(a[1])},${e(a[2])},${e(a[3])},${e(-a[4])},${e(-a[5])},${e(-a[6])},${e(-a[7])},${e(a[8])},${e(a[9])},${e(a[10])},${e(a[11])},${e(a[12])},${e(a[13])},${e(a[14])},${e(a[15])})`; };
+    function add(el, { position, scale, rotationY = 0 }) {
+      el.classList.add('css3d-obj');
+      const o = new T.Object3D();
+      o.position.copy(position); o.rotation.y = rotationY; o.scale.setScalar(scale);
+      o.updateMatrixWorld(true);
+      el.style.transform = objMatrix(o.matrixWorld);
+      cam.append(el);
+      objs.push({ el, o });
+      return o;
+    }
+    function render(camera, w, h) {
+      if (!objs.length) return;
+      const fov = camera.projectionMatrix.elements[5] * h * 0.5;
+      dom.style.perspective = `${fov}px`;
+      cam.style.transform = `translateZ(${fov}px)${camMatrix(camera.matrixWorldInverse)}translate(${w * 0.5}px,${h * 0.5}px)`;
+    }
+    return { add, render };
+  })();
   if (!renderer.getContext()) throw new Error('no context');
   renderer.setPixelRatio(Math.min(devicePixelRatio || 1, MOBILE ? 1.5 : 2));
-  renderer.setClearColor(0x0e1013, 1);
+  renderer.setClearColor(0x0e1013, 0);
   renderer.shadowMap.enabled = !MOBILE;
   renderer.shadowMap.type = T.PCFSoftShadowMap;
   stage.classList.add('has-3d');
@@ -1955,6 +2063,7 @@ async function createWorld(T, progress) {
   const SN = 64;
   const snow = canvasTex(SN, SN, () => {});
   snow.tex.magFilter = snow.tex.minFilter = T.NearestFilter; snow.tex.generateMipmaps = false;
+  snow.tex.wrapS = snow.tex.wrapT = T.RepeatWrapping; // outlines larger than one tile repeat the noise instead of smearing it
   const snowImg = snow.ctx.createImageData(SN, SN);
   function drawSnow() {
     const d = snowImg.data;
@@ -2095,6 +2204,121 @@ async function createWorld(T, progress) {
     return scr;
   }
   const rug = (b, x, z, w, d, m = mat.rug) => b.box(x, 0, z, w, 0.02, d, m);
+  // Outline that appears around something hoverable: the same TV static that covers Franco
+  // (`snow.tex`, redrawn while any hover is on), hugging the shape with no margin.
+  function staticOutline(parent, geo, z) {
+    const m = mesh(geo, new T.MeshBasicMaterial({ map: snow.tex, transparent: true, opacity: 0, depthWrite: false, toneMapped: false }), parent, 0, 0, z);
+    m.castShadow = m.receiveShadow = false;
+    return m;
+  }
+  // A flat rectangular frame (outer w×h, border t) for the static outline of a screen.
+  function frameGeometry(w, h, t) {
+    const sh = new T.Shape();
+    sh.moveTo(-w / 2, -h / 2); sh.lineTo(w / 2, -h / 2); sh.lineTo(w / 2, h / 2); sh.lineTo(-w / 2, h / 2); sh.closePath();
+    const hole = new T.Path();
+    hole.moveTo(-w / 2 + t, -h / 2 + t); hole.lineTo(w / 2 - t, -h / 2 + t); hole.lineTo(w / 2 - t, h / 2 - t); hole.lineTo(-w / 2 + t, h / 2 - t); hole.closePath();
+    sh.holes.push(hole);
+    return new T.ShapeGeometry(sh);
+  }
+  // Wall clock (faces +z, `ry` turns it to another wall): white face with black numerals and
+  // hands, a ring of orbiting white particles that invites the tap, a pixel outline on hover,
+  // and a spin that carries the hands to another hour.
+  function makeClock(root, x, y, z, ry = 0) {
+    const g = new T.Group(); g.position.set(x, y, z); g.rotation.y = ry; root.add(g);
+    const R = 0.34;
+    const rim = mesh(new T.CylinderGeometry(R + 0.035, R + 0.035, 0.06, 36), mat.black, g, 0, 0, -0.03);
+    rim.rotation.x = Math.PI / 2;
+    const faceTex = canvasTex(256, 256, (c, w, h) => {
+      c.fillStyle = '#f6f7f9'; c.fillRect(0, 0, w, h);
+      const cx = w / 2, cy = h / 2, r = w / 2;
+      c.strokeStyle = '#15181d'; c.lineCap = 'round';
+      for (let i = 0; i < 60; i++) {
+        const a = (i / 60) * Math.PI * 2, big = i % 5 === 0;
+        c.lineWidth = big ? 4 : 1.5;
+        c.beginPath(); c.moveTo(cx + Math.sin(a) * (r - 6), cy - Math.cos(a) * (r - 6)); c.lineTo(cx + Math.sin(a) * (r - (big ? 20 : 13)), cy - Math.cos(a) * (r - (big ? 20 : 13))); c.stroke();
+      }
+      c.fillStyle = '#15181d'; c.textAlign = 'center'; c.textBaseline = 'middle';
+      c.font = `700 32px "Instrument Sans", system-ui, sans-serif`;
+      for (let n = 1; n <= 12; n++) { const a = (n / 12) * Math.PI * 2; c.fillText(String(n), cx + Math.sin(a) * (r - 44), cy - Math.cos(a) * (r - 44) + 2); }
+    });
+    const face = mesh(new T.CircleGeometry(R, 36), new T.MeshStandardMaterial({ map: faceTex.tex, emissive: 0xffffff, emissiveMap: faceTex.tex, emissiveIntensity: 0.32, roughness: 0.6, flatShading: false }), g, 0, 0, 0.002);
+    face.castShadow = false;
+    const hand = (len, w, zz) => { const geo = new T.BoxGeometry(w, len, 0.01); geo.translate(0, len / 2 - 0.05, 0); const m = mesh(geo, mat.black, g, 0, 0, zz); m.receiveShadow = false; return m; };
+    const hour = hand(0.19, 0.032, 0.02), minute = hand(0.27, 0.024, 0.032), second = hand(0.29, 0.009, 0.044);
+    mesh(new T.CylinderGeometry(0.022, 0.022, 0.06, 10), mat.black, g, 0, 0, 0.03).rotation.x = Math.PI / 2;
+    const hit = mesh(new T.CircleGeometry(R + 0.22, 16), mat.signal, g, 0, 0, 0.06); hit.visible = false;
+    // Static ring right against the rim (rim radius R + 0.035), no gap.
+    const ringGeo = new T.RingGeometry(R + 0.035, R + 0.095, 48);
+    { const uv = ringGeo.attributes.uv, d = (R + 0.095) * 2; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * d, uv.getY(i) * d); } // one noise tile per scene unit, like the TV frame
+    const outline = staticOutline(g, ringGeo, 0.03);
+    // Particles: a loose ring in the wall plane, each one pulsing; the burst pushes them outwards.
+    const N = COARSE ? 40 : 64;
+    const pos = new Float32Array(N * 3), col = new Float32Array(N * 3), seed = [];
+    for (let i = 0; i < N; i++) seed.push({ a: Math.random() * Math.PI * 2, r: R + 0.14 + Math.random() * 0.2, v: (0.2 + Math.random() * 0.45) * (Math.random() < 0.5 ? -1 : 1), p: Math.random() * Math.PI * 2 });
+    const geo = new T.BufferGeometry();
+    geo.setAttribute('position', new T.BufferAttribute(pos, 3));
+    geo.setAttribute('color', new T.BufferAttribute(col, 3));
+    const pts = new T.Points(geo, new T.PointsMaterial({ size: 0.09, vertexColors: true, transparent: true, opacity: 1, blending: T.AdditiveBlending, depthWrite: false, sizeAttenuation: true }));
+    pts.frustumCulled = false; g.add(pts);
+    const anim = { spin: null, burst: 0, hot: 0 };
+    function update(t) {
+      const m = anim.spin ? anim.spin.m : clockMinutes();
+      hour.rotation.z = -(m / 720) * Math.PI * 2;
+      minute.rotation.z = -((m % 60) / 60) * Math.PI * 2;
+      second.rotation.z = -(((m * 60) % 60) / 60) * Math.PI * 2;
+      if (REDUCE && anim.hot === 0 && anim.burst === 0 && t > 1) return;
+      for (let i = 0; i < N; i++) {
+        const sd = seed[i], a = sd.a + t * sd.v, r = sd.r * (1 + anim.burst * 1.8);
+        pos[i * 3] = Math.cos(a) * r; pos[i * 3 + 1] = Math.sin(a) * r; pos[i * 3 + 2] = 0.07 + Math.sin(t * 2 + sd.p) * 0.03;
+        const tw = 0.45 + 0.55 * (0.5 + 0.5 * Math.sin(t * 2.6 + sd.p));
+        const k = tw * (1 - anim.burst * 0.75) * (1.1 + anim.hot * 0.6);
+        col[i * 3] = 0.9 * k; col[i * 3 + 1] = 0.93 * k; col[i * 3 + 2] = 1.0 * k;
+      }
+      geo.attributes.position.needsUpdate = true; geo.attributes.color.needsUpdate = true;
+    }
+    // Spin the hands forward to `target` (minutes since midnight): at least a third of a turn
+    // of the hour hand, so the move always reads as a jump to another moment of the day.
+    function spinTo(target) {
+      const { gsap } = loader.libs;
+      const from = anim.spin ? anim.spin.m : clockMinutes();
+      let delta = (((target - from) % 720) + 720) % 720;
+      if (delta < 240) delta += 720;
+      anim.spin = { m: from };
+      if (!gsap || REDUCE) { anim.spin = null; return Promise.resolve(); }
+      gsap.to(anim, { burst: 1, duration: 0.45, ease: 'expo.out', onComplete: () => gsap.to(anim, { burst: 0, duration: 0.7, ease: 'power2.inOut' }) });
+      return new Promise((res) => gsap.to(anim.spin, { m: from + delta, duration: 1.15, ease: 'power3.inOut', onComplete: () => { anim.spin = null; res(); } }));
+    }
+    function setHot(on) {
+      const { gsap } = loader.libs;
+      if (gsap && !REDUCE) { gsap.to(anim, { hot: on ? 1 : 0, duration: 0.3, overwrite: true }); gsap.to(outline.material, { opacity: on ? 1 : 0, duration: 0.15, overwrite: true }); }
+      else { anim.hot = on ? 1 : 0; outline.material.opacity = on ? 1 : 0; }
+    }
+    return { group: g, hit, update, spinTo, setHot };
+  }
+  // Soft glow drawn on a window pane (additive), for sunlight or moonlight coming in.
+  // Size the quad to the pane so the glow stays on the glass and never spills onto the wall;
+  // `focus` is where the light sits on the pane (fractions from the left/top, seen from inside)
+  // and `reach` the halo radius as a fraction of the pane width.
+  function windowGlow(root, x, y, z, w, h, rgb, alpha, ry = 0, focus = [0.5, 0.5], reach = 0.5) {
+    const tex = canvasTex(128, 128, (c, cw, ch) => {
+      const fx = focus[0] * cw, fy = focus[1] * ch;
+      const g = c.createRadialGradient(fx, fy, 0, fx, fy, reach * cw);
+      g.addColorStop(0, `rgba(${rgb},${alpha})`); g.addColorStop(0.45, `rgba(${rgb},${alpha * 0.45})`); g.addColorStop(1, `rgba(${rgb},0)`);
+      c.fillStyle = g; c.fillRect(0, 0, cw, ch);
+    }).tex;
+    const m = mesh(new T.PlaneGeometry(w, h), new T.MeshBasicMaterial({ map: tex, transparent: true, blending: T.AdditiveBlending, depthWrite: false }), root, x, y, z);
+    m.rotation.y = ry; m.castShadow = m.receiveShadow = false;
+    return m;
+  }
+  // The patch of light on the floor in front of a window (additive quad lying flat).
+  function floorGlow(root, x, z, w, d, rgb, alpha) { const m = windowGlow(root, x, 0.03, z, w, d, rgb, alpha); m.rotation.set(-Math.PI / 2, 0, 0); return m; }
+  // Light through a window: a shadowless spot aimed at the floor, intensity driven per scene.
+  function windowLight(root, color, from, to, angle = 0.55) {
+    const l = new T.SpotLight(color, 0, 18, angle, 0.7, 1);
+    l.position.set(...from); l.target.position.set(...to);
+    root.add(l, l.target);
+    return l;
+  }
   function plant(b, x, z, s = 1) {
     b.cyl(x, 0, z, 0.22 * s, 0.4 * s, mat.pot, 7, 0.82);
     b.add(ICO, mat.plant, x, 0.82 * s, z, 0.36 * s, 0.44 * s, 0.36 * s, 0.2, 0.4, 0);
@@ -2570,9 +2794,15 @@ async function createWorld(T, progress) {
       }
       if (t - dashLast >= FPS6) { dashLast = t; stepDash(); drawDash(); }
     }
-    lights.office = [[glow, 1.2]];
-    const surprise = () => {
-      scrCode.material.map = SUR.main.tex; scrTerm.material.map = SUR.side.tex;
+    // Sun: warm glow on the window pane and a patch of light on the floor in front of it.
+    windowGlow(root, 1.2, 1.85, -4.86, 2.6, 2.2, '255,214,150', 0.95);
+    floorGlow(root, 1.1, -3.5, 2.8, 2.4, '255,205,130', 0.5);
+    const sunIn = windowLight(root, 0xffd9a6, [1.2, 4.4, -7.2], [0.5, 0, -2.0]);
+    lights.office = [[glow, 1.2], [sunIn, 120]];
+    // Left wall, between the whiteboard and Franco's desk.
+    const clock = makeClock(root, -4.77, 2.2, 1.0, Math.PI / 2);
+    const surprise = (on = true) => {
+      scrCode.material.map = on ? SUR.main.tex : code.tex; scrTerm.material.map = on ? SUR.side.tex : term.tex;
       scrCode.material.needsUpdate = scrTerm.material.needsUpdate = true;
     };
     // Surprise shot: close on the code monitor, in front of Franco's head. The monitor arm crosses
@@ -2580,7 +2810,7 @@ async function createWorld(T, progress) {
     const shot = { mesh: scrCode, dist: 0.62, lift: 0.03, onTop: true };
     // Hunt ticket: out of the server rack's front-left edge.
     const tkSpot = new T.Vector3(rx - 0.46, 1.25, rz + 0.46);
-    return { root, franco, update, pov, surprise, shot, tkSpot, light: { hemi: 1.5, sun: 2.4, sunColor: 0xfff6ea } };
+    return { root, franco, update, pov, surprise, shot, tkSpot, clock, light: { hemi: 1.5, sun: 2.4, sunColor: 0xfff6ea } };
   }
 
   function university() {
@@ -2811,13 +3041,18 @@ async function createWorld(T, progress) {
       for (const p of people) p.update(t);
       if (!REDUCE) tickBoard(t);
     };
-    lights.uni = [];
-    const surprise = () => { screenMesh.material.map = SUR.uni.tex; screenMesh.material.needsUpdate = true; };
+    // Softer sun than the office: paler glow, weaker patch.
+    windowGlow(root, -2.4, 1.85, -4.86, 2.6, 2.2, '236,240,255', 0.6);
+    floorGlow(root, -2.5, -3.5, 2.8, 2.4, '230,236,255', 0.28);
+    const sunIn = windowLight(root, 0xf1f4ff, [-2.4, 4.4, -7.2], [-2.6, 0, -2.0]);
+    lights.uni = [[sunIn, 60]];
+    const clock = makeClock(root, 0, 2.5, -4.77);
+    const surprise = (on = true) => { screenMesh.material.map = on ? SUR.uni.tex : slide.tex; screenMesh.material.needsUpdate = true; };
     // Surprise shot: projection screen seen from the side away from the teacher (+z), so he doesn't block it.
     const shot = { mesh: screenMesh, dist: 2.3, yaw: -0.6, lift: 0.15 };
     // Hunt ticket: out of the bookcase's front-left edge, at the third shelf.
     const tkSpot = new T.Vector3(1.68, 1.35, -4.22);
-    return { root, franco, update, pov, onFocus, surprise, shot, tkSpot, light: { hemi: 1.6, sun: 2.2, sunColor: 0xf3f6fa } };
+    return { root, franco, update, pov, onFocus, surprise, shot, tkSpot, clock, light: { hemi: 1.6, sun: 2.2, sunColor: 0xf3f6fa } };
   }
 
   function home() {
@@ -2828,11 +3063,18 @@ async function createWorld(T, progress) {
     // (de espaldas a la cámara), con el sofá en L a la izquierda y el sillón a la derecha.
     rug(b, 0.2, -2.9, 4.6, 3.0, mat.rug2);
     // Mueble de tele contra la pared del fondo, debajo del cartel; la tele pasa una película.
-    tvUnit(b, 0, -4.5, 2.4);
-    b.box(-0.7, 0.54, -4.5, 0.5, 0.08, 0.2, mat.dark);
+    tvUnit(b, 0, -4.5, 3.4);
+    // Consola blanca acostada en el extremo derecho del mueble, con la rejilla redonda negra arriba.
+    b.box(1.3, 0.54, -4.5, 0.3, 0.065, 0.16, mat.catW);
+    b.cyl(1.38, 0.605, -4.5, 0.045, 0.006, mat.black, 16);
     const tvc = canvasTex(256, 144, () => {});
     const tvScreen = tv(b, 0, 1.19, -4.56, 1.86, 1.06, tvc.tex);
     root.add(tvScreen);
+    // Tocar la pantalla abre el video en YouTube; al pasar el mouse, borde pixelado.
+    const tvHit = mesh(new T.PlaneGeometry(1.9, 1.1), mat.signal, root, 0, 1.19, -4.5); tvHit.visible = false;
+    const tvBox = new T.Group(); tvBox.position.set(0, 1.19, -4.55); root.add(tvBox);
+    // Static frame around the bezel (bezel is 1.90 x 1.10), no gap.
+    const tvOutline = staticOutline(tvBox, frameGeometry(2.02, 1.22, 0.06), 0.03);
     const tvLight = new T.PointLight(0x7fb0ff, 0, 4.5, 1.4);
     tvLight.position.set(0, 1.3, -3.6); root.add(tvLight);
     // Sofá de Franco (dos cuerpos) mirando a -z; su almohadón queda en x≈0, alineado con la tele.
@@ -2858,26 +3100,40 @@ async function createWorld(T, progress) {
     shade.material.side = T.DoubleSide;
     const lamp = new T.PointLight(0xffc98a, 0, 7, 1.2);
     lamp.position.set(lx, 1.45, lz + 0.05); root.add(lamp);
-    // Window on the left wall with the moon.
-    const moon = mesh(new T.CircleGeometry(0.16, 20), mat.moon, root, -4.77, 2.1, 0.15);
+    // Window on the left wall: half the moon shows past the back edge of the frame (z=-1.6),
+    // its halo only on the glass (the quad is the opening itself, with the moon at its right edge),
+    // and a cool moonlight patch on the floor.
+    const moon = mesh(new T.CircleGeometry(0.3, 28, Math.PI / 2, Math.PI), mat.moon, root, -4.77, 1.95, -1.6);
     moon.rotation.y = Math.PI / 2; moon.castShadow = false;
+    windowGlow(root, -4.78, 1.75, -0.5, 2.2, 1.5, '170,196,240', 0.7, Math.PI / 2, [1, 0.37], 0.4);
+    floorGlow(root, -3.6, -0.5, 2.4, 3.0, '150,182,238', 0.4);
+    const moonIn = windowLight(root, 0xa9c0ee, [-7.4, 4.0, -0.9], [-2.4, 0, -0.3], 0.5);
     for (const [y, z] of [[1.4, -1.2], [2.3, -0.9], [1.75, -0.3], [2.35, 0.45]]) {
       const s = mesh(new T.PlaneGeometry(0.025, 0.025), mat.moon, root, -4.77, y, z);
       s.rotation.y = Math.PI / 2; s.castShadow = false;
     }
-    // "EN LÍNEA" sign above the sofa.
-    const sign = mesh(UNIT_BOX, mat.signal, root, 0, 2.3, -4.77); sign.scale.set(1.7, 0.022, 0.02); sign.castShadow = false;
-    const label = canvasTex(512, 96, (c, w, h) => {
-      c.clearRect(0, 0, w, h);
-      c.font = '500 44px "JetBrains Mono", monospace';
-      if ('letterSpacing' in c) c.letterSpacing = '8px';
-      c.textAlign = 'center'; c.textBaseline = 'middle';
-      c.fillStyle = '#1fbf75';
-      c.fillText('EN LÍNEA', w / 2 + 12, h / 2);
-      c.beginPath(); c.arc(w / 2 - 150, h / 2, 9, 0, Math.PI * 2); c.fill();
+    // Barra de volumen de la tele, arriba de la pantalla: se arrastra; arranca en la mitad.
+    const BAR_W = 1.7, BAR_Y = 2.3, BAR_Z = -4.76;
+    mesh(new T.BoxGeometry(BAR_W + 0.06, 0.07, 0.025), mat.dark, root, 0, BAR_Y, BAR_Z - 0.01).castShadow = false;
+    const barFill = mesh(new T.BoxGeometry(1, 0.035, 0.02), mat.catW, root, 0, BAR_Y, BAR_Z); barFill.castShadow = false;
+    const barKnob = mesh(new T.BoxGeometry(0.05, 0.15, 0.04), mat.catW, root, 0, BAR_Y, BAR_Z + 0.01); barKnob.castShadow = false;
+    const volIcon = canvasTex(128, 64, (c, w, h) => {
+      c.clearRect(0, 0, w, h); c.fillStyle = '#e7eaee';
+      c.fillRect(18, 24, 12, 16); c.beginPath(); c.moveTo(30, 24); c.lineTo(48, 10); c.lineTo(48, 54); c.lineTo(30, 40); c.closePath(); c.fill();
+      c.strokeStyle = '#e7eaee'; c.lineWidth = 4; c.lineCap = 'round';
+      for (const [r, a] of [[14, 0.7], [24, 0.6]]) { c.beginPath(); c.arc(52, 32, r, -a, a); c.stroke(); }
     });
-    const signText = new T.Mesh(new T.PlaneGeometry(1.4, 0.26), new T.MeshBasicMaterial({ map: label.tex, transparent: true, toneMapped: false, depthWrite: false }));
-    signText.position.set(0, 2.52, -4.77); root.add(signText);
+    const volMesh = new T.Mesh(new T.PlaneGeometry(0.32, 0.16), new T.MeshBasicMaterial({ map: volIcon.tex, transparent: true, toneMapped: false, depthWrite: false }));
+    volMesh.position.set(-BAR_W / 2 - 0.25, BAR_Y, BAR_Z); root.add(volMesh);
+    const barHit = mesh(new T.BoxGeometry(BAR_W + 0.3, 0.36, 0.1), mat.signal, root, 0, BAR_Y, BAR_Z); barHit.visible = false;
+    let tvVol = 0.5;
+    function setVolume(v) {
+      tvVol = Math.max(0, Math.min(1, v));
+      barFill.scale.x = Math.max(0.001, tvVol * BAR_W); barFill.position.x = -BAR_W / 2 + (tvVol * BAR_W) / 2;
+      barKnob.position.x = -BAR_W / 2 + tvVol * BAR_W;
+      tvCmd('unMute'); tvCmd('setVolume', [Math.round(tvVol * 100)]);
+    }
+    const bar = { hit: barHit, set: setVolume, get: () => tvVol, x0: -BAR_W / 2, w: BAR_W, z: BAR_Z };
     // Low shelf + plant on the right.
     b.box(3.9, 0, -1.5, 0.7, 0.9, 1.6, mat.furn);
     b.box(3.9, 0.9, -1.5, 0.74, 0.04, 1.64, mat.furnL);
@@ -2923,25 +3179,34 @@ async function createWorld(T, progress) {
     root.add(catB.root); pets.push(catB);
     // POV: el centro de la pantalla de la tele, derecho adelante de Franco.
     const pov = { target: toWorld(root, 0, 1.19, -4.56), back: new T.Vector3(0, 0, 1) };
-    // La película (Big Buck Bunny, ver el <video> en el HTML): textura de video cuando hay cuadros;
-    // mientras no cargó o falló, bandas de color dibujadas en canvas.
-    const video = $('#tvVideo');
-    let videoErr = false, videoOk = false, tvSurprise = false;
-    video.addEventListener('error', () => { videoErr = true; });
-    const vtex = new T.VideoTexture(video);
-    vtex.colorSpace = T.SRGBColorSpace;
-    function syncTvSource() {
-      if (tvSurprise) return;
-      const ok = !videoErr && video.readyState >= 2;
-      if (ok === videoOk) return;
-      videoOk = ok;
-      tvScreen.material.map = ok ? vtex : tvc.tex;
-      tvScreen.material.needsUpdate = true;
+    // La tele pasa un video de YouTube: el reproductor oficial embebido va en la capa CSS3D, justo
+    // sobre el plano de la pantalla (muted, en loop, sin controles). Debajo, el canvas de bandas de
+    // color queda como respaldo mientras el iframe no cargó o si está bloqueado.
+    const TV_VIDEO = 'Y3FEZJz55T0';
+    const TV_ORIGIN = 'https://www.youtube-nocookie.com';
+    const TV_URL = `https://www.youtube.com/watch?v=${TV_VIDEO}`;
+    let tvSurprise = false, tvEl = null, tvFrame = null;
+    const tvCmd = (func, args = []) => tvFrame?.contentWindow?.postMessage(JSON.stringify({ event: 'command', func, args }), TV_ORIGIN);
+    setVolume(tvVol);
+    function mountTv() {
+      if (tvEl || REDUCE) return;
+      tvEl = document.createElement('div');
+      // 930x530 CSS px scaled to the 1.86x1.06 screen: sharp even in the POV close-up.
+      tvEl.style.width = '930px'; tvEl.style.height = '530px';
+      tvFrame = document.createElement('iframe');
+      tvFrame.title = 'Video en la tele del living';
+      tvFrame.allow = 'autoplay; encrypted-media; picture-in-picture';
+      tvFrame.referrerPolicy = 'strict-origin-when-cross-origin';
+      tvFrame.src = `${TV_ORIGIN}/embed/${TV_VIDEO}?autoplay=1&mute=1&loop=1&playlist=${TV_VIDEO}&controls=0&rel=0&playsinline=1&iv_load_policy=3&disablekb=1&enablejsapi=1`;
+      // Once the player is up, hand it the bar's volume (the embed itself loads muted so it can autoplay).
+      tvFrame.addEventListener('load', () => setTimeout(() => { tvCmd('playVideo'); setVolume(tvVol); }, 900));
+      tvEl.append(tvFrame);
+      css3d.add(tvEl, { position: toWorld(root, 0, 1.19, -4.56 + 0.03), scale: 1.86 / 930 });
     }
     // Reproduce sólo con el diorama activo y el mundo a la vista; en pausa queda un cuadro fijo.
     function onActive(on) {
-      if (on && !REDUCE && !tvSurprise) video.play().catch(() => {});
-      else if (!video.paused) video.pause();
+      if (on) { mountTv(); if (tvEl) { tvEl.style.display = tvSurprise ? 'none' : ''; tvCmd('playVideo'); } }
+      else if (tvEl) { tvCmd('pauseVideo'); tvEl.style.display = 'none'; }
     }
     let tvLast = -1;
     function drawTv(t) {
@@ -2959,34 +3224,39 @@ async function createWorld(T, progress) {
       tvc.tex.needsUpdate = true;
     }
     drawTv(0);
-    lights.home = [[lamp, 5.5], [phoneLight, 1.4], [tvLight, 1.2]];
+    lights.home = [[lamp, 5.5], [phoneLight, 1.4], [tvLight, 1.2], [moonIn, 60]];
+    // Back wall, halfway between the TV and the right end of the wall.
+    const clock = makeClock(root, 3.0, 2.4, -4.77);
     const update = (t) => {
       franco.update(t);
       for (const p of pets) p.update(t);
-      syncTvSource();
       if (REDUCE) return;
       const on = state.scene === 'home';
       phoneLight.intensity = (on ? 1.4 : 0) * (0.85 + Math.sin(t * 2.2) * 0.15);
       tvLight.intensity = (on ? 1.2 : 0) * (1 + Math.sin(t * 7.3) * 0.08 + Math.sin(t * 3.1) * 0.07);
-      if (!videoOk && !tvSurprise && t - tvLast >= FPS6) { tvLast = t; drawTv(t); }
+      if (!tvSurprise && t - tvLast >= FPS6) { tvLast = t; drawTv(t); }
     };
-    const surprise = () => {
-      tvSurprise = true;
-      if (!video.paused) video.pause();
-      tvScreen.material.map = SUR.main.tex; tvScreen.material.needsUpdate = true;
+    // The surprise covers the player but leaves its sound running; off, the player shows again.
+    const surprise = (on = true) => {
+      tvSurprise = on;
+      if (tvEl) tvEl.style.display = on ? 'none' : '';
+      tvScreen.material.map = on ? SUR.main.tex : tvc.tex; tvScreen.material.needsUpdate = true;
     };
     // Surprise shot: the TV, straight on, between the sofa and the screen.
     const shot = { mesh: tvScreen, dist: 1.9, lift: 0.04 };
     // Hunt ticket: out of the TV's left edge.
     const tkSpot = new T.Vector3(-0.97, 1.12, -4.53);
-    return { root, franco, update, pov, onActive, surprise, shot, tkSpot, light: { hemi: 1.35, sun: 1.3, sunColor: 0x9fb4d0 } };
+    const tvUi = {
+      hit: tvHit, url: TV_URL, bar,
+      setHot(on) { const { gsap } = loader.libs; if (gsap && !REDUCE) gsap.to(tvOutline.material, { opacity: on ? 1 : 0, duration: 0.15, overwrite: true }); else tvOutline.material.opacity = on ? 1 : 0; },
+    };
+    return { root, franco, update, pov, onActive, surprise, shot, tkSpot, clock, tv: tvUi, light: { hemi: 1.35, sun: 1.3, sunColor: 0x9fb4d0 } };
   }
 
   progress(0.15); await nextFrame();
   dioramas.office = office(); progress(0.35); await nextFrame();
   dioramas.uni = university(); progress(0.55); await nextFrame();
   dioramas.home = home(); progress(0.7); await nextFrame();
-  if (huntFound().size >= HUNT_TOTAL) for (const k of SCENES) dioramas[k].surprise?.();
 
   // ---------- ground halo: soft contact shadow + faint floor haze under each slab ----------
   const haloTex = canvasTex(256, 256, (c, w, h) => {
@@ -3079,6 +3349,7 @@ async function createWorld(T, progress) {
     camera.aspect = aspect;
     camera.updateProjectionMatrix();
   }
+  function render() { renderer.render(scene, camera); css3d.render(camera, view.w, view.h); }
   function applyCamera() {
     const auto = viewMode === 'inicio' && !REDUCE ? Math.sin(elapsed * 0.12) * 0.05 : 0;
     const bob = REDUCE ? 0 : Math.sin(elapsed * 0.4) * 0.15 * (focused ? 0.3 : 1);
@@ -3129,7 +3400,7 @@ async function createWorld(T, progress) {
   if (renderer.compileAsync) await renderer.compileAsync(scene, camera); else renderer.compile(scene, camera);
   progress(0.92); await nextFrame();
   activate(state.scene);
-  renderer.render(scene, camera);
+  render();
   progress(1);
 
   // ---------- render loop (paused when the view is off / hidden tab) ----------
@@ -3161,14 +3432,15 @@ async function createWorld(T, progress) {
     applyCamera();
     const d = dioramas[state.scene];
     d.update(elapsed, dt);
+    d.clock?.update(elapsed);
     if (!REDUCE) updateDust(elapsed, dt);
     // Hover highlight: emissive rim tint + floor ring.
     hoverAmt += ((hovered ? 1 : 0) - hoverAmt) * (REDUCE ? 1 : 0.15);
     for (const m of francoMats) { m.emissive.setHex(0x9aa1ab); m.emissiveIntensity = hoverAmt * 0.16; }
     d.franco.ring.material.opacity = hoverAmt * 0.9;
     // Estática "sin señal" sobre Franco: se redibuja ≈12 veces por segundo mientras dura el hover.
-    if (staticOn && !REDUCE && elapsed - snowLast >= 1 / 12) { snowLast = elapsed; drawSnow(); }
-    renderer.render(scene, camera);
+    if ((staticOn || clockHot || tvHot) && !REDUCE && elapsed - snowLast >= 1 / 12) { snowLast = elapsed; drawSnow(); }
+    render();
     // Project the floating label above Franco.
     if (labelOn) {
       d.franco.anchor.getWorldPosition(_v).project(camera);
@@ -3189,7 +3461,7 @@ async function createWorld(T, progress) {
   function start() { if (running || document.hidden || !state.entered || viewMode === 'off') return; running = true; last = performance.now(); requestAnimationFrame(frame); }
   function stop() { running = false; }
   document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); else start(); syncActive(); });
-  addEventListener('resize', () => { resize(); applyCamera(); if (!running) renderer.render(scene, camera); });
+  addEventListener('resize', () => { resize(); applyCamera(); if (!running) render(); });
   // The label only exists on the interactive view.
   const setLabel = (on) => { labelOn = on && viewMode === 'mundo'; label.classList.toggle('is-on', labelOn); };
 
@@ -3207,18 +3479,77 @@ async function createWorld(T, progress) {
     raycaster.setFromCamera(ndc, camera);
     return raycaster.intersectObject(dioramas[state.scene].franco.hit, false).length > 0;
   }
+  function aim(clientX, clientY) {
+    const r = canvas.getBoundingClientRect();
+    ndc.set(((clientX - r.left) / r.width) * 2 - 1, -((clientY - r.top) / r.height) * 2 + 1);
+    raycaster.setFromCamera(ndc, camera);
+  }
+  const hitMesh = (m, clientX, clientY) => { if (!m) return false; aim(clientX, clientY); return raycaster.intersectObject(m, false).length > 0; };
+  const hitClock = (x, y) => hitMesh(dioramas[state.scene].clock.hit, x, y);
+  const tvUi = () => (state.scene === 'home' ? dioramas.home.tv : null);
+  // TV: hover shows the pixel border, a tap opens the video on YouTube; the bar above sets the volume.
+  let tvHot = false, tvPart = null, volDrag = false;
+  const _barPlane = new T.Plane(new T.Vector3(0, 0, 1), 0), _barPt = new T.Vector3();
+  // `part` is 'screen' (link cursor: a tap opens the video), 'bar' (precision cursor) or null.
+  function setTvHover(part) {
+    const on = !!part;
+    canvas.classList.toggle('cur-link', part === 'screen');
+    canvas.classList.toggle('cur-precision', part === 'bar');
+    tvPart = part;
+    if (tvHot === on) return;
+    tvHot = on;
+    tvUi()?.setHot(on);
+    cursor.classList.toggle('is-hot', on);
+    if (!FINE) canvas.style.cursor = on ? 'pointer' : '';
+    if (on) audio.tick();
+  }
+  function volumeFromPointer(clientX, clientY) {
+    const bar = tvUi().bar;
+    aim(clientX, clientY);
+    _barPlane.constant = -bar.z;
+    if (!raycaster.ray.intersectPlane(_barPlane, _barPt)) return;
+    bar.set((_barPt.x - SCENE_X.home - bar.x0) / bar.w);
+  }
+  let clockHot = false, clockBusy = false;
+  function setClockHover(on) {
+    if (clockHot === on) return;
+    clockHot = on;
+    dioramas[state.scene].clock.setHot(on);
+    cursor.classList.toggle('is-hot', on);
+    canvas.classList.toggle('cur-location', on);
+    if (!FINE) canvas.style.cursor = on ? 'pointer' : '';
+    if (on) audio.tick();
+  }
+  // Tap: the hands spin to the next scene's hour, then the scene changes (home → office 9:00 → university 16:00 → home 21:00).
+  async function clockTap() {
+    if (clockBusy || state.busy) return;
+    clockBusy = true;
+    audio.tick();
+    const next = CLOCK_NEXT[state.scene];
+    // The scene the schedule picks right now shows the real time again, the others their signature hour.
+    const isNow = next === sceneFor(argNow());
+    await dioramas[state.scene].clock.spinTo(isNow ? realMinutes() : SCENE_HOUR[next] * 60);
+    clockBusy = false;
+    setClockHover(false);
+    setMode(isNow ? 'auto' : next);
+  }
   function setHover(on) {
     if (hovered === on) return;
     hovered = on;
     if (FINE) setStatic(dioramas[state.scene].franco, on);
     label.classList.toggle('is-hot', on);
     cursor.classList.toggle('is-hot', on);
+    canvas.classList.toggle('cur-person', on);
     if (!FINE) canvas.style.cursor = on ? 'pointer' : '';
     if (on) audio.tick();
   }
   const locked = () => state.busy || state.panelOpen || !interactive();
   canvas.addEventListener('pointerdown', (e) => {
     if (locked()) return;
+    if (tvUi() && hitMesh(tvUi().bar.hit, e.clientX, e.clientY)) {
+      volDrag = true; canvas.setPointerCapture(e.pointerId); volumeFromPointer(e.clientX, e.clientY); audio.tick();
+      return;
+    }
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pointers.size === 2) {
       const [a, c] = [...pointers.values()];
@@ -3228,9 +3559,10 @@ async function createWorld(T, progress) {
     }
     Object.assign(drag, { active: true, id: e.pointerId, sx: e.clientX, sy: e.clientY, lx: e.clientX, ly: e.clientY, moved: false, lastT: performance.now(), v: 0 });
     orbit.vAz = 0;
-    if (e.pointerType === 'mouse') { canvas.setPointerCapture(e.pointerId); cursor.classList.add('is-grabbing'); }
+    if (e.pointerType === 'mouse') { canvas.setPointerCapture(e.pointerId); cursor.classList.add('is-grabbing'); canvas.classList.add('cur-move'); }
   });
   canvas.addEventListener('pointermove', (e) => {
+    if (volDrag) { volumeFromPointer(e.clientX, e.clientY); return; }
     if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pointers.size === 2 && pinch0) {
       const [a, c] = [...pointers.values()];
@@ -3251,16 +3583,26 @@ async function createWorld(T, progress) {
       drag.lx = e.clientX; drag.ly = e.clientY;
       return;
     }
-    if (e.pointerType === 'mouse' && !locked()) setHover(hitFranco(e.clientX, e.clientY));
+    if (e.pointerType === 'mouse' && !locked()) {
+      const onClock = hitClock(e.clientX, e.clientY);
+      const tv = tvUi();
+      const tvPartNow = onClock || !tv ? null : hitMesh(tv.bar.hit, e.clientX, e.clientY) ? 'bar' : hitMesh(tv.hit, e.clientX, e.clientY) ? 'screen' : null;
+      setClockHover(onClock);
+      setTvHover(tvPartNow);
+      setHover(!onClock && !tvPartNow && hitFranco(e.clientX, e.clientY));
+    }
   });
   const endDrag = (e, cancelled) => {
+    if (volDrag) { volDrag = false; return; }
     pointers.delete(e.pointerId);
     if (pointers.size < 2) pinch0 = 0;
     if (!drag.active || e.pointerId !== drag.id) return;
     drag.active = false;
-    cursor.classList.remove('is-grabbing');
+    cursor.classList.remove('is-grabbing'); canvas.classList.remove('cur-move');
     if (drag.moved) { orbit.vAz = REDUCE ? 0 : drag.v; return; }
     if (cancelled || locked()) return;
+    if (hitClock(e.clientX, e.clientY)) { clockTap(); return; }
+    if (tvUi() && hitMesh(tvUi().hit, e.clientX, e.clientY)) { audio.tick(); window.open(tvUi().url, '_blank', 'noopener'); return; }
     if (hitFranco(e.clientX, e.clientY)) {
       if (e.pointerType !== 'mouse') { setHover(true); setTimeout(() => setHover(false), 900); }
       openPanel({ from: 'world' });
@@ -3268,12 +3610,12 @@ async function createWorld(T, progress) {
   };
   canvas.addEventListener('pointerup', (e) => endDrag(e, false));
   canvas.addEventListener('pointercancel', (e) => endDrag(e, true));
-  canvas.addEventListener('pointerleave', () => { if (!drag.active) setHover(false); });
+  canvas.addEventListener('pointerleave', () => { if (!drag.active) { setHover(false); setClockHover(false); setTvHover(null); } });
   canvas.addEventListener('pointerenter', () => { if (interactive()) cursor.classList.add('is-grab'); });
   canvas.addEventListener('pointerout', () => cursor.classList.remove('is-grab'));
-  // Ctrl/⌘ + wheel (and trackpad pinch) zooms.
+  // The wheel zooms (plain, Ctrl/⌘ and trackpad pinch alike): nothing scrolls on this page.
   canvas.addEventListener('wheel', (e) => {
-    if (!(e.ctrlKey || e.metaKey) || locked()) return;
+    if (locked()) return;
     e.preventDefault();
     view.userZoom = Math.max(0.75, Math.min(1.8, view.userZoom * Math.exp(-e.deltaY * 0.0025)));
   }, { passive: false });
@@ -3305,7 +3647,7 @@ async function createWorld(T, progress) {
     const z = homeZoom();
     camSet({ x: SCENE_X[key], y: view.camY, z: 0, az: REDUCE ? 0 : -0.12, zoom: REDUCE ? z : z * 0.88 });
     if (!REDUCE) gsap.to(rig, { az: 0, zoom: z, duration: 1.2, ease: 'expo.out' });
-    if (!running) renderer.render(scene, camera);
+    if (!running) render();
   }
   // View per page: inicio (wide, auto-orbit, no interaction), mundo (interactive), off (paused, faded).
   function setView(mode, { instant = false } = {}) {
@@ -3314,7 +3656,7 @@ async function createWorld(T, progress) {
     syncActive();
     stage.classList.toggle('is-off', mode === 'off');
     stage.classList.toggle('is-inicio', mode === 'inicio');
-    setLabel(false); setHover(false);
+    setLabel(false); setHover(false); setClockHover(false); setTvHover(null);
     if (mode === 'off') { stop(); return; }
     if (!focused) {
       const z = homeZoom(), el = mode === 'inicio' ? 0.06 : 0;
@@ -3326,7 +3668,7 @@ async function createWorld(T, progress) {
         gsap.to(rig, { zoom: z, el, az: 0, duration: 1.4, ease: 'expo.out', onComplete: () => { if (!focused) setLabel(true); } });
       }
     }
-    renderer.render(scene, camera);
+    render();
     start();
   }
   // Vista POV al abrir el panel: la cámara queda detrás y por encima de la cabeza de Franco,
@@ -3458,8 +3800,10 @@ async function createWorld(T, progress) {
       });
     });
   }
-  if (params.has('debug')) window.__world = { T, camera, rig, view, para, pov, dioramas, renderer, pointer };
-  return { intro, show, focusOn, unfocus, setLabel, setView, start, stop, surprise };
+  if (params.has('debug')) window.__world = { T, camera, rig, view, para, pov, dioramas, renderer, pointer, dbg: { locked, hitClock, clockHot: () => clockHot, busy: () => state.busy } };
+  // Screens go back to what they were showing (the surprise view is over and the chat it opened is closed).
+  function endSurprise() { surRun++; surTyping = false; for (const k of SCENES) dioramas[k].surprise?.(false); }
+  return { intro, show, focusOn, unfocus, setLabel, setView, start, stop, surprise, endSurprise };
 }
 
 // =====================================================================
@@ -3496,6 +3840,7 @@ async function switchScene(next) {
   const { gsap } = loader.libs;
   if (next === state.scene || state.busy) { paintSceneInfo(false); return; }
   state.busy = true;
+  busyCursor.begin();
   world?.setLabel(false);
   audio.whoosh();
   if (gsap) {
@@ -3516,6 +3861,7 @@ async function switchScene(next) {
     else await gsap.to(cells, { scale: 0, duration: 0.55, ease: 'expo.out', stagger: { grid, from: 'start', amount: 0.35 } });
   }
   state.busy = false;
+  busyCursor.end();
   world?.setLabel(true);
 }
 
@@ -3629,6 +3975,7 @@ function closePanel() {
   panel.style.transform = '';
   $('#app').removeAttribute('inert');
   world?.unfocus();
+  document.dispatchEvent(new CustomEvent('app:panelclose'));
   setTimeout(() => {
     if (state.panelOpen) return;
     panel.hidden = true; backdrop.hidden = true;
@@ -3707,7 +4054,7 @@ function mockAnswer(question) {
 }
 
 async function ask(question) {
-  chat.waiting = true; syncComposer();
+  chat.waiting = true; syncComposer(); busyCursor.begin();
   addMsg('me', question, { who: 'Vos' });
   const typing = addMsg('typing', 'escribiendo…');
   let res = null, data = null, mock = chat.api === 'mock';
@@ -3737,7 +4084,7 @@ async function ask(question) {
     addMsg('sys', typeof data?.error === 'string' ? data.error : `No pude responder (error ${res.status}).`);
   }
   audio.tick();
-  chat.waiting = false; syncComposer();
+  chat.waiting = false; syncComposer(); busyCursor.end();
 }
 
 // ---------- direct contact (mock) ----------
@@ -3788,6 +4135,16 @@ const SERVICES = [
   ['Logos', 'Diseño gráfico e identidad para que todo hable el mismo idioma.'],
 ];
 const TOOLS = ['React', 'TypeScript', 'FastAPI', 'SQLite', 'Astro', 'Cloudflare Workers', 'Workers AI', 'D1'];
+// Fotos: archivos en `public/fotos/` (webp, 1600 px de ancho máximo). `w`/`h` deciden la celda:
+// apaisadas ocupan dos columnas, verticales dos filas. Sin `src` queda un hueco marcado.
+const PHOTOS = [
+  { src: '/fotos/2026-01-17-montana.webp', alt: 'Franco, de gorra y con mochila, mirando un valle entre montañas.', caption: 'Montaña · ene 2026', w: 1600, h: 900 },
+  { caption: 'Foto 02' },
+  { caption: 'Foto 03', tall: true },
+  { caption: 'Foto 04' },
+  { caption: 'Foto 05', wide: true },
+  { caption: 'Foto 06' },
+];
 // Más nuevo primero: este orden es el de la página. `media`: imágenes (`img`) o un clip local (`clip` + `poster`).
 const PROJECTS = [
   {
@@ -3858,6 +4215,16 @@ function renderSections() {
     return c;
   }));
   $('#chips').replaceChildren(...TOOLS.map((t) => { const li = el('li', 'chip', t); return li; }));
+  $('#photos').replaceChildren(...PHOTOS.map((f) => {
+    const ratio = f.w && f.h ? f.w / f.h : 1;
+    const shape = f.wide || ratio > 1.3 ? ' wide' : f.tall || ratio < 0.8 ? ' tall' : '';
+    if (!f.src) { const slot = el('figure', 'photo slot reveal-card' + shape, f.caption); return slot; }
+    const fig = el('figure', 'photo reveal-card' + shape);
+    const img = new Image();
+    img.loading = 'lazy'; img.decoding = 'async'; img.alt = f.alt; img.width = f.w; img.height = f.h; img.src = f.src;
+    fig.append(img, el('figcaption', '', f.caption));
+    return fig;
+  }));
   $('#projects').replaceChildren(...PROJECTS.map((p) => {
     const card = el('article', 'card reveal-card');
     const media = el('div', 'card-media');
@@ -3938,11 +4305,14 @@ function splitWords(h) {
 // Router: pages as states, hash history, "mancha" transition, title glitch
 // =====================================================================
 const PAGES = ['inicio', 'mundo', 'proyectos', 'sobre'];
+// Glyph set shared by the inicio rain and the paper-page fields.
+const RAIN_GLYPHS = 'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ0123456789Z:・"=*+<>¦|ç';
+const randomGlyph = () => RAIN_GLYPHS[(Math.random() * RAIN_GLYPHS.length) | 0];
+
 // Matrix rain for inicio: columns of glyphs that fall without pause while the page is active.
 const rain = (() => {
   const canvas = document.getElementById('rain');
   const ctx = canvas?.getContext('2d');
-  const GLYPHS = 'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾘﾙﾚﾛﾜﾝ0123456789Z:・"=*+<>¦|ç';
   const BG = 'rgb(231,234,238)';
   let streams = [], base = 15, W = 0, H = 0, raf = 0, last = 0, on = false, mono = 'monospace';
   // Smaller glyphs read as farther away: slower and dimmer.
@@ -3979,12 +4349,12 @@ const rain = (() => {
       ctx.font = `600 ${fs}px ${mono}`;
       // Bright head, green neck, and a glyph somewhere in the tail that keeps changing.
       ctx.fillStyle = `rgba(21,24,29,${s.a})`;
-      ctx.fillText(GLYPHS[(Math.random() * GLYPHS.length) | 0], s.x, gy);
+      ctx.fillText(randomGlyph(), s.x, gy);
       ctx.fillStyle = `rgba(23,149,91,${s.a * 0.95})`;
-      ctx.fillText(GLYPHS[(Math.random() * GLYPHS.length) | 0], s.x, gy - fs);
+      ctx.fillText(randomGlyph(), s.x, gy - fs);
       if (Math.random() < 0.35) {
         ctx.fillStyle = `rgba(31,191,117,${s.a * 0.55})`;
-        ctx.fillText(GLYPHS[(Math.random() * GLYPHS.length) | 0], s.x, gy - fs * (2 + ((Math.random() * Math.min(s.len, 14)) | 0)));
+        ctx.fillText(randomGlyph(), s.x, gy - fs * (2 + ((Math.random() * Math.min(s.len, 14)) | 0)));
       }
       if (gy > H + s.len * fs) Object.assign(s, mk(s.x, false));
     }
@@ -3996,6 +4366,106 @@ const rain = (() => {
   document.addEventListener('visibilitychange', () => (document.hidden ? stop() : state.entered && state.page === 'inicio' && start()));
   return { start, stop };
 })();
+
+// Glyph field for the paper pages (proyectos, sobre): the same glyphs as the rain, but still.
+// The pointer carries a halo that "decodes" the cells it passes over: they flicker through
+// glyphs, light up ink in the centre and green around it, then cool down and leave a trail.
+// Nothing on the page moves, so the cards and the text stay readable.
+const FIELD_THEMES = {
+  // Paper pages: ink at the centre of the halo, green towards the rim (like the rain's head and neck).
+  paper: { bg: 'rgb(231,234,238)', dormant: 'rgba(21,24,29,.05)', core: (h) => `rgba(21,24,29,${(0.25 + h * 0.6).toFixed(3)})`, rim: (h) => `rgba(23,149,91,${(0.1 + h * 0.85).toFixed(3)})` },
+  // The world: same field on the dark stage, pale core and signal-green rim.
+  dark: { bg: 'rgb(14,16,19)', dormant: 'rgba(201,206,214,.07)', core: (h) => `rgba(231,234,238,${(0.2 + h * 0.6).toFixed(3)})`, rim: (h) => `rgba(31,191,117,${(0.08 + h * 0.8).toFixed(3)})` },
+};
+function glyphField(canvas, pageName, theme = FIELD_THEMES.paper) {
+  const ctx = canvas?.getContext('2d');
+  const BG = theme.bg;
+  const CELL = COARSE ? 22 : 26, FS = COARSE ? 11 : 13, RADIUS = COARSE ? 150 : 200;
+  const DORMANT = theme.dormant;
+  let cols = 0, rows = 0, cells = [], W = 0, H = 0, raf = 0, last = 0, on = false, mono = 'monospace';
+  let layer = null; // offscreen copy of the dormant grid, redrawn only where cells cool down
+  let px = -1e4, py = -1e4, seenX = -1, seenY = -1, wake = 0;
+  const hot = new Set();
+  function cellAt(i) { return { x: (i % cols) * CELL + (CELL - FS * 0.6) / 2, y: Math.floor(i / cols) * CELL + (CELL - FS) / 2 }; }
+  function paintDormant(target, i) {
+    const { x, y } = cellAt(i);
+    target.fillStyle = BG; target.fillRect(x - 2, y - 2, FS + 4, FS + 4);
+    target.fillStyle = DORMANT; target.fillText(cells[i].g, x, y);
+  }
+  function size() {
+    const dpr = Math.min(2, devicePixelRatio || 1);
+    W = canvas.clientWidth; H = canvas.clientHeight;
+    canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    mono = getComputedStyle(document.documentElement).getPropertyValue('--font-mono') || 'monospace';
+    cols = Math.ceil(W / CELL) + 1; rows = Math.ceil(H / CELL) + 1;
+    cells = Array.from({ length: cols * rows }, () => ({ g: randomGlyph(), h: 0 }));
+    hot.clear();
+    layer = document.createElement('canvas');
+    layer.width = canvas.width; layer.height = canvas.height;
+    const lc = layer.getContext('2d');
+    lc.setTransform(dpr, 0, 0, dpr, 0, 0);
+    lc.font = `500 ${FS}px ${mono}`; lc.textBaseline = 'top';
+    lc.fillStyle = BG; lc.fillRect(0, 0, W, H);
+    lc.fillStyle = DORMANT;
+    for (let i = 0; i < cells.length; i++) { const { x, y } = cellAt(i); lc.fillText(cells[i].g, x, y); }
+    ctx.drawImage(layer, 0, 0, W, H);
+  }
+  function frame(now) {
+    if (!on) return;
+    const dt = Math.min(0.05, (now - last) / 1000 || 0.016); last = now;
+    // The page is fixed to the viewport, so client coordinates are canvas coordinates.
+    const moved = pointer.x !== seenX || pointer.y !== seenY;
+    if (moved) { seenX = pointer.x; seenY = pointer.y; wake = 1; }
+    // Fine pointers keep the halo lit; touch lets it fade a couple of seconds after the tap.
+    if (!FINE) wake = Math.max(0, wake - dt / 2.2);
+    if (px < -1e3) { px = seenX; py = seenY; }
+    const k = 1 - Math.pow(0.001, dt);
+    px += (seenX - px) * k; py += (seenY - py) * k;
+    ctx.drawImage(layer, 0, 0, W, H);
+    ctx.font = `500 ${FS}px ${mono}`; ctx.textBaseline = 'top';
+    // Heat the cells inside the halo; the gain fades with distance.
+    if (wake > 0) {
+      const c0 = Math.max(0, Math.floor((px - RADIUS) / CELL)), c1 = Math.min(cols - 1, Math.ceil((px + RADIUS) / CELL));
+      const r0 = Math.max(0, Math.floor((py - RADIUS) / CELL)), r1 = Math.min(rows - 1, Math.ceil((py + RADIUS) / CELL));
+      for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) {
+        const dx = c * CELL + CELL / 2 - px, dy = r * CELL + CELL / 2 - py;
+        const d = Math.sqrt(dx * dx + dy * dy) / RADIUS;
+        if (d > 1) continue;
+        const gain = (1 - d) * (1 - d) * wake;
+        const i = r * cols + c, cell = cells[i];
+        if (gain > cell.h) {
+          if (gain - cell.h > 0.08 && Math.random() < 0.5) cell.g = randomGlyph();
+          cell.h = gain; hot.add(i);
+        }
+      }
+    }
+    const decay = Math.pow(0.18, dt);
+    const lc = layer.getContext('2d');
+    lc.font = `500 ${FS}px ${mono}`; lc.textBaseline = 'top';
+    for (const i of hot) {
+      const cell = cells[i];
+      cell.h *= decay;
+      if (cell.h < 0.02) { cell.h = 0; hot.delete(i); paintDormant(lc, i); continue; }
+      if (cell.h > 0.35 && Math.random() < 0.06) cell.g = randomGlyph();
+      const { x, y } = cellAt(i), h = cell.h;
+      ctx.fillStyle = BG; ctx.fillRect(x - 2, y - 2, FS + 4, FS + 4);
+      ctx.fillStyle = h > 0.72 ? theme.core(h) : theme.rim(h);
+      ctx.fillText(cell.g, x, y);
+    }
+    raf = requestAnimationFrame(frame);
+  }
+  function start() {
+    if (!ctx || on || document.hidden) return;
+    on = true; size(); last = performance.now(); px = py = -1e4; wake = 0;
+    if (!REDUCE) raf = requestAnimationFrame(frame);
+  }
+  function stop() { on = false; cancelAnimationFrame(raf); }
+  addEventListener('resize', () => { if (on) size(); });
+  document.addEventListener('visibilitychange', () => (document.hidden ? stop() : state.entered && state.page === pageName && start()));
+  return { start, stop };
+}
+const fields = Object.fromEntries($$('canvas.glyph-field').map((c) => [c.dataset.field, glyphField(c, c.dataset.field, FIELD_THEMES[c.dataset.theme] ?? FIELD_THEMES.paper)]));
 
 // Word-level hover on inicio: each word is its own span so only the one under the cursor reacts.
 function splitHeroWords(el) {
@@ -4123,6 +4593,7 @@ const router = (() => {
     }
     if (world) world.setView(VIEW_OF[page], { instant: first });
     if (page === 'inicio') rain.start(); else rain.stop();
+    for (const [p, f] of Object.entries(fields)) { if (p === page) f.start(); else f.stop(); }
     armReveals(page);
     document.dispatchEvent(new CustomEvent('app:pageswap', { detail: page }));
   }
@@ -4139,6 +4610,7 @@ const router = (() => {
       return;
     }
     transitioning = true;
+    busyCursor.begin();
     audio.whoosh();
     if (REDUCE) {
       const pages = $('#pages');
@@ -4152,6 +4624,7 @@ const router = (() => {
       await mancha.reveal(gsap);
     }
     transitioning = false;
+    busyCursor.end();
     heading(page)?.focus({ preventScroll: true });
   }
   return { go };
@@ -4204,37 +4677,11 @@ function armReveals(page) {
 }
 
 // =====================================================================
-// Project cards: 3D tilt toward the pointer + inner counter-parallax
+// Project cards: the hover sound only; the background reacts instead of the card.
 // =====================================================================
-const tilts = [];
 function initCards() {
-  if (!FINE || REDUCE) return;
-  for (const card of $$('.card')) {
-    card.classList.add('is-tilt');
-    const s = { rx: 0, ry: 0, gx: 0, gy: 0, hot: false };
-    card.addEventListener('pointermove', (e) => {
-      const r = card.getBoundingClientRect();
-      const x = ((e.clientX - r.left) / r.width) * 2 - 1, y = ((e.clientY - r.top) / r.height) * 2 - 1;
-      s.gx = -y * 6; s.gy = x * 6;
-    });
-    card.addEventListener('pointerenter', () => { s.hot = true; audio.tick(); });
-    card.addEventListener('pointerleave', () => { s.hot = false; s.gx = s.gy = 0; });
-    tilts.push({ card, s });
-  }
-  tickers.add(() => {
-    if (state.page !== 'proyectos') return;
-    for (const { card, s } of tilts) {
-      s.rx += (s.gx - s.rx) * 0.12; s.ry += (s.gy - s.ry) * 0.12;
-      const inner = card.querySelector('.card-view');
-      if (!s.hot && Math.abs(s.rx) < 0.01 && Math.abs(s.ry) < 0.01) {
-        // At rest: hand the card back to the stylesheet.
-        if (card.style.transform) { s.rx = s.ry = 0; card.style.transform = ''; if (inner) inner.style.transform = ''; }
-        continue;
-      }
-      card.style.transform = `perspective(900px) rotateX(${s.rx.toFixed(2)}deg) rotateY(${s.ry.toFixed(2)}deg) scale(${s.hot ? 1.02 : 1})`;
-      if (inner) inner.style.transform = `translate(${(-s.ry * 1.2).toFixed(2)}px, ${(s.rx * 1.2).toFixed(2)}px) scale(1.06)`;
-    }
-  });
+  if (!FINE) return;
+  for (const card of $$('.card')) card.addEventListener('pointerenter', () => audio.tick());
 }
 
 // =====================================================================
@@ -4273,28 +4720,53 @@ function afterEnter() {
 }
 
 // =====================================================================
-// Custom cursor (desktop, pointer: fine): dot + lagging ring
+// Busy cursor: begin()/end() bracket a wait; the Windows 7 ring appears only past 0.5 s.
+// =====================================================================
+const busyCursor = (() => {
+  const el = $('#busyCursor'), img = $('#busyImg');
+  // 'busy' is the ring alone (hotspot at its centre); 'working' is the arrow with the ring beside it.
+  const KINDS = { busy: { hx: 16, hy: 16 }, working: { hx: 0, hy: 8 } };
+  const FRAMES = 18, STEP = 55; // ≈ one turn per second, like Windows
+  const src = (kind, i) => `cursores/${kind}-${String(i).padStart(2, '0')}.png`;
+  if (FINE) for (const k of Object.keys(KINDS)) for (let i = 0; i < FRAMES; i++) { const im = new Image(); im.src = src(k, i); }
+  let depth = 0, timer = 0, on = false, kind = 'busy', nextKind = 'busy', frame = 0, ticker = 0;
+  function show(v) {
+    if (on === v) return;
+    on = v;
+    el.classList.toggle('is-on', v);
+    document.body.classList.toggle('is-busy', v);
+    clearInterval(ticker);
+    if (!v) return;
+    kind = nextKind;
+    el.style.margin = `-${KINDS[kind].hy}px 0 0 -${KINDS[kind].hx}px`;
+    el.style.transform = `translate3d(${pointer.x}px, ${pointer.y}px, 0)`;
+    frame = 0; img.src = src(kind, 0);
+    ticker = setInterval(() => { frame = (frame + 1) % FRAMES; img.src = src(kind, frame); }, STEP);
+  }
+  function begin(k = 'busy') { nextKind = k; if (depth++ === 0 && FINE) timer = setTimeout(() => show(true), 500); }
+  function end() { depth = Math.max(0, depth - 1); if (depth === 0) { clearTimeout(timer); show(false); } }
+  async function wrap(promise) { begin(); try { return await promise; } finally { end(); } }
+  addEventListener('pointermove', (e) => { if (on && e.pointerType === 'mouse') el.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0)`; }, { passive: true });
+  return { begin, end, wrap };
+})();
+
+// =====================================================================
+// Custom cursor (desktop, pointer: fine): the small ring that follows the pointer
 // =====================================================================
 if (FINE && !REDUCE) {
-  const c = $('#cursor'), ring = $('#cursorRing');
-  const pos = { x: innerWidth / 2, y: innerHeight / 2 }, cur = { ...pos }, rp = { ...pos };
+  const c = $('#cursor');
+  const pos = { x: innerWidth / 2, y: innerHeight / 2 }, cur = { ...pos };
   addEventListener('pointermove', (e) => {
     if (e.pointerType !== 'mouse') return;
     pos.x = e.clientX; pos.y = e.clientY;
-    if (state.entered) { c.classList.add('is-on'); ring.classList.add('is-on'); }
+    if (state.entered) c.classList.add('is-on');
     const link = e.target.closest?.('a, button, input, textarea, label, [data-go]');
-    const isLink = !!link && !c.classList.contains('is-hot');
-    c.classList.toggle('is-link', isLink);
-    ring.classList.toggle('is-link', isLink);
+    c.classList.toggle('is-link', !!link && !c.classList.contains('is-hot'));
   });
-  document.addEventListener('pointerleave', () => { c.classList.remove('is-on'); ring.classList.remove('is-on'); });
+  document.addEventListener('pointerleave', () => c.classList.remove('is-on'));
   tickers.add(() => {
     cur.x += (pos.x - cur.x) * 0.2; cur.y += (pos.y - cur.y) * 0.2;
-    // The ring trails further behind on the home page.
-    const lag = state.page === 'inicio' ? 0.05 : 0.1;
-    rp.x += (pos.x - rp.x) * lag; rp.y += (pos.y - rp.y) * lag;
     c.style.transform = `translate3d(${cur.x.toFixed(1)}px, ${cur.y.toFixed(1)}px, 0)`;
-    ring.style.transform = `translate3d(${rp.x.toFixed(1)}px, ${rp.y.toFixed(1)}px, 0)`;
   });
 }
 
@@ -4349,13 +4821,17 @@ if (FINE && !REDUCE) {
 
   // Surprise: go to the world and frame the screen of the current scene (monitor, projector or TV).
   const back = $('#surpriseBack');
-  let finalePending = false, surpriseRun = 0;
+  let finalePending = false, surpriseRun = 0, onScreens = false;
+  // The phrase leaves the screens once the viewing is over: "back", a page change, or closing the
+  // chat that the viewing opened. "Ver sorpresa" in the ticket panel brings it back.
+  function clearScreens() { if (!onScreens) return; onScreens = false; world?.endSurprise(); }
   function endSurpriseView(unfocus = true) {
     if (!document.body.classList.contains('surprise-view')) return;
     document.body.classList.remove('surprise-view');
     back.hidden = true;
-    if (unfocus) world?.unfocus();
+    if (unfocus) { world?.unfocus(); clearScreens(); }
   }
+  document.addEventListener('app:panelclose', clearScreens);
   async function showSurprise() {
     finalePending = false;
     closeToast(); setOpen(false);
@@ -4371,6 +4847,7 @@ if (FINE && !REDUCE) {
     const run = ++surpriseRun;
     document.body.classList.add('surprise-view');
     back.hidden = false;
+    onScreens = true;
     await world.surprise();
     // Still watching (no "back", no page change, chat not opened by hand): bring in the chat.
     if (run !== surpriseRun || !document.body.classList.contains('surprise-view') || state.page !== 'mundo' || state.panelOpen) return;
