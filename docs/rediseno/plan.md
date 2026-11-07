@@ -141,7 +141,7 @@ Cada tarea cierra con capturas y sin errores de consola (ver "Criterios de termi
 
 ### Fase 6 — Interacción
 
-- [ ] **Vista POV.** Al tocar a Franco la cámara pasa detrás de él y mira lo que él mira (monitores, profesor y pantalla, tele); etiqueta "tocá para hablar"; estática de tele con el mouse encima.
+- [x] **Vista POV.** Hecho el 2026-11-07: `src/scripts/world/pov.ts` (puerto exacto de `focusOn`/`unfocus`/`blendPov` del prototipo: cámara detrás y sobre la cabeza de Franco, corrida a un hombro, mirando `d.pov.target`; el objetivo se centra en el área libre del panel en escritorio y en la franja alta en móvil; luces al 65 %, spot sobre Franco y viñeta `#focusVig`; `setOnTop` y `shotPush` quedan como costura para la toma sorpresa de la fase 8) y `focusOn()`/`unfocus()` en `WorldApi`. La etiqueta "tocá para hablar" y la estática al pasar el mouse ya estaban en `input.ts` desde la fase 3; el panel (tarea siguiente) llama a `focusOn` al abrirse y a `unfocus` al cerrarse o al navegar. Verificado: capturas en POV de las tres escenas en Astro y en el prototipo, posición de cámara igual a tres decimales, fov 50/50/46, sin errores de consola. Al tocar a Franco la cámara pasa detrás de él y mira lo que él mira (monitores, profesor y pantalla, tele); etiqueta "tocá para hablar"; estática de tele con el mouse encima.
   - Resultado esperado: misma transición y encuadres del prototipo en las tres escenas.
   - Cómo se verifica: captura en POV de cada escena.
 - [ ] **Panel de chat y contacto.** Panel de chat conectado a `/api/chat` (oficina y universidad), con Turnstile y auditoría en D1 como hoy; modo contacto directo en "disponible".

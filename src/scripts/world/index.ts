@@ -16,6 +16,7 @@ import type { WorldApi } from './handle';
 import { bindInput } from './input';
 import { createLights } from './lights';
 import { francoMats } from './materials';
+import { createPov } from './pov';
 import { createStage } from './renderer';
 import { home } from './scenes/home';
 import { office } from './scenes/office';
@@ -35,7 +36,8 @@ export async function initWorld(): Promise<WorldApi> {
   const st = createStage();
   const { renderer, scene, camera, canvas, stage } = st;
   const css3d = createCss3d();
-  const { hemi, sun } = createLights(scene);
+  const lights = createLights(scene);
+  const { hemi, sun } = lights;
   const cam = createCameraRig(st, css3d);
   const { rig, orbit, para, view, pov } = cam;
 
@@ -169,6 +171,8 @@ export async function initWorld(): Promise<WorldApi> {
     label.classList.toggle('is-on', labelOn);
   };
 
+  const { focusOn, unfocus } = createPov({ cam, lights, dioramas, setLabel, setHover: input.setHover });
+
   // ---------- camera moves ----------
   const camSet = (vars: Partial<typeof rig>) => {
     gsap.killTweensOf(rig);
@@ -248,9 +252,9 @@ export async function initWorld(): Promise<WorldApi> {
 
   if (DEBUG) {
     Object.assign(window, {
-      __world: { T, gsap, camera, rig, view, para, pov, dioramas, renderer, pointer, dbg: { locked: input.locked, hitFranco: input.hitFranco, hitClock: input.hitClock, setHover: input.setHover, setClockHover: input.setClockHover, setTvHover: input.setTvHover, clockHot: () => input.anyHot, busy: () => state.busy } },
+      __world: { T, gsap, camera, rig, view, para, pov, dioramas, renderer, pointer, dbg: { locked: input.locked, hitFranco: input.hitFranco, hitClock: input.hitClock, setHover: input.setHover, setClockHover: input.setClockHover, setTvHover: input.setTvHover, clockHot: () => input.anyHot, busy: () => state.busy, focusOn, unfocus } },
     });
   }
 
-  return { intro, show, setView, setLabel, start, stop };
+  return { intro, show, setView, setLabel, focusOn, unfocus, start, stop };
 }

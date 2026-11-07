@@ -15,6 +15,10 @@ export interface WorldApi {
   /** View per page: inicio (wide, auto-orbit), mundo (interactive), off (paused, faded). */
   setView(mode: ViewMode, opts?: { instant?: boolean }): void;
   setLabel(on: boolean): void;
+  /** POV view behind Franco (while the panel is open); returns the transition length in seconds. */
+  focusOn(): number;
+  /** Back to the iso rig. */
+  unfocus(): void;
   start(): void;
   stop(): void;
 }
