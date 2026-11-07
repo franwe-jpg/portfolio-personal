@@ -8,3 +8,15 @@ export const COARSE = matchMedia('(pointer: coarse)').matches;
 export const DEBUG = params.has('debug');
 
 export const isNarrow = (): boolean => innerWidth < 768;
+
+/** `?sinwebgl=1` simulates a browser without WebGL (the world then shows its SVG fallback). */
+function hasWebGL(): boolean {
+  if (params.get('sinwebgl') === '1') return false;
+  try {
+    const canvas = document.createElement('canvas');
+    return !!(canvas.getContext('webgl2') || canvas.getContext('webgl'));
+  } catch {
+    return false;
+  }
+}
+export const WEBGL = hasWebGL();

@@ -57,6 +57,9 @@ export interface UiCopy {
     label: string;
     /** Screen-reader suffix after the visible label. */
     sr: string;
+    /** aria-label of the toggle in each state. */
+    on: string;
+    off: string;
   };
 
   inicio: {
@@ -184,7 +187,12 @@ const es: UiCopy = {
     nav: { mundo: 'Mundo', proyectos: 'Proyectos', sobre: 'Sobre mí' },
   },
 
-  sound: { label: 'Sonido', sr: ' ambiente' },
+  sound: {
+    label: 'Sonido',
+    sr: ' ambiente',
+    on: 'Sonido ambiente: activado',
+    off: 'Sonido ambiente: desactivado',
+  },
 
   inicio: {
     label: 'Inicio',

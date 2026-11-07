@@ -104,7 +104,7 @@ Cada tarea cierra con capturas y sin errores de consola (ver "Criterios de termi
 
 ### Fase 2 — Entrada
 
-- [ ] **Entrada completa.** Logo key-cap con partículas que siguen el cursor, barra de carga real (descarga de librerías, fuentes, armado del mundo), botón "Ingresar" y toggle de audio.
+- [x] **Entrada completa.** Hecho el 2026-11-07: `src/scripts/particles.ts` (logo key-cap con el ojo y las partículas, fases boot/solid/leave), `loader.ts` (barra real: `loadThree()` importa `three` dinámicamente desde npm y cachea la promesa, fuentes con `document.fonts.load`, y `registerBootStep(clave, paso)` para que la fase 3 enganche el armado del mundo en el último 10 % de la barra; `gsap` sigue estático porque el router lo necesita de entrada), `audio.ts` (motor WebAudio del prototipo: pad, tick, whoosh, chime; el `AudioContext` se crea solo dentro del clic) y `gate.ts` completo (botón ocupado mientras carga, cursor "trabajando", ícono de pestaña con el ojo). Decisión sobre `three`: la entrada lo precarga para que la barra sea honesta y el mundo arme al instante; como la importación vive en una sola función cacheada, la fase 3 puede llamarla desde la entrada o recién al entrar a `mundo`. Verificado con capturas antes de cargar, con el botón listo y el primer cuadro al entrar, en 1280 y 390 px, y `__app.audio.unlocked` falso antes del clic y verdadero después. Logo key-cap con partículas que siguen el cursor, barra de carga real (descarga de librerías, fuentes, armado del mundo), botón "Ingresar" y toggle de audio.
   - Resultado esperado: misma entrada que el prototipo; el audio arranca solo después de un clic.
   - Cómo se verifica: capturas de la entrada antes y después de cargar; sin errores de consola.
 
