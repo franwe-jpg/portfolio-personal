@@ -97,9 +97,9 @@ export function requestEnter(withAudio: boolean): void {
 
 /** Tab icon: while the visitor is on another tab, the icon becomes the green eye, half closed, looking back at them. */
 function initTabIcon(): void {
-  const link = document.querySelector<HTMLLinkElement>('link[rel="icon"]');
-  if (!link) return;
-  const home = link.href;
+  // Both icon links (the .ico fallback and the SVG) swap, whichever one the browser picked.
+  const links = [...document.querySelectorAll<HTMLLinkElement>('link[rel="icon"]')].map((link) => ({ link, home: link.href }));
+  if (!links.length) return;
   const eye =
     'data:image/svg+xml,' +
     encodeURIComponent(
@@ -113,7 +113,7 @@ function initTabIcon(): void {
         `</svg>`,
     );
   document.addEventListener('visibilitychange', () => {
-    link.href = document.hidden ? eye : home;
+    for (const { link, home } of links) link.href = document.hidden ? eye : home;
   });
 }
 

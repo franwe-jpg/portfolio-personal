@@ -27,6 +27,8 @@ export interface UiCopy {
   ogLocale: string;
   /** Built from the per-language role, so the tag stays in one place. */
   metaDescription: (role: string) => string;
+  /** Alt text of the Open Graph card (public/og.png). */
+  ogImageAlt: string;
 
   loader: {
     loading: (pct: number) => string;
@@ -196,6 +198,7 @@ const es: UiCopy = {
   ogLocale: 'es_AR',
   metaDescription: (role) =>
     `${role} en Trelew, Chubut. Desarrollo web full stack con foco en front-end. Entrá a mi mundo y hablá conmigo.`,
+  ogImageAlt: 'Tecla negra con las iniciales FS y un punto verde, junto al nombre Franco Martin Soler, Analista Programador en Trelew, Chubut.',
 
   loader: {
     loading: (pct) => `CARGANDO MUNDO ${pct}%`,
@@ -389,6 +392,7 @@ const en: UiCopy = {
   ogLocale: 'en_US',
   metaDescription: (role) =>
     `${role} based in Trelew, Chubut. Full stack web development with a front-end focus. Step into my world and talk to me.`,
+  ogImageAlt: 'Black key cap with the initials FS and a green dot, next to the name Franco Martin Soler, software analyst in Trelew, Chubut.',
 
   loader: {
     loading: (pct) => `LOADING WORLD ${pct}%`,
