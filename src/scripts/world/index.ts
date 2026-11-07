@@ -121,6 +121,7 @@ export async function initWorld(): Promise<WorldApi> {
     cam.applyCamera();
     const d = dioramas[state.scene];
     d.update(elapsed, dt);
+    d.clock?.update(elapsed);
     if (!REDUCE) dust.update(elapsed, dt);
     // Hover highlight: emissive rim tint + floor ring.
     hoverAmt += ((input.hovered ? 1 : 0) - hoverAmt) * (REDUCE ? 1 : 0.15);
@@ -130,7 +131,7 @@ export async function initWorld(): Promise<WorldApi> {
     }
     d.franco.ring.material.opacity = hoverAmt * 0.9;
     // "No signal" static over Franco: redrawn ≈12 times per second while any hover lasts.
-    if (isStaticOn() && !REDUCE && elapsed - snowLast >= 1 / 12) {
+    if ((isStaticOn() || input.anyHot) && !REDUCE && elapsed - snowLast >= 1 / 12) {
       snowLast = elapsed;
       drawSnow();
     }
@@ -213,6 +214,7 @@ export async function initWorld(): Promise<WorldApi> {
     stage.classList.toggle('is-inicio', mode === 'inicio');
     setLabel(false);
     input.setHover(false);
+    input.setClockHover(false);
     if (mode === 'off') {
       stop();
       return;
@@ -245,7 +247,7 @@ export async function initWorld(): Promise<WorldApi> {
 
   if (DEBUG) {
     Object.assign(window, {
-      __world: { T, gsap, camera, rig, view, para, pov, dioramas, renderer, pointer, dbg: { locked: input.locked, hitFranco: input.hitFranco, setHover: input.setHover, busy: () => state.busy } },
+      __world: { T, gsap, camera, rig, view, para, pov, dioramas, renderer, pointer, dbg: { locked: input.locked, hitFranco: input.hitFranco, hitClock: input.hitClock, setHover: input.setHover, setClockHover: input.setClockHover, clockHot: () => input.anyHot, busy: () => state.busy } },
     });
   }
 

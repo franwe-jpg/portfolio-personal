@@ -1,18 +1,22 @@
 import * as T from 'three';
+import { REDUCE } from '../../env';
 import { Batch } from '../batch';
+import { makeClock } from '../clock';
 import { MOBILE, SCENE_X } from '../config';
 import { makeFranco, makePerson, type Person } from '../figure';
 import { floorGlow, windowGlow, windowLight } from '../lights';
 import { mat } from '../materials';
-import { at, ICO, UNIT_BOX } from '../primitives';
-import { coffeeMachine, dualMonitors, mug, notebook, plant, roundTable, rug, swivelChair, waterDispenser, type Face } from '../props';
+import { at, ICO, toWorld, UNIT_BOX } from '../primitives';
+import { coffeeMachine, dualMonitors, mug, notebook, plant, roundTable, rug, swivelChair, tv, waterDispenser, type Face } from '../props';
+import { createCodeScreens, createDashboard } from '../screens';
 import type { Diorama } from '../types';
 import { base } from '../walls';
 
 /**
  * Office diorama: two desk islands with four stations, Franco across from the girl with the
- * orange hair, the guy in the brown polo across from the girl with the curls, server rack,
- * coffee corner, meeting TV and whiteboard. Screens and the rack LEDs animate (plan, Fase 5).
+ * orange hair, the guy in the brown polo across from the girl with the curls, server rack with
+ * blinking LEDs, coffee corner, meeting TV with the production dashboard, whiteboard and the
+ * wall clock. Franco's monitors type code and print a terminal.
  */
 export function office(scene: T.Scene): Diorama {
   const root = new T.Group();
@@ -64,11 +68,43 @@ export function office(scene: T.Scene): Diorama {
   const sA = station(-3.7, -0.6, Math.PI, { mug: true });
   const sB = station(1.6, -0.6, 0, { book: true, faces: [mat.screen2, mat.screen] });
   const sC = station(0.2, -0.6, Math.PI, { paper: true, mug: true });
+  // Franco's monitors: code on the one facing the camera, terminal on the other.
+  const screens = createCodeScreens();
+  const screenOf = (f: Face, tex: T.Texture) => {
+    const m = new T.Mesh(new T.PlaneGeometry(0.53, 0.31), new T.MeshBasicMaterial({ map: tex, toneMapped: false }));
+    m.position.set(f.x, f.y, f.z);
+    m.rotation.y = Math.PI / 2 + f.ry;
+    root.add(m);
+    return m;
+  };
+  const scrCode = screenOf(sFranco.faces[1], screens.code.tex);
+  const scrTerm = screenOf(sFranco.faces[0], screens.term.tex);
+  const [fA, fB] = sFranco.faces;
+  // The monitors are under a metre away: the camera goes higher and over the shoulder so the head does not cover them.
+  const pov = {
+    target: toWorld(root, (fA.x + fB.x) / 2, fA.y, (fA.z + fB.z) / 2),
+    wide: { back: 0.85, up: 0.85, side: -0.5, fov: 50 },
+    narrow: { back: 1.0, up: 1.1, side: -0.3 },
+  };
   // Server rack (front faces +z).
   const rx = -4.2;
   const rz = -4.15;
   b.box(rx, 0, rz, 0.9, 2.2, 0.9, mat.black);
   for (let i = 0; i < 6; i++) b.box(rx, 0.32 + i * 0.3, rz + 0.452, 0.8, 0.012, 0.01, mat.trim);
+  const ledGeo = new T.BoxGeometry(0.05, 0.03, 0.012);
+  const leds = new T.InstancedMesh(ledGeo, new T.MeshBasicMaterial({ color: 0xffffff }), 24);
+  const _m = new T.Matrix4();
+  let k = 0;
+  for (let r = 0; r < 6; r++) {
+    for (let c = 0; c < 4; c++) {
+      _m.makeTranslation(rx - 0.3 + c * 0.09, 0.42 + r * 0.3, rz + 0.458);
+      leds.setMatrixAt(k++, _m);
+    }
+  }
+  const ledOn = new T.Color(0x1fbf75);
+  const ledOff = new T.Color(0x1d3328);
+  for (let i = 0; i < 24; i++) leds.setColorAt(i, Math.random() > 0.3 ? ledOn : ledOff);
+  root.add(leds);
   // Shelf with books on the back wall.
   const shx = -1.5;
   b.box(shx, 1.62, -4.62, 2.6, 0.05, 0.36, mat.furnL);
@@ -97,6 +133,9 @@ export function office(scene: T.Scene): Diorama {
   b.box(3.75, 0.94, -4.7, 0.2, 0.12, 0.14, mat.paper, 0.2);
   waterDispenser(b, 4.45, -4.5);
   plant(b, 4.5, -3.55);
+  // Meeting TV on the back wall, over the coffee corner.
+  const dash = createDashboard();
+  root.add(tv(b, 3.3, 1.9, -4.78, 1.56, 0.86, dash.tex.tex));
   // Whiteboard on wheels next to Franco's island, turned towards the room.
   b.add(UNIT_BOX, mat.paper, -3.0, 1.35, 2.6, 1.4, 0.9, 0.04, 0, 0.6, 0);
   b.add(UNIT_BOX, mat.metal, -3.0, 0.45, 2.6, 0.04, 0.9, 0.04, 0, 0.6, 0);
@@ -149,14 +188,36 @@ export function office(scene: T.Scene): Diorama {
   floorGlow(root, 1.1, -3.5, 2.8, 2.4, '255,205,130', 0.5);
   const sunIn = windowLight(root, 0xffd9a6, [1.2, 4.4, -7.2], [0.5, 0, -2.0]);
 
-  function update(t: number): void {
+  // Left wall, between the whiteboard and Franco's desk.
+  const clock = makeClock(root, -4.77, 2.2, 1.0, Math.PI / 2);
+  // Surprise shot (plan, Fase 8): close on the code monitor, in front of Franco's head. The monitor
+  // arm crosses that view, so the screen is drawn on top while the shot lasts.
+  const shot = { mesh: scrCode, dist: 0.62, lift: 0.03, onTop: true };
+  // Hunt ticket (plan, Fase 8): out of the server rack's front-left edge.
+  const tkSpot = new T.Vector3(rx - 0.46, 1.25, rz + 0.46);
+
+  let ledT = 0;
+  function update(t: number, dt: number): void {
     franco.update(t);
     for (const p of people) p.update(t);
+    if (REDUCE) return;
+    ledT += dt;
+    screens.update(t, dt);
+    if (ledT > 0.12) {
+      ledT = 0;
+      for (let i = 0; i < 3; i++) leds.setColorAt((Math.random() * 24) | 0, Math.random() > 0.35 ? ledOn : ledOff);
+      if (leds.instanceColor) leds.instanceColor.needsUpdate = true;
+    }
+    dash.update(t);
   }
   return {
     root,
     franco,
     update,
+    pov,
+    shot,
+    tkSpot,
+    clock,
     lights: [
       [glow, 1.2],
       [sunIn, 120],

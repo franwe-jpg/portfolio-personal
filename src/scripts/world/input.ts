@@ -3,6 +3,8 @@ import type { Scene } from '../../i18n/ui';
 import { audio } from '../audio';
 import { byId } from '../dom';
 import { FINE, REDUCE } from '../env';
+import { argNow, CLOCK_NEXT, realMinutes, SCENE_HOUR, sceneFor } from '../schedule';
+import { setMode } from '../scene';
 import { emit, state } from '../state';
 import type { CameraRig } from './camera';
 import { setStatic } from './figure';
@@ -25,9 +27,13 @@ export interface WorldInput {
   readonly dragging: boolean;
   /** Franco under the pointer. */
   readonly hovered: boolean;
+  /** Something with a static outline is hot (the snow texture keeps redrawing). */
+  readonly anyHot: boolean;
   locked(): boolean;
   setHover(on: boolean): void;
+  setClockHover(on: boolean): void;
   hitFranco(clientX: number, clientY: number): boolean;
+  hitClock(clientX: number, clientY: number): boolean;
 }
 
 export function bindInput(core: InputCore): WorldInput {
@@ -55,6 +61,33 @@ export function bindInput(core: InputCore): WorldInput {
     return raycaster.intersectObject(m, false).length > 0;
   }
   const hitFranco = (x: number, y: number) => hitMesh(dioramas[state.scene].franco.hit, x, y);
+  const hitClock = (x: number, y: number) => hitMesh(dioramas[state.scene].clock?.hit, x, y);
+
+  let clockHot = false;
+  let clockBusy = false;
+  function setClockHover(on: boolean): void {
+    if (clockHot === on) return;
+    clockHot = on;
+    dioramas[state.scene].clock?.setHot(on);
+    cursor.classList.toggle('is-hot', on);
+    canvas.classList.toggle('cur-location', on);
+    if (!FINE) canvas.style.cursor = on ? 'pointer' : '';
+    if (on) audio.tick();
+  }
+  // Tap: the hands spin to the next scene's hour, then the scene changes (home → office 9:00 → university 16:00 → home 21:00).
+  async function clockTap(): Promise<void> {
+    const clock = dioramas[state.scene].clock;
+    if (!clock || clockBusy || state.busy) return;
+    clockBusy = true;
+    audio.tick();
+    const next = CLOCK_NEXT[state.scene];
+    // The scene the schedule picks right now shows the real time again, the others their signature hour.
+    const isNow = next === sceneFor(argNow());
+    await clock.spinTo(isNow ? realMinutes() : SCENE_HOUR[next] * 60);
+    clockBusy = false;
+    setClockHover(false);
+    setMode(isNow ? 'auto' : next);
+  }
 
   function setHover(on: boolean): void {
     if (hovered === on) return;
@@ -119,7 +152,9 @@ export function bindInput(core: InputCore): WorldInput {
       return;
     }
     if (e.pointerType === 'mouse' && !locked()) {
-      setHover(hitFranco(e.clientX, e.clientY));
+      const onClock = hitClock(e.clientX, e.clientY);
+      setClockHover(onClock);
+      setHover(!onClock && hitFranco(e.clientX, e.clientY));
     }
   });
   const endDrag = (e: PointerEvent, cancelled: boolean) => {
@@ -134,6 +169,10 @@ export function bindInput(core: InputCore): WorldInput {
       return;
     }
     if (cancelled || locked()) return;
+    if (hitClock(e.clientX, e.clientY)) {
+      void clockTap();
+      return;
+    }
     if (hitFranco(e.clientX, e.clientY)) {
       if (e.pointerType !== 'mouse') {
         setHover(true);
@@ -145,7 +184,10 @@ export function bindInput(core: InputCore): WorldInput {
   canvas.addEventListener('pointerup', (e) => endDrag(e, false));
   canvas.addEventListener('pointercancel', (e) => endDrag(e, true));
   canvas.addEventListener('pointerleave', () => {
-    if (!drag.active) setHover(false);
+    if (!drag.active) {
+      setHover(false);
+      setClockHover(false);
+    }
   });
   canvas.addEventListener('pointerenter', () => {
     if (core.interactive()) cursor.classList.add('is-grab');
@@ -169,8 +211,13 @@ export function bindInput(core: InputCore): WorldInput {
     get hovered() {
       return hovered;
     },
+    get anyHot() {
+      return clockHot;
+    },
     locked,
     setHover,
+    setClockHover,
     hitFranco,
+    hitClock,
   };
 }

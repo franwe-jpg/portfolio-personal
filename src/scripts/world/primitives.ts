@@ -63,3 +63,7 @@ export const at =
     const s = Math.sin(ry);
     return [x + lx * c + lz * s, z - lx * s + lz * c];
   };
+
+/** Diorama-local point → world (the dioramas only translate along x). */
+export const toWorld = (root: T.Object3D, x: number, y: number, z: number): T.Vector3 =>
+  new T.Vector3(x + root.position.x, y, z);
