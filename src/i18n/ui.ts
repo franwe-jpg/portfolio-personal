@@ -137,8 +137,21 @@ export interface UiCopy {
 
   panel: {
     title: (where: string) => string;
+    /** Title and subtitle of the direct-contact mode (home scene). */
+    titleContact: string;
+    subContact: string;
     close: string;
+    /** Status line under the title: probing, reachable, unreachable. */
     checking: string;
+    live: string;
+    offline: string;
+    /** Speaker labels on the bubbles. */
+    who: { ai: string; franco: string; me: string };
+    typing: string;
+    /** System bubble when the endpoint fails without its own message. */
+    errorStatus: (status: number) => string;
+    /** System bubble when the request never reaches the endpoint. */
+    errorNetwork: string;
     form: {
       name: string;
       via: string;
@@ -146,8 +159,20 @@ export interface UiCopy {
       mail: string;
       handle: string;
       handlePlaceholder: string;
+      mailHandle: string;
+      mailPlaceholder: string;
       message: string;
       send: string;
+      errName: string;
+      errTelegram: string;
+      errMail: string;
+      errMessage: string;
+      /** The visitor's bubble: message, then name and contact. */
+      summary: (message: string, name: string, via: string, handle: string) => string;
+      /** Franco's acknowledgement; `via` is one of `ackVia`. */
+      ack: (name: string, via: string) => string;
+      ackVia: { telegram: string; mail: string };
+      ackTag: string;
     };
     composer: {
       label: string;
@@ -308,8 +333,16 @@ const es: UiCopy = {
 
   panel: {
     title: (where) => `Franco (IA) · ${where}`,
+    titleContact: 'Franco · disponible',
+    subContact: 'Te respondo yo, no una IA',
     close: 'Cerrar',
     checking: '○ verificando /api/chat…',
+    live: '● conectado a /api/chat',
+    offline: '○ sin conexión a /api/chat',
+    who: { ai: 'Franco (IA)', franco: 'Franco', me: 'Vos' },
+    typing: 'escribiendo…',
+    errorStatus: (status) => `No pude responder (error ${status}).`,
+    errorNetwork: 'No pude conectarme. Probá de nuevo en un momento, o escribime por mail.',
     form: {
       name: 'Tu nombre',
       via: 'Respondeme por',
@@ -317,8 +350,18 @@ const es: UiCopy = {
       mail: 'Mail',
       handle: 'Tu usuario de Telegram',
       handlePlaceholder: '@usuario',
+      mailHandle: 'Tu mail',
+      mailPlaceholder: 'nombre@dominio.com',
       message: 'Mensaje',
       send: 'Enviar mensaje',
+      errName: 'Escribí tu nombre.',
+      errTelegram: 'Ingresá un usuario de Telegram válido: 5 a 32 caracteres, letras, números o guion bajo.',
+      errMail: 'Ingresá un mail válido.',
+      errMessage: 'Escribí tu mensaje.',
+      summary: (message, name, via, handle) => `${message}\n\n— ${name} · ${via}: ${handle}`,
+      ack: (name, via) => `Gracias, ${name}. Cuando esté conectado, esto me llega directo y te respondo por ${via}.`,
+      ackVia: { telegram: 'Telegram', mail: 'mail' },
+      ackTag: 'EJEMPLO · no se envió nada (falta /api/contact)',
     },
     composer: {
       label: 'Tu pregunta para Franco',

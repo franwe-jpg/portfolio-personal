@@ -49,6 +49,8 @@ export interface AppEvents {
   'app:pageswap': CustomEvent<Page>;
   /** The visitor tapped Franco in the world (or the fallback's button): the panel (Fase 6) opens. */
   'app:talk': CustomEvent<'world' | 'button'>;
+  /** The chat/contact panel just closed (the ticket hunt, Fase 8, clears the surprise screens then). */
+  'app:panelclose': CustomEvent<void>;
 }
 
 export function emit<K extends keyof AppEvents>(type: K, detail?: AppEvents[K]['detail']): void {

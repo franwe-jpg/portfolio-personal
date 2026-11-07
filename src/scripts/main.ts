@@ -5,6 +5,7 @@ import { initGate } from './gate';
 import { initGlyphFields } from './glyph-field';
 import { initHero } from './hero';
 import { loader } from './loader';
+import { initPanel, panelApi } from './panel';
 import { initPointer } from './pointer';
 import { initRain } from './rain';
 import { initReveals } from './reveals';
@@ -15,7 +16,7 @@ import { state } from './state';
 
 /**
  * Client entry. Each module registers its listeners here; later phases add
- * theirs next to these (the panel in Fase 6, the ticket hunt in Fase 8).
+ * theirs next to these (the ticket hunt in Fase 8).
  * Modules talk through `state` and the `app:*` events declared in state.ts.
  * The 3D world (src/scripts/world) is not imported here: stage.ts loads it
  * lazily on the first visit to `mundo`. A phase that needs work on the gate's
@@ -30,9 +31,10 @@ initReveals();
 initHero();
 initRouter();
 initStage();
+initPanel();
 initAudio();
 initGate();
 
 if (DEBUG) {
-  Object.assign(window, { __app: { state, router, audio, loader } });
+  Object.assign(window, { __app: { state, router, audio, loader, panel: panelApi } });
 }
