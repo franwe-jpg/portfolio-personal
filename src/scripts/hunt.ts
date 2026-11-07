@@ -211,5 +211,3 @@ export function initHunt(): void {
   });
   paint();
 }
-
-export const huntApi = { key: HUNT_KEY, total: TOTAL };

@@ -14,8 +14,8 @@ Producción sigue en francosolersistemas.com, que pasa al sitio nuevo. Se despli
 
 ## Fuente de verdad del diseño
 
-- `demos/prototipos/index.html`: un solo archivo, Three.js 0.170 + GSAP 3.12 desde CDN. Se sirve con `node demos/prototipos/serve.mjs` en `http://localhost:4400`.
-- Hasta terminar la migración, las decisiones visuales se toman primero en el prototipo. Cuando una fase ya está migrada, el código Astro pasa a ser la verdad para esa parte.
+- La migración terminó: el código Astro (`src/`) es la fuente de verdad del diseño. Las decisiones visuales se toman y se verifican ahí.
+- `demos/prototipos/index.html` queda solo como archivo de referencia (un solo archivo, Three.js 0.170 + GSAP 3.12 desde CDN; se sirve con `node demos/prototipos/serve.mjs` en `http://localhost:4400`). No se mantiene ni se actualiza.
 
 ## Plan
 
