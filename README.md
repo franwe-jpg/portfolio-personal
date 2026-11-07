@@ -84,3 +84,4 @@ Bindings declarados en `wrangler.jsonc`: `AI` (Workers AI), `DB` (D1 `portfolio`
 
 - Los cursores de `public/cursores/` son el set de Windows 7 "Cursor Mania" publicado en rw-designer: licencia de uso personal no comercial, con el dibujo original de Microsoft.
 - Las fuentes Instrument Sans y JetBrains Mono se cargan desde Google Fonts (OFL).
+- La música de la sorpresa del cazatickets (`public/musica/gymnopedie-no-1.mp3`) es "Gymnopedie No 1" de Kevin MacLeod (incompetech.com), licencia Creative Commons: By Attribution 4.0 (https://creativecommons.org/licenses/by/4.0/), recodificada a 80 kbps.

@@ -2,7 +2,8 @@ import { gsap } from 'gsap';
 import * as T from 'three';
 import { byId } from '../dom';
 import { REDUCE } from '../env';
-import { t } from '../i18n';
+import { QUOTES, type Quote } from '../../data/quotes';
+import { lang, t } from '../i18n';
 import { HUNT_TOTAL, SCENES, state } from '../state';
 import type { CameraRig } from './camera';
 import { MONO } from './config';
@@ -16,10 +17,10 @@ import type { Dioramas } from './types';
  * screen Franco is looking at in each scene (`SUR` textures, swapped in by each diorama's
  * `surprise(on)`), the camera cuts to the scene's `shot` (square on the screen, darker room,
  * slow push-in) and the phrase types itself out. `endSurprise` gives the screens back their
- * usual content. The phrase is `t.hunt.surprise`; the signature is Franco's panel name.
+ * usual content. The phrase is the visitor's current quote (`surprise(quote)`); the signature
+ * credits its source.
  */
-const PHRASE = t.hunt.surprise;
-const SIGNATURE = `— ${t.panel.who.franco}`;
+let phrase: Quote = QUOTES[lang][0];
 const UP = new T.Vector3(0, 1, 0);
 const W = 640;
 const H = 360;
@@ -58,15 +59,25 @@ function drawPhrase(target: CanvasTex, shown: number, { left = false } = {}): vo
   const x = left ? 48 : W / 2;
   c.textAlign = left ? 'left' : 'center';
   c.textBaseline = 'middle';
-  c.font = `600 15px ${MONO}`;
+  c.font = `500 17px "Instrument Sans", system-ui, sans-serif`;
   c.fillStyle = '#ff5a5f';
-  c.fillText(t.hunt.screenHeader(HUNT_TOTAL), x, 50);
-  const size = left ? 31 : 36;
-  const lh = left ? 40 : 46;
-  c.font = `500 ${size}px "Instrument Sans", system-ui, sans-serif`;
+  c.fillText(t.hunt.screenHeader, x, 44);
+  const maxW = left ? 350 : W - 120;
+  // Largest size whose wrapped lines fit between the header and the signature.
+  const top = 70;
+  const bottom = H - 84;
+  const sizes = left ? [31, 28, 25, 22, 20, 18] : [36, 32, 28, 25, 22, 20];
+  let size = sizes[sizes.length - 1];
+  let lines: string[] = [];
+  for (const candidate of sizes) {
+    size = candidate;
+    c.font = `500 ${size}px "Instrument Sans", system-ui, sans-serif`;
+    lines = wrapLines(c, phrase.text, maxW);
+    if (lines.length * size * 1.28 <= bottom - top) break;
+  }
+  const lh = size * 1.28;
   c.fillStyle = '#f3f5f7';
-  const lines = wrapLines(c, PHRASE, left ? 350 : W - 120);
-  const y0 = H / 2 + 4 - ((lines.length - 1) * lh) / 2;
+  const y0 = (top + bottom) / 2 - ((lines.length - 1) * lh) / 2;
   let rem = shown;
   let caret: { x: number; y: number } | null = null;
   for (const [i, l] of lines.entries()) {
@@ -84,14 +95,15 @@ function drawPhrase(target: CanvasTex, shown: number, { left = false } = {}): vo
   } else {
     c.font = `400 13px ${MONO}`;
     c.fillStyle = '#8a94a3';
-    c.fillText(SIGNATURE, x, H - 42);
+    const sig = wrapLines(c, `— ${phrase.source}`, left ? 350 : W - 100);
+    for (const [i, l] of sig.entries()) c.fillText(l, x, H - 64 - (sig.length - 1 - i) * 17);
   }
   target.tex.needsUpdate = true;
 }
 
 /** Draws the phrase typed up to the fraction `k` on the main and university textures. */
 export function drawSurprise(k = 1): void {
-  const n = Math.round(PHRASE.length * k);
+  const n = Math.round(phrase.text.length * k);
   drawPhrase(SUR.main, n);
   drawPhrase(SUR.uni, n, { left: true });
 }
@@ -161,8 +173,8 @@ export interface SurpriseCore {
 }
 
 export interface SurpriseControl {
-  /** Phrase on every screen, special shot on the current scene; resolves when the "clip" has ended. */
-  surprise(): Promise<void>;
+  /** `quote` on every screen, special shot on the current scene; resolves when the "clip" has ended. */
+  surprise(quote: Quote): Promise<void>;
   /** Screens back to what they were showing. */
   endSurprise(): void;
 }
@@ -188,11 +200,19 @@ export function createSurprise(core: SurpriseCore): SurpriseControl {
     const nrm = new T.Vector3(0, 0, 1).applyQuaternion(sh.mesh.getWorldQuaternion(new T.Quaternion())).applyAxisAngle(UP, sh.yaw ?? 0);
     const at = (k: number) => tgt.clone().addScaledVector(nrm, k).addScaledVector(UP, sh.lift ?? 0);
     const dur = REDUCE ? 0 : 1.6;
-    shotPush.k = sh.dist * (REDUCE ? 1 : 1.35);
-    blendPov(at(shotPush.k), tgt, 40, dur, 'power3.inOut');
+    // Portrait phones: the vertical FOV is what the camera keeps, so at the desktop distance the
+    // screen's width overflows the viewport. Widen the FOV to keep the same horizontal field
+    // instead of backing off (further back, Franco's head covers the TV).
+    const aspect = innerWidth / innerHeight;
+    const SHOT_FOV = 40;
+    const DESK_ASPECT = 1.6;
+    const fov = aspect < DESK_ASPECT ? Math.min(100, (2 * Math.atan((Math.tan((SHOT_FOV / 2) * (Math.PI / 180)) * DESK_ASPECT) / aspect) * 180) / Math.PI) : SHOT_FOV;
+    const dist = sh.dist;
+    shotPush.k = dist * (REDUCE ? 1 : 1.35);
+    blendPov(at(shotPush.k), tgt, fov, dur, 'power3.inOut');
     if (!REDUCE) {
       gsap.to(shotPush, {
-        k: sh.dist,
+        k: dist,
         delay: dur,
         duration: hold,
         ease: 'sine.inOut',
@@ -212,9 +232,10 @@ export function createSurprise(core: SurpriseCore): SurpriseControl {
     return dur;
   }
 
-  function surprise(): Promise<void> {
+  function surprise(quote: Quote): Promise<void> {
+    phrase = quote;
     for (const k of SCENES) dioramas[k].surprise?.(true);
-    const typeDur = PHRASE.length * 0.055;
+    const typeDur = Math.min(phrase.text.length * 0.055, 9);
     const tail = 2.2;
     const lead = surpriseShot(typeDur + tail);
     const run = ++surRun;
@@ -235,7 +256,7 @@ export function createSurprise(core: SurpriseCore): SurpriseControl {
         ease: 'none',
         onUpdate: () => {
           if (run !== surRun) return;
-          const n = Math.round(st.k * PHRASE.length);
+          const n = Math.round(st.k * phrase.text.length);
           if (n !== last) {
             last = n;
             drawSurprise(st.k);

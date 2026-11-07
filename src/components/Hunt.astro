@@ -1,7 +1,7 @@
 ---
 import type { UiCopy } from '../i18n/ui';
 
-/** Ticket hunt: the "ábreme" tab, its panel and the surprise back button (behaviour in src/scripts/hunt.ts). */
+/** Ticket hunt: the "ábreme" tab, its panel and the surprise HUD (prize line, terms link, back button; behaviour in src/scripts/hunt.ts). */
 interface Props {
   t: UiCopy;
 }
@@ -28,4 +28,10 @@ const TOTAL = 5;
     </div>
   </div>
 </div>
-<button class="pill surprise-back" id="surpriseBack" type="button" hidden>{t.mundo.surpriseBack}</button>
+<div class="surprise-hud" id="surpriseHud" hidden>
+  <p class="surprise-prize">{t.hunt.prize}</p>
+  <div class="surprise-row">
+    <a class="pill surprise-terms" href={t.hunt.termsHref} target="_blank" rel="noopener">{t.hunt.terms}</a>
+    <button class="pill surprise-back" id="surpriseBack" type="button">{t.mundo.surpriseBack}</button>
+  </div>
+</div>

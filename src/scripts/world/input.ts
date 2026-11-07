@@ -54,6 +54,8 @@ export function bindInput(core: InputCore): WorldInput {
   const raycaster = new T.Raycaster();
   const ndc = new T.Vector2();
   const locked = () => state.busy || state.panelOpen || !core.interactive();
+  /** The surprise view: the canvas takes no taps (TV, clock, Franco); only its buttons leave it. */
+  const inSurprise = () => document.body.classList.contains('surprise-view');
 
   function aim(clientX: number, clientY: number): void {
     const r = canvas.getBoundingClientRect();
@@ -132,7 +134,7 @@ export function bindInput(core: InputCore): WorldInput {
 
   canvas.addEventListener('pointerdown', (e) => {
     if (locked()) return;
-    const tv = tvUi();
+    const tv = inSurprise() ? null : tvUi();
     if (tv && hitMesh(tv.bar.hit, e.clientX, e.clientY)) {
       volDrag = true;
       canvas.setPointerCapture(e.pointerId);
@@ -193,7 +195,7 @@ export function bindInput(core: InputCore): WorldInput {
       drag.ly = e.clientY;
       return;
     }
-    if (e.pointerType === 'mouse' && !locked()) {
+    if (e.pointerType === 'mouse' && !locked() && !inSurprise()) {
       const onClock = hitClock(e.clientX, e.clientY);
       const tv = tvUi();
       const tvPartNow: TvPart =
@@ -224,7 +226,7 @@ export function bindInput(core: InputCore): WorldInput {
       orbit.vAz = REDUCE ? 0 : drag.v;
       return;
     }
-    if (cancelled || locked()) return;
+    if (cancelled || locked() || inSurprise()) return;
     if (hitClock(e.clientX, e.clientY)) {
       void clockTap();
       return;

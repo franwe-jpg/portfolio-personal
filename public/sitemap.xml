@@ -14,4 +14,18 @@
     <xhtml:link rel="alternate" hreflang="en" href="https://francosolersistemas.com/en/" />
     <xhtml:link rel="alternate" hreflang="x-default" href="https://francosolersistemas.com/" />
   </url>
+  <url>
+    <loc>https://francosolersistemas.com/tyc/</loc>
+    <lastmod>2026-11-07</lastmod>
+    <xhtml:link rel="alternate" hreflang="es" href="https://francosolersistemas.com/tyc/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://francosolersistemas.com/en/tyc/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://francosolersistemas.com/tyc/" />
+  </url>
+  <url>
+    <loc>https://francosolersistemas.com/en/tyc/</loc>
+    <lastmod>2026-11-07</lastmod>
+    <xhtml:link rel="alternate" hreflang="es" href="https://francosolersistemas.com/tyc/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://francosolersistemas.com/en/tyc/" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://francosolersistemas.com/tyc/" />
+  </url>
 </urlset>
