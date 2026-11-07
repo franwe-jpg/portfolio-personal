@@ -3,21 +3,50 @@ import { Batch } from '../batch';
 import { MOBILE, SCENE_X } from '../config';
 import { makeFranco, makePerson, person, type Person } from '../figure';
 import { floorGlow, windowGlow, windowLight } from '../lights';
+import { mat, pm } from '../materials';
+import { at, UNIT_BOX, unitCyl } from '../primitives';
+import { backpack, bookcase, classChair, notebook, plant, studentDesk } from '../props';
 import type { Diorama } from '../types';
 import { base } from '../walls';
 
-/** University diorama (plan, Fase 5): the board, desks and people arrive with that task. */
+/**
+ * University diorama: blackboard with the Databases II slides, projection screen, teacher at
+ * the lectern, 3×3 desks with notebooks and notebooks, Franco's desk with his lunch box. The
+ * board and screen animate (plan, Fase 5).
+ */
 export function university(scene: T.Scene): Diorama {
   const root = new T.Group();
   root.position.x = SCENE_X.uni;
   scene.add(root);
   const b = new Batch(root);
   base(root, b, { window: { a: -3.4, b: -1.4, y0: 1.1, y1: 2.6 } });
-  b.flush();
-
-  // Desks in a 3×3 facing the board (-x); the seat is 0.6 to the right of each desk.
+  // Blackboard on the left wall (faces +x), pushed to the back to leave room for the screen.
+  const BZ = -2.3;
+  b.box(-4.76, 0.95, BZ, 0.06, 1.95, 4.5, mat.trim);
+  b.box(-4.68, 0.93, BZ, 0.16, 0.04, 4.2, mat.furnL);
+  b.box(-4.62, 0.97, BZ - 1.6, 0.06, 0.025, 0.12, mat.paper);
+  b.box(-4.62, 0.97, BZ - 1.4, 0.06, 0.025, 0.12, mat.pale);
+  // Projection screen (roll-up) to the right of the board, and the projector aimed at it.
+  const PZ = 1.5;
+  b.add(unitCyl(10), mat.dark, -4.7, 2.3, PZ, 0.05, 2.34, 0.05, Math.PI / 2, 0, 0);
+  b.box(-4.7, 0.86, PZ, 0.03, 0.04, 2.24, mat.dark);
+  // Ceiling projector (lens faces -x, toward the screen).
+  b.box(0.3, 2.84, PZ, 0.04, 0.18, 0.04, mat.metal);
+  b.box(0.3, 2.66, PZ, 0.42, 0.16, 0.36, mat.pale);
+  b.add(unitCyl(10), mat.dark, 0.08, 2.74, PZ, 0.06, 0.05, 0.06, 0, 0, Math.PI / 2);
+  b.box(0.3, 2.7, PZ + 0.182, 0.02, 0.02, 0.006, mat.signal);
+  // Desks in a 3×3 facing the board (-x), with an aisle between rows.
+  const cols = [-1.9, -0.4, 1.1];
+  const rows = [-1.9, 0, 1.9];
   const SEAT = (x: number, z: number) => ({ x: x + 0.6, z });
-  // Franco in the middle column, front row (away from the projector and its cone); mates on five desks.
+  for (const x of cols) {
+    for (const z of rows) {
+      studentDesk(b, x, z);
+      classChair(b, x + 0.62, z, 0);
+    }
+  }
+  // Franco in the middle column, front row (away from the projector and its cone);
+  // mates on 5 desks; 3 empty, two with a backpack.
   const fSeat = SEAT(-0.4, -1.9);
   const mates: [number, number][] = [
     [-1.9, 0],
@@ -26,6 +55,50 @@ export function university(scene: T.Scene): Diorama {
     [-1.9, -1.9],
     [-1.9, 1.9],
   ];
+  const empties: [number, number, T.Material | null][] = [
+    [1.1, -1.9, mat.plum],
+    [-0.4, 0, pm(0x9c5a46)],
+    [1.1, 0, null],
+  ];
+  // The occupied desks alternate notebook, exercise book, loose sheet, notebook with an exercise
+  // book beside it, and exercise book with a pen.
+  const cuaderno = (x: number, z: number, ry: number, cover: T.Material) => {
+    b.box(x, 0.76, z, 0.21, 0.025, 0.29, cover, ry);
+    const w = at(x, z, ry);
+    const [px, pz] = w(0, 0.055);
+    b.box(px, 0.785, pz, 0.19, 0.004, 0.13, mat.paper, ry);
+  };
+  mates.forEach(([x, z], i) => {
+    const tilt = 0.2 - ((x * 7 + z * 3) % 1) * 0.5;
+    if (i === 0) notebook(b, x - 0.04, 0.76, z, 0);
+    else if (i === 1) cuaderno(x, z, tilt, mat.plum);
+    else if (i === 2) {
+      b.box(x, 0.76, z, 0.24, 0.012, 0.32, mat.paper, tilt);
+      b.box(x + 0.08, 0.772, z + 0.15, 0.012, 0.012, 0.16, mat.dark, 0.4);
+    } else if (i === 3) {
+      notebook(b, x - 0.04, 0.76, z - 0.16, 0);
+      cuaderno(x + 0.02, z + 0.26, 0.1, mat.trim);
+    } else {
+      cuaderno(x, z, tilt, pm(0x9c5a46));
+      b.box(x + 0.1, 0.785, z + 0.12, 0.012, 0.012, 0.16, mat.dark, 0.3);
+    }
+  });
+  for (const [x, z, m] of empties) {
+    if (m) backpack(b, x + 0.55, z + 0.6, 0.3, m);
+    else b.box(x, 0.74, z, 0.2, 0.06, 0.28, mat.trim, 0.1);
+  }
+  // Franco's desk: notebook and a lunch box with its lid.
+  notebook(b, -0.44, 0.76, -2.02, 0);
+  b.box(-0.38, 0.76, -1.6, 0.17, 0.065, 0.13, mat.pale, 0.15);
+  b.box(-0.38, 0.825, -1.6, 0.18, 0.015, 0.14, mat.plum, 0.15);
+  // Lectern between the board and the screen.
+  b.box(-3.9, 0, -0.5, 0.55, 1.0, 0.5, mat.furn);
+  b.add(UNIT_BOX, mat.furnL, -3.86, 1.06, -0.5, 0.62, 0.05, 0.58, 0, 0, -0.25);
+  b.box(-3.84, 1.1, -0.5, 0.3, 0.012, 0.4, mat.paper, 0.1);
+  // Bookcase on the back wall.
+  bookcase(b, 2.8, -4.57, -Math.PI / 2, 2.2, 4);
+  plant(b, 4.3, -3.6, 0.8);
+  b.flush();
 
   const franco = makeFranco('writing');
   franco.root.position.set(fSeat.x, 0.51, fSeat.z);
