@@ -1,159 +1,86 @@
-<div align="center">
+# Portfolio personal — mundo 3D
 
-<img src="docs/readme/banner.svg" alt="Franco Martin Soler — Software Analyst" width="100%">
+Sitio de [francosolersistemas.com](https://francosolersistemas.com): un portfolio que no hace scroll. Se entra por una pantalla de carga, se cae en `inicio` y desde ahí se navega entre cuatro estados: el **mundo** (un diorama isométrico en 3D donde Franco está en la oficina, en la universidad o en casa según la hora de Argentina, y se le puede hablar por un chat con IA), **proyectos** y **sobre mí**. Hay versión en español (`/`) e inglés (`/en/`). Y hay un easter egg.
 
-<br>
+La primera versión del portfolio sigue en línea en [v1.francosolersistemas.com](https://v1.francosolersistemas.com), desde el repo [`franwe-jpg/portfolio-v1`](https://github.com/franwe-jpg/portfolio-v1).
 
-[![Live](https://img.shields.io/badge/●_LIVE-francosolersistemas.com-25d366?style=for-the-badge&labelColor=0b141a)](https://francosolersistemas.com)
+## Stack
 
-![Astro](https://img.shields.io/badge/Astro_7-0b141a?style=flat-square&logo=astro&logoColor=ff5d01)
-![TypeScript](https://img.shields.io/badge/TypeScript-0b141a?style=flat-square&logo=typescript&logoColor=3178c6)
-![Cloudflare Workers](https://img.shields.io/badge/Workers-0b141a?style=flat-square&logo=cloudflareworkers&logoColor=f38020)
-![Workers AI](https://img.shields.io/badge/Workers_AI-Llama_3.1_8B-0b141a?style=flat-square&logo=cloudflare&logoColor=f38020)
-![D1](https://img.shields.io/badge/D1-SQLite-0b141a?style=flat-square&logo=sqlite&logoColor=53bdeb)
-![Turnstile](https://img.shields.io/badge/Turnstile-human_check-0b141a?style=flat-square&logo=cloudflare&logoColor=25d366)
+- **Astro 7** con `@astrojs/cloudflare`: todas las páginas se prerenderizan a HTML estático; solo `/api/*` corre en el Worker.
+- **Three.js 0.170** para el mundo 3D y **GSAP 3.12** para las animaciones. El chunk del mundo se descarga recién al entrar a `mundo`.
+- **Cloudflare Workers** para servir el sitio, con **Workers AI** (`llama-3.1-8b-instruct-fp8`) detrás del chat, **D1** para la cuota diaria y el registro de preguntas, y **Turnstile** como verificación humana.
+- Sin framework de UI: componentes `.astro` y módulos TypeScript que se comunican por un estado único y eventos en `document`.
 
-</div>
-
-```text
-┌──────────────────────────────────────────────────────────────────────┐
-│  SYSTEM.INFO                                                         │
-├──────────────────────────────────────────────────────────────────────┤
-│  > what      a portfolio that is a chat, not a page                  │
-│  > how       tap through the scripted intro, then ask anything       │
-│  > who       an AI persona answers in first person, ES / EN          │
-│  > where     static HTML on Cloudflare + one Worker route            │
-│  > status    ██████████████████████████████  ONLINE                  │
-└──────────────────────────────────────────────────────────────────────┘
-```
-
-## `01` // The interface
-
-Each tap plays one exchange. The scripted visitor question is typed into the
-composer letter by letter and sent, then Franco types and answers. When the script
-ends, the chat scrolls natively and opens up to real questions.
-
-<div align="center">
-
-| `[ boot ]` | `[ typing… ]` | `[ your turn ]` |
-| :---: | :---: | :---: |
-| <img src="docs/readme/screen-tap-hint.png" width="230" alt="Pulsing tap hint centered on the chat"> | <img src="docs/readme/screen-typing.png" width="230" alt="Visitor message being typed in the composer"> | <img src="docs/readme/screen-your-turn.png" width="230" alt="Invitation to write once the script ends"> |
-| A pulsing hint asks for a tap | The draft takes 1–2 s, then it is sent | Ask anything or pick a suggested question |
-
-</div>
-
-## `02` // Architecture
-
-```mermaid
-flowchart LR
-    V([visitor]):::ext -->|GET /| A[["static HTML<br/>prerendered by Astro"]]
-    V -->|POST /api/chat| W{{"Worker<br/>src/pages/api/chat.ts"}}
-    W --> T[(Turnstile<br/>siteverify)]
-    W --> D[(D1<br/>quota + log)]
-    W --> AI[/"Workers AI<br/>llama-3.1-8b-instruct-fp8"/]
-
-    classDef ext fill:#0b141a,stroke:#25d366,color:#e9edef
-    classDef default fill:#111b21,stroke:#53bdeb,color:#e9edef
-```
-
-Every page is prerendered to static HTML. Only `/api/chat` runs on the Worker.
-
-## `03` // Request pipeline
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant B as browser
-    participant W as /api/chat
-    participant T as Turnstile
-    participant D as D1
-    participant M as Workers AI
-
-    B->>W: { question, lang, turnstileToken }
-    W->>W: validate shape and length
-    W->>T: verify token
-    T-->>W: passed / rejected
-    W->>D: upsert question_quota (hashed IP, day)
-    D-->>W: count (cap: 25/day)
-    alt emoji-only message
-        W-->>B: 🤖 ⚙️ 💻  (answered in code)
-    else regular question
-        W->>M: system persona + <question> as data
-        M-->>W: answer
-        W->>D: insert chat_log
-        W-->>B: { answer }
-    end
-```
-
-## `04` // Source map
+## Estructura
 
 ```text
 src/
-├── components/     ▸ ChatPanel, ProjectsPanel, ProfilePanel, Avatar …
-├── data/           ▸ scripted messages, profile, projects (ES / EN)
-├── i18n/           ▸ UI copy and language routing
-├── lib/persona.ts  ▸ the system prompt and the daily limit
-├── pages/
-│   ├── index.astro ▸ /      (Spanish)
-│   ├── en/         ▸ /en/   (English)
-│   └── api/chat.ts ▸ the only server route
-├── scripts/        ▸ tap-driven chat, typing drafts, Turnstile, theme
-└── styles/         ▸ landing.css, with light and dark themes
-db/schema.sql       ▸ D1 tables: question_quota, chat_log
-public/_headers     ▸ security headers for static responses
+├── components/   Áreas del único documento: Loader, Gate, Header, PageInicio, PageMundo,
+│                 PageProyectos, PageSobre, Panel (chat y contacto), Hunt, Cursor…
+├── scripts/      Lógica del cliente: router, state (estado y eventos), gate, rain,
+│                 glyph-field, panel, chat, hunt, audio, cursor, scene, stage…
+│   └── world/    El mundo 3D: cámara, luces, materiales, figuras, mascotas, pantallas,
+│                 reloj, sorpresa y las tres escenas (scenes/office, university, home)
+├── styles/       base, gate, pages, panel, world (CSS plano)
+├── data/         Contenido: profile.ts, projects.ts, photos.ts (ES y EN)
+├── i18n/         config.ts (idiomas y rutas) y ui.ts (todo texto de interfaz, tipado)
+├── lib/          persona.ts: prompt del sistema y límites del chat
+├── layouts/      Layout.astro: head, metadatos, JSON-LD y redirección por idioma
+├── pages/        index.astro (/), en/index.astro (/en/) y api/ (chat.ts, geo.ts)
+└── assets/       Imágenes importadas desde componentes
+public/
+├── fotos/        Fotos de la sección "Fotos" (webp, ≤ 1600 px)
+├── proyectos/    Capturas y clips de las tarjetas de proyectos
+├── cursores/     Set de cursores (PNG por cuadro)
+├── og.png, favicon.ico, apple-touch-icon.png   Generados por scripts/brand-assets.mjs
+├── sitemap.xml, robots.txt, _headers           Estáticos, se editan a mano
+└── fallback-mundo.svg                          Ilustración cuando no hay WebGL
+db/schema.sql     Tablas de D1: question_quota y chat_log
+demos/prototipos/ Prototipo original en un solo HTML; queda como referencia (ver su README)
+scripts/          brand-assets.mjs
+docs/rediseno/    Plan de la migración y registro de decisiones
 ```
 
-## `05` // Boot sequence
+## Cómo correrlo
 
 ```sh
-$ npm install
-$ npx wrangler d1 execute portfolio --local --file=db/schema.sql   # once
-$ npm run dev        # http://localhost:4321
-$ npm run build      # dist/client (static) + dist/server (Worker)
-$ npm run deploy     # build + wrangler deploy
+npm install
+npm run dev        # http://localhost:4321
+npm run build      # dist/client (estático) + dist/server (Worker)
+npm run preview    # sirve el build
+npm run cf-typegen # regenera worker-configuration.d.ts tras editar wrangler.jsonc
 ```
 
-> [!NOTE]
-> Workers AI has no local emulation. With the `ai` binding enabled, `astro dev`
-> opens a remote proxy session, so run `npx wrangler login` first. If the binding
-> is absent in dev, `/api/chat` answers with a `[STUB LOCAL …]` placeholder; that
-> path is guarded by `import.meta.env.DEV`. Turnstile is skipped in dev when
-> `TURNSTILE_SECRET` is not set.
+Secretos que usa `/api/chat`, en `.dev.vars` (ignorado por git) y en producción con `wrangler secret put`:
 
-<details>
-<summary><b>▸ Database</b></summary>
+- `IP_SALT`: sal para el hash de las IPs que se guardan en D1.
+- `TURNSTILE_SECRET`: clave secreta del widget de Turnstile. Si falta en desarrollo, la verificación se salta.
 
-```sh
-npx wrangler d1 create portfolio                       # paste the id into wrangler.jsonc
-npx wrangler d1 execute portfolio --local  --file=db/schema.sql
-npx wrangler d1 execute portfolio --remote --file=db/schema.sql
-```
+Bindings declarados en `wrangler.jsonc`: `AI` (Workers AI), `DB` (D1 `portfolio`), `SESSION` (KV) y `ASSETS`. Workers AI no tiene emulación local: con el binding activo, `astro dev` abre una sesión remota (hace falta `npx wrangler login`); sin él, `/api/chat` responde con un stub marcado. La base local se crea con `npx wrangler d1 execute portfolio --local --file=db/schema.sql`.
 
-</details>
+### Parámetros de URL
 
-<details>
-<summary><b>▸ Secrets</b></summary>
+| Parámetro | Efecto |
+|---|---|
+| `?escena=oficina` · `universidad` · `disponible` | Fuerza la escena en vez de seguir el horario. |
+| `?debug` | Expone `window.__app` y `window.__world` para inspeccionar desde la consola. |
+| `?sinwebgl=1` | Simula un navegador sin WebGL y muestra `fallback-mundo.svg`. |
 
-```sh
-npx wrangler secret put IP_SALT            # random string; salts the stored IP hashes
-npx wrangler secret put TURNSTILE_SECRET   # Turnstile widget secret for siteverify
-```
+## Cómo agregar contenido
 
-</details>
+**Una foto.** Convertir el original a webp de 1600 px de ancho como máximo (con `sharp`, que ya instala Astro) y guardarlo en `public/fotos/`. Agregar la entrada en `src/data/photos.ts`: `src`, `width` y `height` en `PHOTO_BASE` (la proporción decide la celda; `wide`/`tall` la fuerzan) y el pie de foto en `PHOTO_COPY`, en español e inglés, en la misma posición. La lista va de la más nueva a la más vieja.
 
-<details>
-<summary><b>▸ Types</b></summary>
+**Un proyecto.** Capturas en webp (y, si hay, un clip corto `.mp4` con su póster) en `public/proyectos/`. Agregar el proyecto en `src/data/projects.ts`: `id`, `media` y `links` en `PROJECT_BASE`, y el título, la descripción, los `alt` y las etiquetas de los enlaces en el bloque de cada idioma. Los `.mp4` de esa carpeta son la única excepción al `*.mp4` de `.gitignore`.
 
-```sh
-npm run cf-typegen   # regenerate worker-configuration.d.ts after editing wrangler.jsonc
-```
+**Textos de interfaz.** Todo pasa por `src/i18n/ui.ts`; la interfaz `UiCopy` hace que una clave faltante en un idioma sea un error de compilación.
 
-</details>
+## Marca, SEO y deploy
 
-<div align="center">
+- `node scripts/brand-assets.mjs` regenera `public/og.png`, `favicon.ico` y `apple-touch-icon.png` a partir de la tecla "FS". Necesita las fuentes Instrument Sans y JetBrains Mono visibles para fontconfig (instaladas o vía `FONTCONFIG_FILE`).
+- `public/sitemap.xml` es estático: si cambian las rutas o el `lastmod`, se edita a mano.
+- Cada push a `main` despliega con `.github/workflows/deploy.yml` (`npm run deploy`: build + `wrangler deploy`). El flujo de ramas es feature → `develop` → `main`.
 
-```text
-> connection closed by remote host. thanks for reading_
-```
+## Licencias de terceros
 
-</div>
+- Los cursores de `public/cursores/` son el set de Windows 7 "Cursor Mania" publicado en rw-designer: licencia de uso personal no comercial, con el dibujo original de Microsoft.
+- Las fuentes Instrument Sans y JetBrains Mono se cargan desde Google Fonts (OFL).

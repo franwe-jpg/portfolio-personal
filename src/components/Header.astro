@@ -1,0 +1,35 @@
+---
+import { otherLang, pathForLang, type Lang } from '../i18n/config';
+import type { UiCopy } from '../i18n/ui';
+import Icon from './Icon.astro';
+
+/** Fixed top HUD: back-to-gate button, wordmark, the page navigation and the language switch. */
+interface Props {
+  lang: Lang;
+  t: UiCopy;
+}
+
+const { lang, t } = Astro.props;
+const other = otherLang(lang);
+---
+
+<header class="hud-top">
+  <div class="brand-row">
+    <button class="back-gate" id="backGate" type="button" title={t.header.backToGate} aria-label={t.header.backToGate}>
+      <Icon name="back" size={16} />
+    </button>
+    <a class="brand" href="#inicio" data-go="inicio">
+      <span class="brand-name" id="brandName" aria-hidden="true">{t.header.brand}</span>
+      <span class="sr-only">{t.header.brandSr}</span>
+    </a>
+  </div>
+  <nav class="nav" aria-label={t.header.navLabel}>
+    <a href="#mundo" data-go="mundo" data-scr>{t.header.nav.mundo}</a>
+    <a href="#proyectos" data-go="proyectos" data-scr>{t.header.nav.proyectos}</a>
+    <a href="#sobre" data-go="sobre" data-scr>{t.header.nav.sobre}</a>
+    {/* src/scripts/i18n.ts persists the choice so the automatic redirect never undoes it. */}
+    <a class="lang-switch" id="langSwitch" href={pathForLang(other)} hreflang={other} lang={other} aria-label={t.header.lang.sr}>
+      {t.header.lang.label}
+    </a>
+  </nav>
+</header>

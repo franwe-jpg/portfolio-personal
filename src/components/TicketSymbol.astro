@@ -1,0 +1,62 @@
+---
+import type { UiCopy } from '../i18n/ui';
+
+/** Shared SVG symbol for the hidden tickets; referenced with <use href="#tkSym">. */
+interface Props {
+  t: UiCopy;
+}
+
+const { t } = Astro.props;
+---
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="tkSymG" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e5383b"></stop>
+      <stop offset="1" stop-color="#b3141c"></stop>
+    </linearGradient>
+    <mask id="tkSymM">
+      <rect width="400" height="190" fill="#fff"></rect>
+      <circle cx="0" cy="95" r="18"></circle>
+      <circle cx="400" cy="95" r="18"></circle>
+    </mask>
+  </defs>
+  <symbol id="tkSym" viewBox="0 0 400 190">
+    <g mask="url(#tkSymM)">
+      <rect width="400" height="190" rx="12" fill="url(#tkSymG)"></rect>
+      <rect
+        x="14"
+        y="14"
+        width="372"
+        height="162"
+        rx="7"
+        fill="none"
+        stroke="#ffd9d0"
+        stroke-opacity=".6"
+        stroke-width="5"
+        stroke-dasharray="12 9"></rect>
+      <line
+        x1="300"
+        y1="18"
+        x2="300"
+        y2="172"
+        stroke="#7a0b10"
+        stroke-width="5"
+        stroke-dasharray="4 12"
+        stroke-linecap="round"></line>
+    </g>
+    <text
+      x="156"
+      y="118"
+      fill="#fff3ee"
+      font-family="ui-monospace, monospace"
+      font-size="54"
+      font-weight="800"
+      text-anchor="middle"
+      letter-spacing="3">{t.hunt.ticket}</text
+    >
+    <text x="350" y="118" fill="#fff3ee" font-family="ui-monospace, monospace" font-size="50" font-weight="800" text-anchor="middle"
+      >?</text
+    >
+  </symbol>
+</svg>

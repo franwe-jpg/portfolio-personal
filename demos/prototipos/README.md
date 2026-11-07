@@ -1,5 +1,7 @@
 # Prototipo del rediseño
 
+> **Nota (2026-11-07).** La migración a Astro terminó: el sitio en `src/` es la fuente de verdad del diseño. Esta carpeta se conserva solo como archivo de referencia y no se mantiene; cualquier cambio visual se hace en el sitio Astro.
+
 Prototipo navegable del portfolio: entrada con partículas, mundo isométrico en 3D y secciones con scroll. Todo vive en `index.html` (CSS y JS inline, librerías desde CDN con versión fija).
 
 ## Cómo correrlo
