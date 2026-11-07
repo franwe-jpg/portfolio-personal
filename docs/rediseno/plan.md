@@ -82,7 +82,7 @@ Cada tarea cierra con capturas y sin errores de consola (ver "Criterios de termi
 
 ### Fase 0 — Preparación
 
-- [ ] **Rama y dependencias.** Crear `rediseno/astro` desde `develop`. Agregar `three` y `gsap` como dependencias npm con versión fija.
+- [x] **Rama y dependencias.** Hecho el 2026-11-07: `rediseno/astro` creada desde `rediseno/prototipo` (que ya contiene `develop`, con el PR #3 abierto); `three@0.170.0` y `gsap@3.12.5` fijadas en `package.json`, `npm run build` y `npm run preview` pasan.
   - Resultado esperado: `npm run build` pasa; `three` y `gsap` importables desde `src`.
   - Cómo se verifica: `npm run build` y `npm run preview` levantan sin errores.
 - [ ] **Limpieza del sitio viejo.** Quitar los componentes que no sobreviven (`ChatPanel`, `ProjectsPanel`, `ProfilePanel`, `Intro`, `LandingPage`, `ProjectCard`, `Avatar`, `ViewToggleButton`) y `landing.ts` / `landing.css`. Conservar `src/pages/api`, `src/data`, `src/i18n` y `src/lib`.
