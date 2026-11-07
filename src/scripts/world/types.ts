@@ -1,6 +1,7 @@
 import type * as T from 'three';
 import type { Clock } from './clock';
 import type { Franco } from './figure';
+import type { HomeDiorama } from './scenes/home';
 
 /** POV framing (plan, Fase 6): distance behind Franco's head, height, shoulder offset and fov. */
 export interface PovFraming {
@@ -49,4 +50,11 @@ export interface Diorama {
   onActive?(on: boolean): void;
   /** Told when the POV view starts or ends (the projector cone hides then). */
   onFocus?(on: boolean): void;
+}
+
+/** The three dioramas; the home one also carries its TV handle for the pointer. */
+export interface Dioramas {
+  office: Diorama;
+  uni: Diorama;
+  home: HomeDiorama;
 }

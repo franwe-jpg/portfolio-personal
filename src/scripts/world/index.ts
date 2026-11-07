@@ -21,7 +21,7 @@ import { home } from './scenes/home';
 import { office } from './scenes/office';
 import { university } from './scenes/university';
 import { drawSnow } from './textures';
-import type { Diorama } from './types';
+import type { Dioramas } from './types';
 import { addGroundHalo } from './walls';
 
 /**
@@ -41,12 +41,12 @@ export async function initWorld(): Promise<WorldApi> {
 
   // Build one diorama per frame so the busy cursor keeps animating.
   await nextFrame();
-  const dioramas: Record<Scene, Diorama> = {} as Record<Scene, Diorama>;
+  const dioramas = {} as Dioramas;
   dioramas.office = office(scene);
   await nextFrame();
   dioramas.uni = university(scene);
   await nextFrame();
-  dioramas.home = home(scene);
+  dioramas.home = home(scene, css3d);
   await nextFrame();
   for (const k of SCENES) addGroundHalo(dioramas[k].root);
   const dust = createDust(scene);
@@ -215,6 +215,7 @@ export async function initWorld(): Promise<WorldApi> {
     setLabel(false);
     input.setHover(false);
     input.setClockHover(false);
+    input.setTvHover(null);
     if (mode === 'off') {
       stop();
       return;
@@ -247,7 +248,7 @@ export async function initWorld(): Promise<WorldApi> {
 
   if (DEBUG) {
     Object.assign(window, {
-      __world: { T, gsap, camera, rig, view, para, pov, dioramas, renderer, pointer, dbg: { locked: input.locked, hitFranco: input.hitFranco, hitClock: input.hitClock, setHover: input.setHover, setClockHover: input.setClockHover, clockHot: () => input.anyHot, busy: () => state.busy } },
+      __world: { T, gsap, camera, rig, view, para, pov, dioramas, renderer, pointer, dbg: { locked: input.locked, hitFranco: input.hitFranco, hitClock: input.hitClock, setHover: input.setHover, setClockHover: input.setClockHover, setTvHover: input.setTvHover, clockHot: () => input.anyHot, busy: () => state.busy } },
     });
   }
 

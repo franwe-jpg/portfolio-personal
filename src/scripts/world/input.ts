@@ -1,5 +1,4 @@
 import * as T from 'three';
-import type { Scene } from '../../i18n/ui';
 import { audio } from '../audio';
 import { byId } from '../dom';
 import { FINE, REDUCE } from '../env';
@@ -7,21 +6,25 @@ import { argNow, CLOCK_NEXT, realMinutes, SCENE_HOUR, sceneFor } from '../schedu
 import { setMode } from '../scene';
 import { emit, state } from '../state';
 import type { CameraRig } from './camera';
+import { SCENE_X } from './config';
 import { setStatic } from './figure';
-import type { Diorama } from './types';
+import type { Dioramas } from './types';
 
 /**
  * Pointer on the canvas (mundo view only): drag to orbit with inertia, wheel and pinch to zoom,
- * hover and tap on Franco (static, ring, label, `app:talk`). The clock and the TV hook in with
- * their scenes (plan, Fase 5).
+ * hover and tap on Franco (static, ring, label, `app:talk`), the wall clock (hover outline, tap
+ * spins to the next scene) and the living-room TV (hover border, tap opens the video, the bar
+ * above sets the volume).
  */
 export interface InputCore {
   canvas: HTMLCanvasElement;
   camera: T.PerspectiveCamera;
   rig: CameraRig;
-  dioramas: Record<Scene, Diorama>;
+  dioramas: Dioramas;
   interactive(): boolean;
 }
+
+export type TvPart = 'screen' | 'bar' | null;
 
 export interface WorldInput {
   readonly dragging: boolean;
@@ -32,6 +35,8 @@ export interface WorldInput {
   locked(): boolean;
   setHover(on: boolean): void;
   setClockHover(on: boolean): void;
+  /** `part` is 'screen' (a tap opens the video), 'bar' (precision cursor) or null. */
+  setTvHover(part: TvPart): void;
   hitFranco(clientX: number, clientY: number): boolean;
   hitClock(clientX: number, clientY: number): boolean;
 }
@@ -62,6 +67,31 @@ export function bindInput(core: InputCore): WorldInput {
   }
   const hitFranco = (x: number, y: number) => hitMesh(dioramas[state.scene].franco.hit, x, y);
   const hitClock = (x: number, y: number) => hitMesh(dioramas[state.scene].clock?.hit, x, y);
+
+  const tvUi = () => (state.scene === 'home' ? dioramas.home.tv : null);
+  let tvHot = false;
+  let volDrag = false;
+  const _barPlane = new T.Plane(new T.Vector3(0, 0, 1), 0);
+  const _barPt = new T.Vector3();
+  function setTvHover(part: TvPart): void {
+    const on = !!part;
+    canvas.classList.toggle('cur-link', part === 'screen');
+    canvas.classList.toggle('cur-precision', part === 'bar');
+    if (tvHot === on) return;
+    tvHot = on;
+    tvUi()?.setHot(on);
+    cursor.classList.toggle('is-hot', on);
+    if (!FINE) canvas.style.cursor = on ? 'pointer' : '';
+    if (on) audio.tick();
+  }
+  function volumeFromPointer(clientX: number, clientY: number): void {
+    const bar = tvUi()?.bar;
+    if (!bar) return;
+    aim(clientX, clientY);
+    _barPlane.constant = -bar.z;
+    if (!raycaster.ray.intersectPlane(_barPlane, _barPt)) return;
+    bar.set((_barPt.x - SCENE_X.home - bar.x0) / bar.w);
+  }
 
   let clockHot = false;
   let clockBusy = false;
@@ -102,6 +132,14 @@ export function bindInput(core: InputCore): WorldInput {
 
   canvas.addEventListener('pointerdown', (e) => {
     if (locked()) return;
+    const tv = tvUi();
+    if (tv && hitMesh(tv.bar.hit, e.clientX, e.clientY)) {
+      volDrag = true;
+      canvas.setPointerCapture(e.pointerId);
+      volumeFromPointer(e.clientX, e.clientY);
+      audio.tick();
+      return;
+    }
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pointers.size === 2) {
       const [a, c] = [...pointers.values()];
@@ -129,6 +167,10 @@ export function bindInput(core: InputCore): WorldInput {
     }
   });
   canvas.addEventListener('pointermove', (e) => {
+    if (volDrag) {
+      volumeFromPointer(e.clientX, e.clientY);
+      return;
+    }
     if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pointers.size === 2 && pinch0) {
       const [a, c] = [...pointers.values()];
@@ -153,11 +195,25 @@ export function bindInput(core: InputCore): WorldInput {
     }
     if (e.pointerType === 'mouse' && !locked()) {
       const onClock = hitClock(e.clientX, e.clientY);
+      const tv = tvUi();
+      const tvPartNow: TvPart =
+        onClock || !tv
+          ? null
+          : hitMesh(tv.bar.hit, e.clientX, e.clientY)
+            ? 'bar'
+            : hitMesh(tv.hit, e.clientX, e.clientY)
+              ? 'screen'
+              : null;
       setClockHover(onClock);
-      setHover(!onClock && hitFranco(e.clientX, e.clientY));
+      setTvHover(tvPartNow);
+      setHover(!onClock && !tvPartNow && hitFranco(e.clientX, e.clientY));
     }
   });
   const endDrag = (e: PointerEvent, cancelled: boolean) => {
+    if (volDrag) {
+      volDrag = false;
+      return;
+    }
     pointers.delete(e.pointerId);
     if (pointers.size < 2) pinch0 = 0;
     if (!drag.active || e.pointerId !== drag.id) return;
@@ -171,6 +227,12 @@ export function bindInput(core: InputCore): WorldInput {
     if (cancelled || locked()) return;
     if (hitClock(e.clientX, e.clientY)) {
       void clockTap();
+      return;
+    }
+    const tv = tvUi();
+    if (tv && hitMesh(tv.hit, e.clientX, e.clientY)) {
+      audio.tick();
+      window.open(tv.url, '_blank', 'noopener');
       return;
     }
     if (hitFranco(e.clientX, e.clientY)) {
@@ -187,6 +249,7 @@ export function bindInput(core: InputCore): WorldInput {
     if (!drag.active) {
       setHover(false);
       setClockHover(false);
+      setTvHover(null);
     }
   });
   canvas.addEventListener('pointerenter', () => {
@@ -212,11 +275,12 @@ export function bindInput(core: InputCore): WorldInput {
       return hovered;
     },
     get anyHot() {
-      return clockHot;
+      return clockHot || tvHot;
     },
     locked,
     setHover,
     setClockHover,
+    setTvHover,
     hitFranco,
     hitClock,
   };
