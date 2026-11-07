@@ -94,7 +94,7 @@ Cada tarea cierra con capturas y sin errores de consola (ver "Criterios de termi
 - [ ] **Layout y router.** Layout Astro con las cuatro páginas (`inicio`, `mundo`, `proyectos`, `sobre`), estado y router en `src/scripts` (historial con `#hash`, transición de mancha, glitch del título).
   - Resultado esperado: navegación entre las cuatro páginas con las mismas transiciones del prototipo, sin mundo 3D todavía.
   - Cómo se verifica: capturas de cada página en escritorio y celular; atrás/adelante del navegador funcionan.
-- [ ] **Estilos.** Mover el CSS del prototipo a `src/styles`, separado por área (base, entrada, mundo, páginas, panel).
+- [x] **Estilos.** Hecho el 2026-11-07: CSS del prototipo copiado línea por línea a `src/styles/{base,gate,world,pages,panel}.css` (solo cambian las URL de los cursores a `/cursores/`); capturas de las cuatro páginas iguales al prototipo en 1280 y 390 px. Mover el CSS del prototipo a `src/styles`, separado por área (base, entrada, mundo, páginas, panel).
   - Resultado esperado: el esqueleto se ve igual al prototipo en las páginas ya migradas.
   - Cómo se verifica: comparación de capturas prototipo vs. Astro.
 - [x] **Textos.** Hecho el 2026-11-07: `src/i18n/ui.ts` reescrito con todos los textos de interfaz del prototipo (inglés reutiliza el español hasta la fase 9); el contenido pasa a `src/data/profile.ts` (bio, datos, trayectoria, servicios, herramientas) y `src/data/photos.ts`; `grep` de textos en `src/components` y `src/scripts` no encuentra copys sueltos. Extraer los textos del prototipo a `src/i18n/ui.ts` (español primero; inglés en la fase 9).
