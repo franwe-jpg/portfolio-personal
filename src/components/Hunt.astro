@@ -1,12 +1,13 @@
 ---
 import type { UiCopy } from '../i18n/ui';
 
-/** Ticket hunt: the "ábreme" tab, its panel, the found-ticket toast and the surprise back button. Static until Fase 8. */
+/** Ticket hunt: the "ábreme" tab, its panel and the surprise back button (behaviour in src/scripts/hunt.ts). */
 interface Props {
   t: UiCopy;
 }
 
 const { t } = Astro.props;
+/** Mirrors HUNT_TOTAL in src/scripts/state.ts (the scripts cannot be imported at build time). */
 const TOTAL = 5;
 ---
 

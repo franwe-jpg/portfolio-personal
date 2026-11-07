@@ -9,6 +9,7 @@ import { mat } from '../materials';
 import { at, ICO, toWorld, UNIT_BOX } from '../primitives';
 import { coffeeMachine, dualMonitors, mug, notebook, plant, roundTable, rug, swivelChair, tv, waterDispenser, type Face } from '../props';
 import { createCodeScreens, createDashboard } from '../screens';
+import { SUR } from '../surprise';
 import type { Diorama } from '../types';
 import { base } from '../walls';
 
@@ -190,10 +191,16 @@ export function office(scene: T.Scene): Diorama {
 
   // Left wall, between the whiteboard and Franco's desk.
   const clock = makeClock(root, -4.77, 2.2, 1.0, Math.PI / 2);
-  // Surprise shot (plan, Fase 8): close on the code monitor, in front of Franco's head. The monitor
-  // arm crosses that view, so the screen is drawn on top while the shot lasts.
+  // Surprise: the phrase on the code monitor, the found ticket on the terminal.
+  const surprise = (on: boolean) => {
+    scrCode.material.map = on ? SUR.main.tex : screens.code.tex;
+    scrTerm.material.map = on ? SUR.side.tex : screens.term.tex;
+    scrCode.material.needsUpdate = scrTerm.material.needsUpdate = true;
+  };
+  // Surprise shot: close on the code monitor, in front of Franco's head. The monitor arm crosses
+  // that view, so the screen is drawn on top while the shot lasts.
   const shot = { mesh: scrCode, dist: 0.62, lift: 0.03, onTop: true };
-  // Hunt ticket (plan, Fase 8): out of the server rack's front-left edge.
+  // Hunt ticket: out of the server rack's front-left edge.
   const tkSpot = new T.Vector3(rx - 0.46, 1.25, rz + 0.46);
 
   let ledT = 0;
@@ -215,6 +222,7 @@ export function office(scene: T.Scene): Diorama {
     franco,
     update,
     pov,
+    surprise,
     shot,
     tkSpot,
     clock,

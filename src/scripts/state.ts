@@ -7,6 +7,8 @@ export type Page = (typeof PAGES)[number];
 export const isPage = (value: unknown): value is Page => PAGES.includes(value as Page);
 
 export const SCENES: readonly Scene[] = ['office', 'uni', 'home'];
+/** Tickets hidden around the site (plan, Fase 8); the hunt and the surprise screens share it. */
+export const HUNT_TOTAL = 5;
 /** `auto` follows the Argentina schedule; a scene name forces that diorama. */
 export type Mode = 'auto' | Scene;
 
@@ -49,8 +51,10 @@ export interface AppEvents {
   'app:pageswap': CustomEvent<Page>;
   /** The visitor tapped Franco in the world (or the fallback's button): the panel (Fase 6) opens. */
   'app:talk': CustomEvent<'world' | 'button'>;
-  /** The chat/contact panel just closed (the ticket hunt, Fase 8, clears the surprise screens then). */
+  /** The chat/contact panel just closed (the ticket hunt clears the surprise screens then). */
   'app:panelclose': CustomEvent<void>;
+  /** The visible diorama changed (behind the cell curtain); the surprise view ends then. */
+  'app:scene': CustomEvent<Scene>;
 }
 
 export function emit<K extends keyof AppEvents>(type: K, detail?: AppEvents[K]['detail']): void {

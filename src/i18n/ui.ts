@@ -131,6 +131,10 @@ export interface UiCopy {
     foundAll: string;
     ticketFound: string;
     ticket: string;
+    /** "No." label on the big ticket of the toast. */
+    ticketNo: string;
+    /** Header on the surprise screens. */
+    screenHeader: (total: number) => string;
     /** Shown on the screen Franco is looking at once every ticket is found. */
     surprise: string;
   };
@@ -328,6 +332,8 @@ const es: UiCopy = {
     foundAll: '¡Has encontrado los 5 tickets! Te llevo a tu sorpresa…',
     ticketFound: 'ENCONTRADO',
     ticket: 'TICKET',
+    ticketNo: 'Nº',
+    screenHeader: (total) => `★  ${total} / ${total} TICKETS  ★`,
     surprise: 'Lo mejor siempre está escondido donde casi nadie se anima a mirar.',
   },
 

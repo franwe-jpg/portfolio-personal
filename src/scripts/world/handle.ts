@@ -19,6 +19,10 @@ export interface WorldApi {
   focusOn(): number;
   /** Back to the iso rig. */
   unfocus(): void;
+  /** Surprise (Fase 8): phrase on every screen, special shot on the current one; resolves when the "clip" ends. */
+  surprise(): Promise<void>;
+  /** Screens back to their usual content. */
+  endSurprise(): void;
   start(): void;
   stop(): void;
 }

@@ -18,6 +18,7 @@ import { createLights } from './lights';
 import { francoMats } from './materials';
 import { createPov } from './pov';
 import { createStage } from './renderer';
+import { createSurprise } from './surprise';
 import { home } from './scenes/home';
 import { office } from './scenes/office';
 import { university } from './scenes/university';
@@ -88,6 +89,10 @@ export async function initWorld(): Promise<WorldApi> {
   let running = false;
   let last = performance.now();
   const label = byId('francoLabel');
+  // Hidden ticket peeking out of an object of the active scene (`tkSpot`, local to its root);
+  // null once the hunt has collected it.
+  const tkWorld = document.querySelector<HTMLElement>('.tk-world');
+  let tkShown = false;
   const _v = new T.Vector3();
   let labelOn = false;
   let hoverAmt = 0;
@@ -145,6 +150,20 @@ export async function initWorld(): Promise<WorldApi> {
       const y = (-_v.y * 0.5 + 0.5) * view.h;
       label.style.transform = `translate3d(${x.toFixed(1)}px, ${(y - 18).toFixed(1)}px, 0) translate(-50%, -100%)`;
     }
+    if (tkWorld) {
+      const show = cam.cam.viewMode === 'mundo' && pov.mix < 0.01 && tkWorld.isConnected;
+      if (show !== tkShown) {
+        tkShown = show;
+        tkWorld.classList.toggle('is-off', !show);
+      }
+      if (show && d.tkSpot) {
+        d.root.localToWorld(_v.copy(d.tkSpot)).project(camera);
+        const x = (_v.x * 0.5 + 0.5) * view.w;
+        const y = (-_v.y * 0.5 + 0.5) * view.h;
+        // The slot's right edge sits on the object's edge: the ticket slides out to the left.
+        tkWorld.style.transform = `translate3d(${(x - 64).toFixed(1)}px, ${(y - 32).toFixed(1)}px, 0)`;
+      }
+    }
   }
   function start(): void {
     if (running || document.hidden || !state.entered || cam.cam.viewMode === 'off') return;
@@ -171,7 +190,9 @@ export async function initWorld(): Promise<WorldApi> {
     label.classList.toggle('is-on', labelOn);
   };
 
-  const { focusOn, unfocus } = createPov({ cam, lights, dioramas, setLabel, setHover: input.setHover });
+  const povCtl = createPov({ cam, lights, dioramas, setLabel, setHover: input.setHover });
+  const { focusOn, unfocus } = povCtl;
+  const { surprise, endSurprise } = createSurprise({ cam, lights, dioramas, pov: povCtl, setLabel, setHover: input.setHover });
 
   // ---------- camera moves ----------
   const camSet = (vars: Partial<typeof rig>) => {
@@ -252,9 +273,9 @@ export async function initWorld(): Promise<WorldApi> {
 
   if (DEBUG) {
     Object.assign(window, {
-      __world: { T, gsap, camera, rig, view, para, pov, dioramas, renderer, pointer, dbg: { locked: input.locked, hitFranco: input.hitFranco, hitClock: input.hitClock, setHover: input.setHover, setClockHover: input.setClockHover, setTvHover: input.setTvHover, clockHot: () => input.anyHot, busy: () => state.busy, focusOn, unfocus } },
+      __world: { T, gsap, camera, rig, view, para, pov, dioramas, renderer, pointer, dbg: { locked: input.locked, hitFranco: input.hitFranco, hitClock: input.hitClock, setHover: input.setHover, setClockHover: input.setClockHover, setTvHover: input.setTvHover, clockHot: () => input.anyHot, busy: () => state.busy, focusOn, unfocus, surprise, endSurprise } },
     });
   }
 
-  return { intro, show, setView, setLabel, focusOn, unfocus, start, stop };
+  return { intro, show, setView, setLabel, focusOn, unfocus, surprise, endSurprise, start, stop };
 }

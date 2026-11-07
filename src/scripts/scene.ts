@@ -5,7 +5,7 @@ import { $$, byId } from './dom';
 import { t } from './i18n';
 import { argNow, resolveScene, sceneFor, statusLine } from './schedule';
 import { scramble } from './scramble';
-import { on, SCENE_TO_PARAM, state, type Mode } from './state';
+import { emit, on, SCENE_TO_PARAM, state, type Mode } from './state';
 import { coverStage, revealStage } from './world/curtain';
 import { world } from './world/handle';
 
@@ -44,6 +44,7 @@ export async function switchScene(next: Scene): Promise<void> {
   audio.whoosh();
   await coverStage();
   state.scene = next;
+  emit('app:scene', next);
   world?.show(next);
   paintSceneInfo(true);
   await revealStage();

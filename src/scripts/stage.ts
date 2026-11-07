@@ -41,6 +41,11 @@ async function load(): Promise<void> {
   }
 }
 
+/** Resolves once the world chunk has been built (or given up for the fallback); immediately if nothing started. */
+export function worldLoaded(): Promise<void> {
+  return loading ?? Promise.resolve();
+}
+
 export function initStage(): void {
   if (!WEBGL) {
     showFallback();

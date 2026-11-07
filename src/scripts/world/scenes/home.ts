@@ -13,6 +13,7 @@ import { makeCat, makeDog, type Pet } from '../pets';
 import { mesh, PUFF, toWorld, unitCyl } from '../primitives';
 import { bookcase, classChair, mug, plant, roundTable, rug, sofa, tv, tvUnit } from '../props';
 import { createTvBands } from '../screens';
+import { SUR } from '../surprise';
 import { canvasTex, frameGeometry, staticOutline } from '../textures';
 import type { Diorama } from '../types';
 import { base } from '../walls';
@@ -270,14 +271,16 @@ export function home(scene: T.Scene, css3d: Css3dLayer): HomeDiorama {
   const clock = makeClock(root, 3.0, 2.4, -4.77);
   // POV: the centre of the TV screen, straight ahead of Franco.
   const pov = { target: toWorld(root, 0, 1.19, -4.56), back: new T.Vector3(0, 0, 1) };
-  // Surprise (plan, Fase 8) covers the player but leaves its sound running; off, the player shows again.
+  // The surprise covers the player but leaves its sound running; off, the player shows again.
   const surprise = (on: boolean) => {
     tvSurprise = on;
     if (tvEl) tvEl.style.display = on ? 'none' : '';
+    tvScreen.material.map = on ? SUR.main.tex : bands.tex.tex;
+    tvScreen.material.needsUpdate = true;
   };
-  // Surprise shot (plan, Fase 8): the TV, straight on, between the sofa and the screen.
+  // Surprise shot: the TV, straight on, between the sofa and the screen.
   const shot = { mesh: tvScreen, dist: 1.9, lift: 0.04 };
-  // Hunt ticket (plan, Fase 8): out of the TV's left edge.
+  // Hunt ticket: out of the TV's left edge.
   const tkSpot = new T.Vector3(-0.97, 1.12, -4.53);
   const tvUi: TvUi = {
     hit: tvHit,

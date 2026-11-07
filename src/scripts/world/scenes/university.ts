@@ -9,6 +9,7 @@ import { mat, pm } from '../materials';
 import { at, toWorld, UNIT_BOX, unitCyl } from '../primitives';
 import { backpack, bookcase, classChair, notebook, plant, studentDesk } from '../props';
 import { createBoard } from '../screens';
+import { SUR } from '../surprise';
 import type { Diorama } from '../types';
 import { base } from '../walls';
 
@@ -175,9 +176,14 @@ export function university(scene: T.Scene): Diorama {
     if (cone) cone.visible = !on;
   };
   const clock = makeClock(root, 0, 2.5, -4.77);
-  // Surprise shot (plan, Fase 8): projection screen seen from the side away from the teacher (+z).
+  // Surprise: the phrase on the projection screen.
+  const surprise = (on: boolean) => {
+    screenMesh.material.map = on ? SUR.uni.tex : slides.slide.tex;
+    screenMesh.material.needsUpdate = true;
+  };
+  // Surprise shot: projection screen seen from the side away from the teacher (+z), so he doesn't block it.
   const shot = { mesh: screenMesh, dist: 2.3, yaw: -0.6, lift: 0.15 };
-  // Hunt ticket (plan, Fase 8): out of the bookcase's front-left edge, at the third shelf.
+  // Hunt ticket: out of the bookcase's front-left edge, at the third shelf.
   const tkSpot = new T.Vector3(1.68, 1.35, -4.22);
 
   const update = (t: number) => {
@@ -191,6 +197,7 @@ export function university(scene: T.Scene): Diorama {
     update,
     pov,
     onFocus,
+    surprise,
     shot,
     tkSpot,
     clock,

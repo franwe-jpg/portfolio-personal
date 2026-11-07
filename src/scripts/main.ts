@@ -5,6 +5,7 @@ import { initGalleries } from './gallery';
 import { initGate } from './gate';
 import { initGlyphFields } from './glyph-field';
 import { initHero } from './hero';
+import { initHunt } from './hunt';
 import { loader } from './loader';
 import { initPanel, panelApi } from './panel';
 import { initPointer } from './pointer';
@@ -16,8 +17,7 @@ import { initStage } from './stage';
 import { state } from './state';
 
 /**
- * Client entry. Each module registers its listeners here; later phases add
- * theirs next to these (the ticket hunt in Fase 8).
+ * Client entry. Each module registers its listeners here.
  * Modules talk through `state` and the `app:*` events declared in state.ts.
  * The 3D world (src/scripts/world) is not imported here: stage.ts loads it
  * lazily on the first visit to `mundo`. A phase that needs work on the gate's
@@ -34,6 +34,7 @@ initGalleries();
 initRouter();
 initStage();
 initPanel();
+initHunt();
 initAudio();
 initGate();
 
