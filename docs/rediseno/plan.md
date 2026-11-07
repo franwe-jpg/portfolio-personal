@@ -85,7 +85,7 @@ Cada tarea cierra con capturas y sin errores de consola (ver "Criterios de termi
 - [x] **Rama y dependencias.** Hecho el 2026-11-07: `rediseno/astro` creada desde `rediseno/prototipo` (que ya contiene `develop`, con el PR #3 abierto); `three@0.170.0` y `gsap@3.12.5` fijadas en `package.json`, `npm run build` y `npm run preview` pasan.
   - Resultado esperado: `npm run build` pasa; `three` y `gsap` importables desde `src`.
   - Cómo se verifica: `npm run build` y `npm run preview` levantan sin errores.
-- [ ] **Limpieza del sitio viejo.** Quitar los componentes que no sobreviven (`ChatPanel`, `ProjectsPanel`, `ProfilePanel`, `Intro`, `LandingPage`, `ProjectCard`, `Avatar`, `ViewToggleButton`) y `landing.ts` / `landing.css`. Conservar `src/pages/api`, `src/data`, `src/i18n` y `src/lib`.
+- [x] **Limpieza del sitio viejo.** Hecho el 2026-11-07: borrados `src/components/*`, `src/scripts/landing.ts` y `src/styles/landing.css`. `Layout.astro` conserva metadatos, hreflang y la redirección por idioma (sin el script de tema claro/oscuro ni el CSS viejo); `/` y `/en/` muestran nombre y rol desde `src/data/profile.ts`. Se conservan `src/pages/api`, `src/data`, `src/i18n`, `src/lib` y `src/assets`.
   - Resultado esperado: `/` y `/en/` renderizan una página mínima; `/api/chat` sigue respondiendo.
   - Cómo se verifica: `npm run build`; `curl` a `/api/chat` en dev responde JSON.
 

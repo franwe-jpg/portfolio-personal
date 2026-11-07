@@ -1,5 +1,16 @@
 ---
-import LandingPage from '../components/LandingPage.astro';
+import Layout from '../layouts/Layout.astro';
+import { profile, PROFILE_COPY } from '../data/profile';
+import { UI } from '../i18n/ui';
+
+// Placeholder page while the redesign is migrated (docs/rediseno/plan.md).
+const lang = 'es';
+const copy = PROFILE_COPY[lang];
 ---
 
-<LandingPage lang="es" />
+<Layout lang={lang} title={copy.tagline} description={UI[lang].metaDescription(copy.role)}>
+  <main>
+    <h1>{profile.name}</h1>
+    <p>{copy.role}</p>
+  </main>
+</Layout>
