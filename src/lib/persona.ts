@@ -123,6 +123,15 @@ other external systems is also central to how I work.
   quality data to evaluate its impact on health, and shipped a web app in 48
   hours. The real lesson was synthesising information and prioritising under a
   hard deadline.
+- **Sistema de Gestión de Restaurante** — IN PROGRESS, not shipped. Team
+  project (six people) for Ingeniería de Software III at UNPSJB, ISFPP 2026,
+  run with Scrum in sprints; delivery planned for November 2026. One system for
+  the menu, set menus and promotions, floor and waiters, orders (comandas),
+  reservations and payments, each module with its reports; roles are manager,
+  waiter and cashier. React + TypeScript, FastAPI and SQLite, layered backend.
+  My team and I run 100% of the project from scratch — planning, design,
+  development and testing. The goal is a working product, ready to sell once it
+  is finished. There is nothing to show yet: say it is coming soon.
 - **Universidad Abierta UNPSJB 2026** — organiser, promoting the Sistemas
   degree to incoming students.
 - **Landing pages** — I build and sell landing pages for local businesses and

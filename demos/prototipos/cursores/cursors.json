@@ -1,0 +1,106 @@
+{
+ "normal": {
+  "hotspot": [
+   0,
+   0
+  ]
+ },
+ "link": {
+  "hotspot": [
+   5,
+   0
+  ]
+ },
+ "text": {
+  "hotspot": [
+   15,
+   16
+  ]
+ },
+ "handwrite": {
+  "hotspot": [
+   0,
+   0
+  ]
+ },
+ "unavailable": {
+  "hotspot": [
+   16,
+   16
+  ]
+ },
+ "move": {
+  "hotspot": [
+   15,
+   15
+  ]
+ },
+ "person": {
+  "hotspot": [
+   6,
+   0
+  ]
+ },
+ "location": {
+  "hotspot": [
+   6,
+   0
+  ]
+ },
+ "precision": {
+  "hotspot": [
+   14,
+   15
+  ]
+ },
+ "help": {
+  "hotspot": [
+   0,
+   0
+  ]
+ },
+ "alternate": {
+  "hotspot": [
+   15,
+   4
+  ]
+ },
+ "resize-v": {
+  "hotspot": [
+   15,
+   15
+  ]
+ },
+ "resize-h": {
+  "hotspot": [
+   15,
+   15
+  ]
+ },
+ "resize-d1": {
+  "hotspot": [
+   15,
+   15
+  ]
+ },
+ "resize-d2": {
+  "hotspot": [
+   15,
+   15
+  ]
+ },
+ "busy": {
+  "hotspot": [
+   16,
+   16
+  ],
+  "frames": 18
+ },
+ "working": {
+  "hotspot": [
+   0,
+   8
+  ],
+  "frames": 18
+ }
+}

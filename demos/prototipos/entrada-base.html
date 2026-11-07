@@ -1,0 +1,250 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Entrada Franco Soler</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one centered column, the particle mark as the only "image". Single deliberate look: cool mist paper, graphite ink, one signal green. */
+:root {
+  --paper: #e7eaee;
+  --paper-2: #dde1e7;
+  --ink: #15181d;
+  --muted: #5b6370;
+  --signal: #1fbf75;
+  --btn: #ffffff;
+  --font-body: "Instrument Sans", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  color-scheme: light;
+}
+[hidden] { display: none !important; }
+html, body { height: 100%; background: var(--paper); color: var(--ink); }
+body {
+  font-family: var(--font-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0;
+  overflow: hidden;
+}
+.screen { position: fixed; inset: 0; display: grid; place-items: center; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); transition: opacity .7s ease; }
+.gate { text-align: center; display: grid; justify-items: center; gap: 18px; max-width: 520px; }
+#mark { width: min(78vw, 380px); aspect-ratio: 19 / 11; display: block; cursor: crosshair; touch-action: none; }
+.name { font: 500 22px/1.1 var(--font-body); letter-spacing: .01em; margin: 0; }
+.name span { color: var(--muted); }
+.desc { font: 400 17px/1.45 var(--font-body); margin: 0; text-wrap: balance; }
+.status { display: inline-flex; align-items: center; gap: 8px; font: 400 12px var(--font-mono); color: var(--muted); letter-spacing: .04em; font-variant-numeric: tabular-nums; }
+.status i { width: 8px; height: 8px; border-radius: 50%; background: var(--signal); box-shadow: 0 0 0 0 rgba(31,191,117,.5); animation: pulse 2s infinite; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(31,191,117,.45); } 70% { box-shadow: 0 0 0 9px rgba(31,191,117,0); } 100% { box-shadow: 0 0 0 0 rgba(31,191,117,0); } }
+.enter {
+  display: inline-flex; align-items: center; gap: 10px;
+  font: 500 18px var(--font-body); color: var(--ink); background: var(--btn);
+  border: 0; border-radius: 999px; padding: 13px 28px; cursor: pointer;
+  box-shadow: 0 1px 0 rgba(0,0,0,.04), 0 8px 24px -12px rgba(21,24,29,.35);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.enter:hover { transform: translateY(-2px); box-shadow: 0 1px 0 rgba(0,0,0,.04), 0 14px 30px -12px rgba(21,24,29,.45); }
+.enter svg { transition: transform .2s ease; }
+.enter:hover svg { transform: translate(2px, 2px); }
+.mute { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(40px + env(safe-area-inset-bottom, 0px)); font: 500 12px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink); background: none; border: 0; border-bottom: 1px solid var(--ink); padding: 2px 0; cursor: pointer; transition: opacity .5s; }
+.progress { position: fixed; left: 0; right: 0; top: 0; height: 2px; background: transparent; }
+.progress b { display: block; height: 100%; width: 0; background: var(--ink); transition: width .3s ease; }
+.loadtxt { position: fixed; right: max(16px, env(safe-area-inset-right, 0px)); top: calc(12px + env(safe-area-inset-top, 0px)); font: 400 11px var(--font-mono); color: var(--muted); letter-spacing: .06em; font-variant-numeric: tabular-nums; }
+button:focus-visible { outline: 2px solid var(--ink); outline-offset: 4px; }
+
+/* the "world" placeholder after entering */
+.world { background: radial-gradient(120% 90% at 50% 110%, #1b2a2a 0%, #0d1014 60%); color: #e9edf2; }
+.world .inner { display: grid; gap: 16px; justify-items: center; text-align: center; max-width: 560px; }
+.world .eyebrow { font: 400 12px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: #8fa0b3; }
+.world h2 { font: 500 clamp(28px, 5vw, 44px)/1.08 var(--font-body); margin: 0; text-wrap: balance; }
+.world p { margin: 0; color: #b6c1cd; font-size: 16px; line-height: 1.5; }
+.world .hud { font: 400 12px var(--font-mono); color: #7ee2b0; letter-spacing: .05em; }
+.world button { font: 500 14px var(--font-body); color: #e9edf2; background: transparent; border: 1px solid #3a4655; border-radius: 999px; padding: 9px 18px; cursor: pointer; }
+.world button:focus-visible { outline-color: #e9edf2; }
+@media (prefers-reduced-motion: reduce) { .status i { animation: none; } * { transition: none !important; } }
+</style>
+
+<div class="progress"><b id="bar"></b></div>
+<div class="loadtxt" id="loadtxt">CARGANDO MUNDO 0%</div>
+
+<section class="screen" id="gate">
+  <div class="gate">
+    <canvas id="mark" aria-label="Iniciales FS hechas de partículas que reaccionan al cursor"></canvas>
+    <p class="name">FRANCO SOLER <span>/ Analista Programador</span></p>
+    <p class="desc">Desarrollo software y estudio sistemas en Chubut. Entrá a mi mundo: vas a ver dónde estoy ahora y podés hablar conmigo.</p>
+    <div class="status" id="status"><i></i><span id="statusTxt">—</span></div>
+    <button class="enter" id="enter" type="button">Ingresar
+      <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2l9 9M11 4v7H4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+</section>
+<button class="mute" id="mute" type="button">Entrar sin audio</button>
+
+<section class="screen world" id="world" hidden style="opacity:0">
+  <div class="inner">
+    <div class="eyebrow">Prototipo · acá empieza el mundo</div>
+    <h2 id="wTitle">Franco está en la oficina</h2>
+    <p id="wText">En la versión real, la cámara entra al diorama 3D de la escena actual y podés hacer clic en Franco para hablar con su IA o escribirle.</p>
+    <div class="hud" id="wHud">STATUS: AT_OFFICE · AUDIO: ON</div>
+    <button type="button" id="back">Volver a la entrada</button>
+  </div>
+</section>
+
+<script>
+(() => {
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // ---------- live status (Argentina time) ----------
+  const TZ = 'America/Argentina/Buenos_Aires';
+  function scene() {
+    const d = new Date();
+    const hh = +new Intl.DateTimeFormat('en-GB', { timeZone: TZ, hour: '2-digit', hourCycle: 'h23' }).format(d);
+    const wd = new Intl.DateTimeFormat('en-US', { timeZone: TZ, weekday: 'short' }).format(d);
+    const time = new Intl.DateTimeFormat('es-AR', { timeZone: TZ, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(d);
+    const weekend = wd === 'Sat' || wd === 'Sun';
+    let s = 'home';
+    if (!weekend && hh >= 7 && hh < 13) s = 'office';
+    else if (!weekend && hh >= 14 && hh < 19) s = 'uni';
+    return { s, time };
+  }
+  const LABEL = {
+    office: { short: 'En la oficina', title: 'Franco está en la oficina', hud: 'AT_OFFICE', text: 'En la versión real, la cámara entra al diorama 3D de la oficina. Hacés clic en Franco y te responde su versión IA.' },
+    uni: { short: 'En la universidad', title: 'Franco está en la uni', hud: 'AT_UNIVERSITY', text: 'En la versión real, la cámara entra al aula. Franco está en clase, así que te responde su versión IA.' },
+    home: { short: 'Disponible para charlar', title: 'Franco está disponible', hud: 'AVAILABLE', text: 'En la versión real, la cámara entra a su casa. Le dejás un mensaje y le llega directo al celular.' },
+  };
+  function tickStatus() {
+    const { s, time } = scene();
+    document.getElementById('statusTxt').textContent = `AHORA · ${LABEL[s].short.toUpperCase()} · ${time} ART`;
+  }
+  tickStatus(); setInterval(tickStatus, 30000);
+
+  // ---------- fake preload (stands in for loading the 3D world) ----------
+  const bar = document.getElementById('bar'), loadtxt = document.getElementById('loadtxt');
+  let pct = 0;
+  const loader = setInterval(() => {
+    pct = Math.min(100, pct + Math.random() * 14);
+    bar.style.width = pct + '%';
+    loadtxt.textContent = pct >= 100 ? 'MUNDO LISTO' : `CARGANDO MUNDO ${pct | 0}%`;
+    if (pct >= 100) clearInterval(loader);
+  }, 160);
+
+  // ---------- particle mark ----------
+  const cv = document.getElementById('mark');
+  const ctx = cv.getContext('2d');
+  let W = 0, H = 0, DPR = 1, pts = [];
+  const mouse = { x: -1e4, y: -1e4, nx: 0, ny: 0 };
+  const rot = { x: 0, y: 0 };
+  let leaving = false, leaveT = 0;
+
+  function resize() {
+    DPR = Math.min(2, devicePixelRatio || 1);
+    const r = cv.getBoundingClientRect();
+    W = r.width; H = r.height;
+    cv.width = W * DPR; cv.height = H * DPR;
+    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  }
+
+  function build() {
+    const off = document.createElement('canvas');
+    const ow = 380, oh = 220; off.width = ow; off.height = oh;
+    const o = off.getContext('2d');
+    o.fillStyle = '#000'; o.textAlign = 'center'; o.textBaseline = 'middle';
+    o.font = '700 200px "Instrument Sans", sans-serif';
+    o.fillText('FS', ow / 2, oh / 2 + 8);
+    const data = o.getImageData(0, 0, ow, oh).data;
+    pts = [];
+    const step = 4;
+    for (let y = 0; y < oh; y += step) for (let x = 0; x < ow; x += step) {
+      if (data[(y * ow + x) * 4 + 3] > 128) {
+        const hx = (x - ow / 2) / ow, hy = (y - oh / 2) / ow;
+        pts.push({ hx, hy, hz: (Math.random() - .5) * .08, ox: 0, oy: 0, vx: 0, vy: 0, ph: Math.random() * 6.28,
+          big: Math.random() < .06, ex: (Math.random() - .5) * 2, ey: (Math.random() - .5) * 2 });
+      }
+    }
+  }
+
+  function frame(t) {
+    ctx.clearRect(0, 0, W, H);
+    rot.y += ((reduce ? 0 : mouse.nx * .5) - rot.y) * .06;
+    rot.x += ((reduce ? 0 : -mouse.ny * .35) - rot.x) * .06;
+    const cy = Math.cos(rot.y), sy = Math.sin(rot.y), cx = Math.cos(rot.x), sx = Math.sin(rot.x);
+    const scale = W * 0.95, f = 2.2;
+    const lt = leaving ? Math.min(1, (t - leaveT) / 900) : 0;
+    for (const p of pts) {
+      const n = reduce ? 0 : Math.sin(t / 900 + p.ph) * .004;
+      let x = p.hx, y = p.hy + n, z = p.hz;
+      let x1 = x * cy - z * sy, z1 = x * sy + z * cy;
+      let y1 = y * cx - z1 * sx, z2 = y * sx + z1 * cx;
+      const k = f / (f + z2);
+      let px = W / 2 + x1 * scale * k, py = H / 2 + y1 * scale * k;
+      // cursor repulsion with spring back
+      const dx = px + p.ox - mouse.x, dy = py + p.oy - mouse.y, d2 = dx * dx + dy * dy, R = 46;
+      if (d2 < R * R && !reduce) { const d = Math.sqrt(d2) || 1, push = (1 - d / R) * 2.4; p.vx += dx / d * push; p.vy += dy / d * push; }
+      p.vx += -p.ox * .06; p.vy += -p.oy * .06; p.vx *= .82; p.vy *= .82;
+      p.ox += p.vx; p.oy += p.vy;
+      if (leaving) { const e = lt * lt; px += p.ex * W * e; py += p.ey * H * 1.6 * e; }
+      const a = (leaving ? 1 - lt : 1) * (0.55 + (1 - z2 * 6) * .35);
+      ctx.fillStyle = p.big ? `rgba(31,191,117,${a})` : `rgba(21,24,29,${a})`;
+      const s = (p.big ? 2.6 : 1.7) * k;
+      ctx.fillRect(px + p.ox - s / 2, py + p.oy - s / 2, s, s);
+    }
+    requestAnimationFrame(frame);
+  }
+
+  cv.addEventListener('pointermove', (e) => {
+    const r = cv.getBoundingClientRect();
+    mouse.x = e.clientX - r.left; mouse.y = e.clientY - r.top;
+  });
+  cv.addEventListener('pointerleave', () => { mouse.x = mouse.y = -1e4; });
+  addEventListener('pointermove', (e) => { mouse.nx = e.clientX / innerWidth - .5; mouse.ny = e.clientY / innerHeight - .5; });
+  addEventListener('resize', resize);
+
+  // ---------- audio (only after a click, which is why the gate exists) ----------
+  let actx = null;
+  function chime() {
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      const now = actx.currentTime;
+      [261.63, 329.63, 392.0, 523.25].forEach((hz, i) => {
+        const o = actx.createOscillator(), g = actx.createGain();
+        o.type = 'sine'; o.frequency.value = hz;
+        g.gain.setValueAtTime(0, now + i * .09);
+        g.gain.linearRampToValueAtTime(.08, now + i * .09 + .04);
+        g.gain.exponentialRampToValueAtTime(.0001, now + i * .09 + 1.6);
+        o.connect(g).connect(actx.destination); o.start(now + i * .09); o.stop(now + i * .09 + 1.7);
+      });
+    } catch (e) { /* audio is optional */ }
+  }
+
+  // ---------- enter / back ----------
+  const gate = document.getElementById('gate'), world = document.getElementById('world'), mute = document.getElementById('mute');
+  function enter(withAudio) {
+    if (leaving) return;
+    if (withAudio) chime();
+    leaving = true; leaveT = performance.now();
+    const { s } = scene();
+    document.getElementById('wTitle').textContent = LABEL[s].title;
+    document.getElementById('wText').textContent = LABEL[s].text;
+    document.getElementById('wHud').textContent = `STATUS: ${LABEL[s].hud} · AUDIO: ${withAudio ? 'ON' : 'OFF'}`;
+    setTimeout(() => { gate.style.opacity = 0; mute.style.opacity = 0; }, 350);
+    setTimeout(() => {
+      gate.hidden = true; mute.hidden = true;
+      world.hidden = false; requestAnimationFrame(() => { world.style.opacity = 1; });
+      document.getElementById('back').focus({ preventScroll: true });
+    }, 1000);
+  }
+  document.getElementById('enter').addEventListener('click', () => enter(true));
+  mute.addEventListener('click', () => enter(false));
+  document.getElementById('back').addEventListener('click', () => {
+    world.style.opacity = 0;
+    setTimeout(() => {
+      world.hidden = true; gate.hidden = false; mute.hidden = false;
+      leaving = false;
+      requestAnimationFrame(() => { gate.style.opacity = 1; mute.style.opacity = 1; });
+    }, 600);
+  });
+
+  (document.fonts?.ready ?? Promise.resolve()).finally(() => { resize(); build(); requestAnimationFrame(frame); });
+})();
+</script>
+
+</body></html>

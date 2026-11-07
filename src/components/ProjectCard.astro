@@ -27,12 +27,24 @@ const hasCarousel = project.media.length > 1;
               allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowfullscreen
             />
+          ) : item.kind === 'clip' ? (
+            <video class="proj-clip" controls muted playsinline preload="none" poster={item.poster} aria-label={item.alt}>
+              <source src={item.src} type="video/mp4" />
+            </video>
           ) : (
             <img src={item.src} alt={item.alt} loading="lazy" />
           ),
         )
       }
     </div>
+    {
+      project.overlay && (
+        <div class="proj-overlay">
+          {project.overlayGhost && <p class="proj-overlay-ghost">{project.overlayGhost}</p>}
+          <p>{project.overlay}</p>
+        </div>
+      )
+    }
     {
       hasCarousel && (
         <>

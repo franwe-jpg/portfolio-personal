@@ -493,9 +493,6 @@ body{
 @keyframes suggestions-marquee{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
 @keyframes suggestions-in{ from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:none; } }
 
-/* Con el teclado abierto el botón flotante solo estorba. */
-.composer-focused .view-toggle-mobile{ opacity:0; pointer-events:none; }
-
 /* Mientras el visitante "escribe" un mensaje del guion. */
 .composer.is-drafting .input{ box-shadow:0 0 0 2px var(--focus-ring); }
 .composer.is-drafting .send{ opacity:1; color:var(--wa-accent); }
@@ -540,6 +537,8 @@ body{
 .intro .bio{ margin:0 0 16px; }
 .intro .bio p{ margin:0 0 3px; }
 .intro .bio p:last-child{ margin-bottom:0; }
+/* Renglón que cambia según el chat esté al lado o abajo (ver profile.ts). */
+.intro .bio .bio-narrow{ display:none; }
 .intro .links{ display:flex; flex-direction:column; align-items:stretch; gap:8px; }
 .intro .links-row{ display:flex; gap:8px; flex-wrap:wrap; }
 .intro .links > .view-toggle-btn{
@@ -565,14 +564,11 @@ body{
 .intro .links a:focus-visible, .intro .links button:focus-visible{ outline:2px solid var(--wa-accent); outline-offset:2px; }
 .intro .links svg{ color:var(--wa-accent); }
 
-/* ── Botón flotante de alternancia (móvil) ──────────────────── */
-.view-toggle-mobile{
-  display:none;
-  align-items:center; gap:6px;
-  padding:8px 13px; border-radius:999px;
-  border:1px solid var(--float-border); background:var(--float-bg);
-  backdrop-filter:blur(6px);
-  color:var(--wa-text); font:inherit; font-size:12.5px; cursor:pointer;
+/* Señal pulsante bajo la portada móvil; en escritorio no existe. */
+.scroll-cue{ display:none; }
+@keyframes scroll-cue-pulse{
+  0%, 100%{ transform:translate(-50%, 0); opacity:.55; }
+  50%{ transform:translate(-50%, 8px); opacity:1; }
 }
 
 /* ── Chat / Proyectos: paneles deslizables ──────────────────── */
@@ -593,7 +589,6 @@ body{
    el mismo lado. El chat queda intacto debajo. */
 #profileScreen{ transform:translateX(100%); z-index:3; background:var(--profile-bg); }
 #profileScreen.is-open{ transform:translateX(0); box-shadow:-10px 0 30px rgba(11,20,26,.16); }
-.profile-open .view-toggle-mobile{ opacity:0; pointer-events:none; }
 .profile-header{ gap:14px; border-bottom:0; }
 .profile-back{
   flex:none; width:44px; height:44px; margin:-6px 0 -6px -8px;
@@ -631,9 +626,25 @@ body{
 .proj-card{ background:var(--proj-card-bg); border-radius:18px; padding:14px 14px 16px; }
 
 .proj-carousel{ position:relative; border-radius:12px; overflow:hidden; aspect-ratio:16/10; background:var(--proj-carousel-bg); }
+/* Proyecto en curso: la foto queda nítida de fondo, con un velo suave al
+   centro para que se lea el aviso, y detrás el nombre borroso de lo que viene. */
+.proj-overlay{
+  position:absolute; inset:0;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px;
+  padding:0 16px; text-align:center;
+  background:radial-gradient(ellipse at center, rgba(11,20,26,.68) 0%, rgba(11,20,26,.25) 75%);
+  color:#fff; font-size:clamp(20px, 4.6vw, 28px); font-weight:600; letter-spacing:-.01em;
+  text-shadow:0 2px 12px rgba(0,0,0,.5);
+}
+.proj-overlay p{ margin:0; }
+.proj-overlay-ghost{
+  font-size:clamp(24px, 6.4vw, 40px); font-weight:800; line-height:1.05;
+  filter:blur(1.4px); opacity:.85;
+}
 .proj-track{ display:flex; height:100%; transition:transform .35s ease; }
 .proj-track img{ width:100%; height:100%; object-fit:cover; flex:none; }
 .proj-track .proj-video{ width:100%; height:100%; flex:none; border:0; display:block; background:#000; }
+.proj-track .proj-clip{ width:100%; height:100%; flex:none; display:block; object-fit:contain; background:#000; }
 .proj-arrow{
   position:absolute; top:50%; margin-top:-14px;
   width:28px; height:28px; border-radius:50%; border:0;
@@ -664,24 +675,94 @@ body{
 }
 .proj-links a:hover{ border-color:var(--proj-link-hover); }
 
-/* ── Mobile: el chat ocupa la pantalla completa ─────────────── */
+/* ── Mobile: portada, chat y proyectos como tres pantallas ───────
+   Tres "páginas" de 100dvh apiladas que encajan con scroll-snap: en
+   el celular se baja, no se alterna. El script fija la altura de
+   #stage para escritorio; acá se libera para que la página scrollee.
+   dvh y no svh: al bajar, el navegador esconde su barra y la pantalla
+   crece; con svh la última página quedaba más corta que la ventana y
+   asomaba el final del chat arriba de proyectos. */
 @media (max-width:900px){
-  :root{ --chat-h:100svh; }
-  #sticky{ padding:0 !important; gap:0 !important; }
+  :root{ --chat-h:100dvh; }
+  html{ scroll-snap-type:y mandatory; }
+  #stage{ height:auto !important; }
+  #sticky{
+    position:static; height:auto;
+    flex-direction:column; align-items:stretch;
+    padding:0 !important; gap:0 !important;
+  }
   #sticky::before, #sticky::after{ display:none !important; }
-  .intro{ display:none !important; }
+  .intro{
+    position:relative;
+    min-height:100dvh; max-width:none;
+    display:flex; flex-direction:column; justify-content:center;
+    padding:32px 24px 112px;
+    scroll-snap-align:start;
+  }
+  .intro h1{ font-size:clamp(44px, 13vw, 60px); }
+  .intro .bio .bio-wide{ display:none; }
+  .intro .bio .bio-narrow{ display:block; margin-bottom:0; }
+  .scroll-cue{
+    display:flex; flex-direction:column; align-items:center; gap:2px;
+    position:absolute; left:50%; bottom:max(28px, env(safe-area-inset-bottom));
+    transform:translateX(-50%);
+    color:var(--intro-text); font-size:14px; letter-spacing:.04em;
+    pointer-events:none; user-select:none;
+    animation:scroll-cue-pulse 1.8s infinite ease-in-out;
+  }
+  /* Las tres redes en una sola fila, repartidas en partes iguales. */
+  .intro .links-row{ flex-wrap:nowrap; gap:6px; }
+  .intro .links-row a{
+    flex:1 1 0; min-width:0; justify-content:center;
+    gap:6px; padding:9px 6px;
+    font-size:clamp(12.5px, 3.6vw, 14.5px); white-space:nowrap;
+  }
+  .intro .links-row svg{ flex:none; }
+  /* Chat y proyectos son tarjetas flotantes, no pantallas al ras: así la
+     barra de escribir nunca queda debajo de las barras que algunos
+     navegadores ponen abajo. Cada página suma margen arriba + tarjeta +
+     margen abajo = 100dvh, para que el scroll-snap siga cayendo exacto. */
+  :root{
+    --card-mx:10px;
+    --card-mt:10px;
+    --card-mb:calc(18px + env(safe-area-inset-bottom, 0px));
+    --card-h:calc(100dvh - var(--card-mt) - var(--card-mb));
+  }
+  /* clip y no hidden: hidden convertiría a .chat en contenedor de scroll
+     y las pantallas encajarían contra él en vez de contra la página.
+     flex y no block: en block los márgenes verticales entre tarjetas se
+     colapsarían y la segunda página quedaría corrida. */
   .chat{
-    width:100% !important; max-width:100%; height:100svh;
+    width:100% !important; max-width:100%; height:auto; flex:none;
+    display:flex; flex-direction:column; overflow:clip;
+    background:transparent;
     border-radius:0 !important; box-shadow:none !important;
   }
+  /* !important pisa el transform en línea que deja el swap de escritorio
+     si la ventana se achica con proyectos abiertos. */
+  #chatScreen, #projectsScreen{
+    position:relative; inset:auto; flex:none;
+    height:var(--card-h);
+    margin:var(--card-mt) var(--card-mx) var(--card-mb);
+    border-radius:18px; overflow:hidden;
+    box-shadow:0 1px 2px rgba(11,20,26,.08), 0 14px 36px -16px rgba(11,20,26,.3);
+    transform:none !important;
+    scroll-snap-align:start; scroll-margin-top:var(--card-mt);
+  }
+  /* La info del contacto cubre sólo la tarjeta del chat, con su misma forma.
+     Cerrada, se corre su ancho más el margen para no asomar por la derecha. */
+  #profileScreen{
+    top:var(--card-mt); bottom:auto; left:var(--card-mx); right:var(--card-mx);
+    height:var(--card-h); border-radius:18px; overflow:hidden;
+    transform:translateX(calc(100% + 2 * var(--card-mx)));
+  }
+  #profileScreen.is-open{ transform:translateX(0); }
+  /* Al llegar al final de la conversación, seguir deslizando baja a
+     proyectos en vez de quedar atrapado en la lista. */
+  .chat-body.is-complete{ overscroll-behavior:auto; }
   .back{ display:flex; }
   .chat-header{ padding:9px 12px; gap:10px; }
   .hdr-actions{ gap:18px; }
-  .view-toggle-mobile{
-    display:inline-flex;
-    position:fixed; right:12px; bottom:92px; z-index:65;
-    box-shadow:0 6px 24px -8px rgba(11,20,26,.35);
-  }
 }
 
 @media (prefers-reduced-motion:reduce){
@@ -689,6 +770,7 @@ body{
   .chat-list{ transition:none; }
   .hint-card,.hint-tap::after,.typing i{ animation:none; }
   .open-prompt,.open-prompt-arrow{ animation:none; }
+  .scroll-cue{ animation:none; }
   .suggestions{ animation:none; }
   /* Sin movimiento: la tira queda quieta y se recorre deslizando a mano. */
   .suggestions{ overflow-x:auto; -webkit-mask-image:none; mask-image:none; }

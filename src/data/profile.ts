@@ -17,8 +17,12 @@ export interface Profile {
 export interface ProfileCopy {
   role: string;
   tagline: string;
-  /** One entry per rendered line of the intro. Kept as separate lines on the page. */
-  bio: string[];
+  /**
+   * One entry per rendered line of the intro. Kept as separate lines on the page.
+   * A line that depends on the layout carries both versions: `wide` when the chat
+   * sits beside the intro, `narrow` when it sits below it on mobile.
+   */
+  bio: (string | { wide: string; narrow: string })[];
 }
 
 // The linkedin and instagram handles are still placeholders: the owner has not
@@ -41,7 +45,10 @@ export const PROFILE_COPY: Record<Lang, ProfileCopy> = {
     bio: [
       'Analista Programador y estudiante avanzado de Licenciatura en Sistemas.',
       'Haciendo del mundo un lugar mejor, pero no tanto...',
-      'Abrí el chat de al lado: contesto todo lo que quieras preguntarme.',
+      {
+        wide: 'Abrí el chat de al lado: contesto todo lo que quieras preguntarme.',
+        narrow: 'Deslizá para conversar conmigo y ver mis proyectos.',
+      },
     ],
   },
   en: {
@@ -52,7 +59,10 @@ export const PROFILE_COPY: Record<Lang, ProfileCopy> = {
     bio: [
       'Software analyst and senior-year student of Licenciatura en Sistemas.',
       'Making the world a better place, but only a little...',
-      'Open the chat next door: I answer anything you feel like asking.',
+      {
+        wide: 'Open the chat next door: I answer anything you feel like asking.',
+        narrow: 'Swipe to chat with me and see my projects.',
+      },
     ],
   },
 };
