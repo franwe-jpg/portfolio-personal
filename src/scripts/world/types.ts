@@ -1,8 +1,10 @@
 import type * as T from 'three';
+import type { Franco } from './figure';
 
 /** What every diorama module returns; later phases add their fields here. */
 export interface Diorama {
   root: T.Group;
+  franco: Franco;
   update(t: number, dt: number): void;
   /** Global light levels while this scene is active. */
   light: { hemi: number; sun: number; sunColor: number };

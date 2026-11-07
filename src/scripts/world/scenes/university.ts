@@ -1,6 +1,7 @@
 import * as T from 'three';
 import { Batch } from '../batch';
-import { SCENE_X } from '../config';
+import { MOBILE, SCENE_X } from '../config';
+import { makeFranco, makePerson, person, type Person } from '../figure';
 import { floorGlow, windowGlow, windowLight } from '../lights';
 import type { Diorama } from '../types';
 import { base } from '../walls';
@@ -14,14 +15,49 @@ export function university(scene: T.Scene): Diorama {
   base(root, b, { window: { a: -3.4, b: -1.4, y0: 1.1, y1: 2.6 } });
   b.flush();
 
+  // Desks in a 3×3 facing the board (-x); the seat is 0.6 to the right of each desk.
+  const SEAT = (x: number, z: number) => ({ x: x + 0.6, z });
+  // Franco in the middle column, front row (away from the projector and its cone); mates on five desks.
+  const fSeat = SEAT(-0.4, -1.9);
+  const mates: [number, number][] = [
+    [-1.9, 0],
+    [-0.4, 1.9],
+    [1.1, 1.9],
+    [-1.9, -1.9],
+    [-1.9, 1.9],
+  ];
+
+  const franco = makeFranco('writing');
+  franco.root.position.set(fSeat.x, 0.51, fSeat.z);
+  franco.root.rotation.y = -Math.PI / 2;
+  root.add(franco.root);
+  franco.ring.position.y = -0.48;
+  const people: Person[] = [];
+  mates.slice(0, MOBILE ? 3 : 5).forEach(([x, z], i) => {
+    const p = person(i + 1, 'writing');
+    p.root.position.set(x + 0.6, 0.51, z);
+    p.root.rotation.y = -Math.PI / 2;
+    root.add(p.root);
+    people.push(p);
+  });
+  const teacher = makePerson({ shirt: 0x4a505c, pants: 0x1f242b, skin: 0xc8a68e, hair: 0x2a2420, pose: 'standing', recede: true });
+  teacher.root.position.set(-3.95, 0.93, 0.45);
+  teacher.root.rotation.y = Math.PI / 2 + 0.2;
+  root.add(teacher.root);
+  people.push(teacher);
+
   // Softer sun than the office: paler glow, weaker patch.
   windowGlow(root, -2.4, 1.85, -4.86, 2.6, 2.2, '236,240,255', 0.6);
   floorGlow(root, -2.5, -3.5, 2.8, 2.4, '230,236,255', 0.28);
   const sunIn = windowLight(root, 0xf1f4ff, [-2.4, 4.4, -7.2], [-2.6, 0, -2.0]);
 
-  const update = () => {};
+  const update = (t: number) => {
+    franco.update(t);
+    for (const p of people) p.update(t);
+  };
   return {
     root,
+    franco,
     update,
     lights: [[sunIn, 60]],
     light: { hemi: 1.6, sun: 2.2, sunColor: 0xf3f6fa },

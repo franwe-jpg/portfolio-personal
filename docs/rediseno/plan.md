@@ -120,7 +120,7 @@ Cada tarea cierra con capturas y sin errores de consola (ver "Criterios de termi
 
 ### Fase 4 — Figuras y props
 
-- [ ] **Figura base.** `figure()` con sus poses (`typing`, `writing`, `phone`, `standing`, `relaxed`) y opciones (`glasses`, `watch`, `curly`, `recede`, `long`, `collar`, `lapel`). Franco con su hit box, anillo y estática de tele al pasar el mouse.
+- [x] **Figura base.** Hecho el 2026-11-07: `src/scripts/world/figure.ts` (geometrías, poses, `figure()`, `makeFranco` con hit box, anillo, insignia, celular y ancla del cartel, estática "sin señal" con `setStatic`, presets y `makePerson`); Franco y la gente secundaria ya sentados en los tres mapas; `input.ts` suma hover (estática, cursor persona, cartel caliente) y toque sobre Franco, que emite `app:talk` para el panel de la fase 6; el loop proyecta el cartel y tiñe el borde. Verificado con primeros planos de Franco de frente, de espalda y con la estática, y de la chica de pelo largo, el chico de lentes con chomba, la chica de rulos con saco y el profesor con entradas, iguales al prototipo con el mismo rig. `figure()` con sus poses (`typing`, `writing`, `phone`, `standing`, `relaxed`) y opciones (`glasses`, `watch`, `curly`, `recede`, `long`, `collar`, `lapel`). Franco con su hit box, anillo y estática de tele al pasar el mouse.
   - Resultado esperado: Franco y los presets de gente secundaria idénticos al prototipo.
   - Cómo se verifica: primeros planos de Franco de frente y de espalda, y de un personaje con cada opción.
 - [ ] **Props y batching.** `Batch` por material, muebles (escritorios, sillas, notebooks, monitores, sofás, bibliotecas, pupitres, mesas), plantas, mascotas (`makeDog`, `makeCat` con poses `sit`, `sleep`, `eat` y manchas).

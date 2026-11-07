@@ -11,13 +11,16 @@ import { createCameraRig, MAX_AZ, type ViewMode } from './camera';
 import { SCENE_X } from './config';
 import { createCss3d } from './css3d';
 import { createDust } from './dust';
+import { isStaticOn } from './figure';
 import type { WorldApi } from './handle';
 import { bindInput } from './input';
 import { createLights } from './lights';
+import { francoMats } from './materials';
 import { createStage } from './renderer';
 import { home } from './scenes/home';
 import { office } from './scenes/office';
 import { university } from './scenes/university';
+import { drawSnow } from './textures';
 import type { Diorama } from './types';
 import { addGroundHalo } from './walls';
 
@@ -83,7 +86,10 @@ export async function initWorld(): Promise<WorldApi> {
   let running = false;
   let last = performance.now();
   const label = byId('francoLabel');
+  const _v = new T.Vector3();
   let labelOn = false;
+  let hoverAmt = 0;
+  let snowLast = -1;
   const input = bindInput({ canvas, camera, rig: cam, dioramas, interactive: () => cam.cam.viewMode === 'mundo' });
 
   function frame(now: number): void {
@@ -116,7 +122,26 @@ export async function initWorld(): Promise<WorldApi> {
     const d = dioramas[state.scene];
     d.update(elapsed, dt);
     if (!REDUCE) dust.update(elapsed, dt);
+    // Hover highlight: emissive rim tint + floor ring.
+    hoverAmt += ((input.hovered ? 1 : 0) - hoverAmt) * (REDUCE ? 1 : 0.15);
+    for (const m of francoMats) {
+      m.emissive.setHex(0x9aa1ab);
+      m.emissiveIntensity = hoverAmt * 0.16;
+    }
+    d.franco.ring.material.opacity = hoverAmt * 0.9;
+    // "No signal" static over Franco: redrawn ≈12 times per second while any hover lasts.
+    if (isStaticOn() && !REDUCE && elapsed - snowLast >= 1 / 12) {
+      snowLast = elapsed;
+      drawSnow();
+    }
     cam.render();
+    // Project the floating label above Franco.
+    if (labelOn) {
+      d.franco.anchor.getWorldPosition(_v).project(camera);
+      const x = (_v.x * 0.5 + 0.5) * view.w;
+      const y = (-_v.y * 0.5 + 0.5) * view.h;
+      label.style.transform = `translate3d(${x.toFixed(1)}px, ${(y - 18).toFixed(1)}px, 0) translate(-50%, -100%)`;
+    }
   }
   function start(): void {
     if (running || document.hidden || !state.entered || cam.cam.viewMode === 'off') return;
@@ -187,6 +212,7 @@ export async function initWorld(): Promise<WorldApi> {
     stage.classList.toggle('is-off', mode === 'off');
     stage.classList.toggle('is-inicio', mode === 'inicio');
     setLabel(false);
+    input.setHover(false);
     if (mode === 'off') {
       stop();
       return;
@@ -219,7 +245,7 @@ export async function initWorld(): Promise<WorldApi> {
 
   if (DEBUG) {
     Object.assign(window, {
-      __world: { T, camera, rig, view, para, pov, dioramas, renderer, pointer, dbg: { locked: input.locked, busy: () => state.busy } },
+      __world: { T, gsap, camera, rig, view, para, pov, dioramas, renderer, pointer, dbg: { locked: input.locked, hitFranco: input.hitFranco, setHover: input.setHover, busy: () => state.busy } },
     });
   }
 

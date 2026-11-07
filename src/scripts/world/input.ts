@@ -1,14 +1,17 @@
-import type * as T from 'three';
+import * as T from 'three';
 import type { Scene } from '../../i18n/ui';
+import { audio } from '../audio';
 import { byId } from '../dom';
-import { REDUCE } from '../env';
-import { state } from '../state';
+import { FINE, REDUCE } from '../env';
+import { emit, state } from '../state';
 import type { CameraRig } from './camera';
+import { setStatic } from './figure';
 import type { Diorama } from './types';
 
 /**
- * Pointer on the canvas (mundo view only): drag to orbit with inertia, wheel and pinch to zoom.
- * Hover and taps on Franco, the clock and the TV come with their tasks (plan, Fases 4–6).
+ * Pointer on the canvas (mundo view only): drag to orbit with inertia, wheel and pinch to zoom,
+ * hover and tap on Franco (static, ring, label, `app:talk`). The clock and the TV hook in with
+ * their scenes (plan, Fase 5).
  */
 export interface InputCore {
   canvas: HTMLCanvasElement;
@@ -20,18 +23,49 @@ export interface InputCore {
 
 export interface WorldInput {
   readonly dragging: boolean;
+  /** Franco under the pointer. */
+  readonly hovered: boolean;
   locked(): boolean;
+  setHover(on: boolean): void;
+  hitFranco(clientX: number, clientY: number): boolean;
 }
 
 export function bindInput(core: InputCore): WorldInput {
-  const { canvas, rig } = core;
+  const { canvas, camera, rig, dioramas } = core;
   const { orbit, view } = rig;
   const cursor = byId('cursor');
+  const label = byId('francoLabel');
   const drag = { active: false, id: -1, sx: 0, sy: 0, lx: 0, ly: 0, moved: false, lastT: 0, v: 0 };
   const pointers = new Map<number, { x: number; y: number }>();
   let pinch0 = 0;
   let zoom0 = 1;
+  let hovered = false;
+  const raycaster = new T.Raycaster();
+  const ndc = new T.Vector2();
   const locked = () => state.busy || state.panelOpen || !core.interactive();
+
+  function aim(clientX: number, clientY: number): void {
+    const r = canvas.getBoundingClientRect();
+    ndc.set(((clientX - r.left) / r.width) * 2 - 1, -((clientY - r.top) / r.height) * 2 + 1);
+    raycaster.setFromCamera(ndc, camera);
+  }
+  function hitMesh(m: T.Object3D | null | undefined, clientX: number, clientY: number): boolean {
+    if (!m) return false;
+    aim(clientX, clientY);
+    return raycaster.intersectObject(m, false).length > 0;
+  }
+  const hitFranco = (x: number, y: number) => hitMesh(dioramas[state.scene].franco.hit, x, y);
+
+  function setHover(on: boolean): void {
+    if (hovered === on) return;
+    hovered = on;
+    if (FINE) setStatic(dioramas[state.scene].franco, on);
+    label.classList.toggle('is-hot', on);
+    cursor.classList.toggle('is-hot', on);
+    canvas.classList.toggle('cur-person', on);
+    if (!FINE) canvas.style.cursor = on ? 'pointer' : '';
+    if (on) audio.tick();
+  }
 
   canvas.addEventListener('pointerdown', (e) => {
     if (locked()) return;
@@ -84,18 +118,35 @@ export function bindInput(core: InputCore): WorldInput {
       drag.ly = e.clientY;
       return;
     }
+    if (e.pointerType === 'mouse' && !locked()) {
+      setHover(hitFranco(e.clientX, e.clientY));
+    }
   });
-  const endDrag = (e: PointerEvent) => {
+  const endDrag = (e: PointerEvent, cancelled: boolean) => {
     pointers.delete(e.pointerId);
     if (pointers.size < 2) pinch0 = 0;
     if (!drag.active || e.pointerId !== drag.id) return;
     drag.active = false;
     cursor.classList.remove('is-grabbing');
     canvas.classList.remove('cur-move');
-    if (drag.moved) orbit.vAz = REDUCE ? 0 : drag.v;
+    if (drag.moved) {
+      orbit.vAz = REDUCE ? 0 : drag.v;
+      return;
+    }
+    if (cancelled || locked()) return;
+    if (hitFranco(e.clientX, e.clientY)) {
+      if (e.pointerType !== 'mouse') {
+        setHover(true);
+        setTimeout(() => setHover(false), 900);
+      }
+      emit('app:talk', 'world');
+    }
   };
-  canvas.addEventListener('pointerup', endDrag);
-  canvas.addEventListener('pointercancel', endDrag);
+  canvas.addEventListener('pointerup', (e) => endDrag(e, false));
+  canvas.addEventListener('pointercancel', (e) => endDrag(e, true));
+  canvas.addEventListener('pointerleave', () => {
+    if (!drag.active) setHover(false);
+  });
   canvas.addEventListener('pointerenter', () => {
     if (core.interactive()) cursor.classList.add('is-grab');
   });
@@ -115,6 +166,11 @@ export function bindInput(core: InputCore): WorldInput {
     get dragging() {
       return drag.active;
     },
+    get hovered() {
+      return hovered;
+    },
     locked,
+    setHover,
+    hitFranco,
   };
 }

@@ -47,6 +47,8 @@ export interface AppEvents {
   'app:navigate': CustomEvent<Page>;
   /** A page just became active. */
   'app:pageswap': CustomEvent<Page>;
+  /** The visitor tapped Franco in the world (or the fallback's button): the panel (Fase 6) opens. */
+  'app:talk': CustomEvent<'world' | 'button'>;
 }
 
 export function emit<K extends keyof AppEvents>(type: K, detail?: AppEvents[K]['detail']): void {
