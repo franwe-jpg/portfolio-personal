@@ -1,0 +1,407 @@
+---
+import type { Lang } from '../i18n/config';
+
+/**
+ * The "terms and conditions" of the ticket-hunt prize: a joke page. One real sentence in bold,
+ * then a wall of formal-sounding nonsense generated at build time from word pools with a seeded
+ * PRNG (same text on every build), and a bold punchline at the end.
+ */
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+
+const COPY = {
+  es: {
+    title: 'Términos y Condiciones del Premio Obtenido',
+    subtitle: 'Anexo I · Reglamento General de Adjudicación, Uso y Mantenimiento de la Landing Page',
+    opening:
+      'El desarrollo de la landing page será personalizable en lo que el usuario quiera y sea accesible, pero el costo y mantenimiento es por cargo del usuario.',
+    closing:
+      'Seguro no leíste todo, pero no te preocupes, es lo que todos hacemos 🙂👍 (lamentablemente). Por tu suerte, no había nada importante (vuelve a mirar).',
+    article: 'Artículo N.º',
+    notice: 'Los artículos anteriores y los próximos a continuación no tienen ningún tipo de sentido:',
+    back: 'Volver al sitio',
+    home: '/',
+    credit: 'Música de la sorpresa: "Gymnopedie No 1", Kevin MacLeod (incompetech.com), CC BY 4.0.',
+    pools: {
+      subjects: [
+        'el beneficiario',
+        'la parte adjudicataria',
+        'el titular del premio',
+        'la entidad otorgante',
+        'el órgano de aplicación',
+        'la comisión evaluadora',
+        'el usuario debidamente notificado',
+        'toda persona humana o jurídica alcanzada',
+        'el responsable técnico designado',
+        'la autoridad competente',
+      ],
+      verbs: [
+        'deberá acreditar',
+        'queda facultado para solicitar',
+        'se compromete a observar',
+        'podrá disponer de',
+        'tendrá por cumplimentado',
+        'asumirá en forma exclusiva',
+        'reconoce expresamente',
+        'se abstendrá de invocar',
+        'instrumentará',
+        'ratifica sin reservas',
+      ],
+      objects: [
+        'la vigencia del presente anexo',
+        'las condiciones de accesibilidad previstas',
+        'el alcance estético de la landing page',
+        'los plazos de entrega razonables',
+        'la provisión del dominio y del alojamiento',
+        'el mantenimiento periódico de la plataforma',
+        'la paleta cromática convenida',
+        'las obligaciones recíprocas emergentes',
+        'el cronograma de revisiones',
+        'la documentación complementaria',
+        'el formulario de contacto y sus derivados',
+        'las métricas de rendimiento oportunamente informadas',
+      ],
+      connectors: [
+        'sin perjuicio de lo dispuesto en la cláusula precedente',
+        'a los efectos de la presente reglamentación',
+        'en los términos y con los alcances aquí previstos',
+        'conforme a los usos y costumbres del sector',
+        'salvo pacto expreso en contrario',
+        'en un todo de acuerdo con el espíritu del acuerdo',
+        'bajo apercibimiento de lo que corresponda',
+        'de manera fehaciente y por escrito',
+        'con carácter previo a cualquier reclamo',
+        'en el marco de la buena fe contractual',
+        'toda vez que resulte materialmente posible',
+        'según el inciso que resulte aplicable',
+      ],
+      adjectives: [
+        'razonable',
+        'proporcional',
+        'subsidiaria',
+        'inobjetable',
+        'provisoria',
+        'definitiva',
+        'oportuna',
+        'ulterior',
+        'preventiva',
+        'accesoria',
+      ],
+      titles: [
+        'Del Objeto',
+        'De las Partes',
+        'De la Personalización',
+        'De los Costos',
+        'Del Mantenimiento',
+        'De la Accesibilidad',
+        'De los Plazos',
+        'De las Notificaciones',
+        'De la Buena Fe',
+        'De las Revisiones',
+        'De la Vigencia',
+        'De las Disposiciones Transitorias',
+        'De la Interpretación',
+        'De las Responsabilidades',
+        'Del Dominio y el Alojamiento',
+        'De la Paleta Cromática',
+        'De los Anexos',
+        'De la Jurisdicción',
+        'De la Confidencialidad',
+        'Del Cumplimiento',
+      ],
+    },
+  },
+  en: {
+    title: 'Terms and Conditions of the Prize Obtained',
+    subtitle: 'Annex I · General Regulations for Award, Use and Maintenance of the Landing Page',
+    opening:
+      'The landing page will be customisable in whatever the user wants and is feasible, but its cost and maintenance are borne by the user.',
+    closing:
+      'You surely did not read all of it, but do not worry, that is what we all do 🙂👍 (unfortunately). Luckily for you, there was nothing important in it (look again).',
+    article: 'Article No.',
+    notice: 'The previous articles and the ones that follow make no sense whatsoever:',
+    back: 'Back to the site',
+    home: '/en/',
+    credit: 'Surprise music: "Gymnopedie No 1", Kevin MacLeod (incompetech.com), CC BY 4.0.',
+    pools: {
+      subjects: [
+        'the beneficiary',
+        'the awarded party',
+        'the holder of the prize',
+        'the granting entity',
+        'the enforcing body',
+        'the evaluation committee',
+        'the duly notified user',
+        'any natural or legal person concerned',
+        'the designated technical officer',
+        'the competent authority',
+      ],
+      verbs: [
+        'shall evidence',
+        'is entitled to request',
+        'undertakes to observe',
+        'may dispose of',
+        'shall deem fulfilled',
+        'shall solely assume',
+        'expressly acknowledges',
+        'shall refrain from invoking',
+        'shall implement',
+        'ratifies without reservation',
+      ],
+      objects: [
+        'the validity of this annex',
+        'the accessibility conditions provided for',
+        'the aesthetic scope of the landing page',
+        'the reasonable delivery deadlines',
+        'the provision of the domain and the hosting',
+        'the periodic maintenance of the platform',
+        'the agreed colour palette',
+        'the reciprocal obligations arising herefrom',
+        'the revision schedule',
+        'the supplementary documentation',
+        'the contact form and its derivatives',
+        'the performance metrics duly reported',
+      ],
+      connectors: [
+        'without prejudice to the preceding clause',
+        'for the purposes of these regulations',
+        'under the terms and to the extent provided herein',
+        'in accordance with the customs of the trade',
+        'unless expressly agreed otherwise',
+        'in full accordance with the spirit of the agreement',
+        'under warning of whatever may apply',
+        'reliably and in writing',
+        'prior to any claim whatsoever',
+        'within the framework of contractual good faith',
+        'whenever materially possible',
+        'pursuant to the applicable subsection',
+      ],
+      adjectives: [
+        'reasonable',
+        'proportional',
+        'subsidiary',
+        'unobjectionable',
+        'provisional',
+        'definitive',
+        'timely',
+        'subsequent',
+        'preventive',
+        'ancillary',
+      ],
+      titles: [
+        'Of the Object',
+        'Of the Parties',
+        'Of Customisation',
+        'Of Costs',
+        'Of Maintenance',
+        'Of Accessibility',
+        'Of Deadlines',
+        'Of Notifications',
+        'Of Good Faith',
+        'Of Revisions',
+        'Of Validity',
+        'Of Transitional Provisions',
+        'Of Interpretation',
+        'Of Liabilities',
+        'Of the Domain and the Hosting',
+        'Of the Colour Palette',
+        'Of the Annexes',
+        'Of Jurisdiction',
+        'Of Confidentiality',
+        'Of Compliance',
+      ],
+    },
+  },
+} as const;
+
+const copy = COPY[lang];
+
+/** mulberry32: a tiny seeded PRNG so the nonsense is identical on every build. */
+function mulberry32(seed: number): () => number {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+const rand = mulberry32(lang === 'es' ? 20261107 : 20261108);
+const pick = <T,>(list: readonly T[]): T => list[Math.floor(rand() * list.length)];
+const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+function sentence(): string {
+  const { subjects, verbs, objects, connectors, adjectives } = copy.pools;
+  const shapes = [
+    () => `${capitalize(pick(connectors))}, ${pick(subjects)} ${pick(verbs)} ${pick(objects)}`,
+    () => `${capitalize(pick(subjects))} ${pick(verbs)} ${pick(objects)}, ${pick(connectors)}`,
+    () => `${capitalize(pick(subjects))}, ${pick(connectors)}, ${pick(verbs)} ${pick(objects)} ${lang === 'es' ? 'de forma' : 'in a'} ${pick(adjectives)} ${lang === 'es' ? 'y' : 'and'} ${pick(adjectives)} ${lang === 'es' ? '' : 'manner'}`,
+    () => `${capitalize(pick(connectors))}, ${pick(subjects)} ${pick(verbs)} ${pick(objects)} ${lang === 'es' ? 'y' : 'and'} ${pick(objects)}`,
+  ];
+  return `${pick(shapes)().replace(/\s+/g, ' ').trim()}.`;
+}
+
+const ARTICLES = 40;
+/** Every article after the first carries the bold notice right under its heading. */
+const NOTICE_FROM = 2;
+const articles = Array.from({ length: ARTICLES }, (_, i) => {
+  const paragraphs = Array.from({ length: 1 + Math.floor(rand() * 2) }, () =>
+    Array.from({ length: 2 + Math.floor(rand() * 3) }, sentence).join(' '),
+  );
+  return { n: i + 1, title: pick(copy.pools.titles), paragraphs };
+});
+---
+
+<main class="terms">
+  <header>
+    <h1>{copy.title}</h1>
+    <p class="subtitle">{copy.subtitle}</p>
+  </header>
+  <a class="pill-btn" href={copy.home}>{copy.back}</a>
+  <p class="lead"><strong>{copy.opening}</strong></p>
+  {
+    articles.map((a) => (
+      <section>
+        <h2>
+          <span class="num">{copy.article} {a.n}</span> — {a.title}
+        </h2>
+        {a.n >= NOTICE_FROM && (
+          <p class="notice">
+            <strong>{copy.notice}</strong>
+          </p>
+        )}
+        {a.paragraphs.map((p) => (
+          <p>{p}</p>
+        ))}
+      </section>
+    ))
+  }
+  <p class="lead closing"><strong>{copy.closing}</strong></p>
+  <footer>
+    <a class="pill-btn" href={copy.home}>{copy.back}</a>
+    <p class="credit">{copy.credit}</p>
+  </footer>
+</main>
+
+<style>
+  :global(html) {
+    background: #e7eaee;
+  }
+  :global(body) {
+    margin: 0;
+    color: #15181d;
+    background: #e7eaee;
+    font: 400 16px/1.6 'Instrument Sans', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .terms {
+    max-width: 72ch;
+    margin: 0 auto;
+    padding: clamp(32px, 8vh, 72px) 16px 64px;
+  }
+  header {
+    margin-bottom: 32px;
+    border-bottom: 1px solid rgba(21, 24, 29, 0.14);
+    padding-bottom: 20px;
+  }
+  h1 {
+    margin: 0 0 8px;
+    font-size: clamp(24px, 4vw, 34px);
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+  }
+  .subtitle {
+    margin: 0;
+    color: #5b6370;
+    font: 400 12px/1.5 'JetBrains Mono', ui-monospace, monospace;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .lead {
+    font-size: 18px;
+    line-height: 1.5;
+  }
+  .closing {
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid rgba(21, 24, 29, 0.14);
+  }
+  section {
+    margin-top: 28px;
+  }
+  h2 {
+    margin: 0 0 8px;
+    font-size: 17px;
+    line-height: 1.3;
+  }
+  .num {
+    font: 500 12px/1 'JetBrains Mono', ui-monospace, monospace;
+    color: #17955b;
+    letter-spacing: 0.06em;
+  }
+  p {
+    margin: 0 0 12px;
+    text-align: justify;
+    hyphens: auto;
+  }
+  footer {
+    margin-top: 48px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(21, 24, 29, 0.14);
+    display: grid;
+    gap: 12px;
+  }
+  /* Same pill as the site's paper pages (.pill-btn in pages.css), self-contained here. */
+  .pill-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 48px;
+    padding: 12px 24px;
+    margin: 0 0 28px;
+    border-radius: 999px;
+    border: 1px solid #15181d;
+    background: transparent;
+    color: #15181d;
+    font: 500 16px 'Instrument Sans', system-ui, sans-serif;
+    text-decoration: none;
+    justify-self: start;
+    transition: background-color 0.18s, color 0.18s, transform 0.18s, box-shadow 0.18s;
+  }
+  .pill-btn:hover {
+    background: #15181d;
+    color: #f3f5f7;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 26px -16px rgba(0, 0, 0, 0.7);
+  }
+  footer .pill-btn {
+    margin: 0;
+  }
+  .notice {
+    font-size: 17px;
+    text-align: left;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pill-btn {
+      transition: none;
+    }
+    .pill-btn:hover {
+      transform: none;
+    }
+  }
+  .credit {
+    margin: 0;
+    color: #5b6370;
+    font-size: 13px;
+    text-align: left;
+  }
+  :global(:focus-visible) {
+    outline: 2px solid #1fbf75;
+    outline-offset: 3px;
+  }
+</style>

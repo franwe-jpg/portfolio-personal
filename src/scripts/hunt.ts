@@ -1,7 +1,8 @@
 import { audio } from './audio';
 import { $$, byId } from './dom';
 import { t } from './i18n';
-import { closePanel, openPanel } from './panel';
+import { closePanel } from './panel';
+import { advanceQuote, currentQuote } from './quotes';
 import { router } from './router';
 import { worldLoaded } from './stage';
 import { HUNT_TOTAL, on, state } from './state';
@@ -12,7 +13,8 @@ import { world } from './world/handle';
  * landing, the world object the loop projects every frame, the projects grid, the about photo).
  * Hovering a hiding spot slides a bit of the ticket out; clicking it collects it, with the
  * chime and the full-screen toast. Progress lives in localStorage. With every ticket found, the
- * world shows the surprise: the phrase on the screen of the current scene, then the chat opens.
+ * world shows the surprise: the visitor's quote (src/scripts/quotes.ts) on the screen of the
+ * current scene, the prize line under it and a piano track while it stays on screen.
  */
 const HUNT_KEY = 'fs-tickets';
 const TOTAL = HUNT_TOTAL;
@@ -26,6 +28,50 @@ function loadFound(): Set<string> {
 }
 
 const pad = (n: number) => String(n).padStart(2, '0');
+
+/**
+ * Piano under the surprise ("Gymnopedie No 1", Kevin MacLeod, CC BY 4.0): created on first use,
+ * faded in while the quote is on the screens and faded out when the screens recover.
+ */
+const PIANO_SRC = '/musica/gymnopedie-no-1.mp3';
+const PIANO_VOL = 0.7;
+let piano: HTMLAudioElement | null = null;
+let pianoRamp = 0;
+function rampPiano(to: number, ms: number, done?: () => void): void {
+  if (!piano) return;
+  clearInterval(pianoRamp);
+  const from = piano.volume;
+  const t0 = performance.now();
+  pianoRamp = window.setInterval(() => {
+    if (!piano) return;
+    const k = Math.min(1, (performance.now() - t0) / ms);
+    piano.volume = from + (to - from) * k;
+    if (k >= 1) {
+      clearInterval(pianoRamp);
+      done?.();
+    }
+  }, 50);
+}
+function startPiano(): void {
+  if (!piano) {
+    piano = new Audio(PIANO_SRC);
+    piano.loop = true;
+    piano.preload = 'none';
+  }
+  piano.volume = 0;
+  void piano.play().catch(() => {
+    /* autoplay blocked: the surprise plays silent */
+  });
+  rampPiano(PIANO_VOL, 1500);
+}
+function stopPiano(): void {
+  if (!piano || piano.paused) return;
+  rampPiano(0, 800, () => {
+    if (!piano) return;
+    piano.pause();
+    piano.currentTime = 0;
+  });
+}
 
 const ticketSvg = (n: number) => `<svg viewBox="0 0 400 190" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
     <defs>
@@ -59,6 +105,7 @@ export function initHunt(): void {
   const pnl = byId('huntPanel');
   const toast = byId('tkToast');
   const back = byId<HTMLButtonElement>('surpriseBack');
+  const hud = byId('surpriseHud');
   const inSurprise = () => document.body.classList.contains('surprise-view');
 
   function paint(): void {
@@ -77,7 +124,11 @@ export function initHunt(): void {
     toast.classList.add('is-on');
   }
   // The found ticket stays on screen until a click lands outside it.
-  const closeToast = () => toast.classList.remove('is-on');
+  const closeToast = () => {
+    toast.classList.remove('is-on');
+    // Fallback mode shows the quote in the toast itself: closing it ends the surprise.
+    if (!world) clearScreens();
+  };
   toast.addEventListener('click', (e) => {
     if (!(e.target instanceof Element) || !e.target.closest('.tk-toast-ticket')) {
       closeToast();
@@ -87,19 +138,19 @@ export function initHunt(): void {
 
   // Surprise: go to the world and frame the screen of the current scene (monitor, projector or TV).
   let finalePending = false;
-  let surpriseRun = 0;
   let onScreens = false;
-  // The phrase leaves the screens once the viewing is over: "back", a page change, a scene change
-  // or closing the chat that the viewing opened. "Ver sorpresa" in the ticket panel brings it back.
+  // The quote leaves the screens (and the piano stops) once the viewing is over: "back", a page
+  // change, a scene change or closing a chat opened over it. "Ver sorpresa" brings it back.
   function clearScreens(): void {
     if (!onScreens) return;
     onScreens = false;
+    stopPiano();
     world?.endSurprise();
   }
   function endSurpriseView(unfocus = true): void {
     if (!inSurprise()) return;
     document.body.classList.remove('surprise-view');
-    back.hidden = true;
+    hud.hidden = true;
     if (unfocus) {
       world?.unfocus();
       clearScreens();
@@ -115,22 +166,23 @@ export function initHunt(): void {
     if (state.page !== 'mundo') return;
     // The world builds on the first visit to mundo: wait for that before framing the shot.
     await worldLoaded();
+    const quote = currentQuote();
     if (!world) {
-      // No 3D (fallback / lite): show the phrase in the announcement instead.
-      byId('tkToastMsg').textContent = t.hunt.surprise;
+      // No 3D (fallback / lite): show the quote in the announcement instead.
+      byId('tkToastMsg').textContent = `${quote.text} — ${quote.source}`;
       toast.classList.add('is-on');
+      onScreens = true;
+      startPiano();
       return;
     }
     if (state.page !== 'mundo' || state.panelOpen) return;
-    const run = ++surpriseRun;
     document.body.classList.add('surprise-view');
-    back.hidden = false;
+    hud.hidden = false;
     onScreens = true;
-    await world.surprise();
-    // Still watching (no "back", no page change, chat not opened by hand): bring in the chat.
-    if (run !== surpriseRun || !inSurprise() || state.page !== 'mundo' || state.panelOpen) return;
-    endSurpriseView(false);
-    void openPanel();
+    startPiano();
+    // The quote, the prize line and the terms link stay until the visitor leaves (back, Escape,
+    // another page or scene): the screenshot needs them on screen.
+    await world.surprise(quote);
   }
   back.addEventListener('click', () => {
     audio.tick();
@@ -207,6 +259,8 @@ export function initHunt(): void {
   byId('huntReset').addEventListener('click', () => {
     found.clear();
     save();
+    // Every restart moves to the next quote of this visitor's order.
+    advanceQuote();
     location.reload();
   });
   paint();

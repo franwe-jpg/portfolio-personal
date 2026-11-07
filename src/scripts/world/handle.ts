@@ -1,3 +1,4 @@
+import type { Quote } from '../../data/quotes';
 import type { Scene } from '../../i18n/ui';
 import type { ViewMode } from './camera';
 
@@ -19,8 +20,8 @@ export interface WorldApi {
   focusOn(): number;
   /** Back to the iso rig. */
   unfocus(): void;
-  /** Surprise (Fase 8): phrase on every screen, special shot on the current one; resolves when the "clip" ends. */
-  surprise(): Promise<void>;
+  /** Surprise (Fase 8): `quote` on every screen, special shot on the current one; resolves when the "clip" ends. */
+  surprise(quote: Quote): Promise<void>;
   /** Screens back to their usual content. */
   endSurprise(): void;
   start(): void;

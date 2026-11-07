@@ -175,7 +175,7 @@ export function initAudio(): void {
   byId('audioBtn').addEventListener('click', () => audio.set(!state.audio));
   on('app:navigate', () => audio.whoosh());
   for (const trigger of $$('[data-go]')) trigger.addEventListener('click', () => audio.tick());
-  for (const hover of $$('.talk, .seg button, .audio-btn, .pill-btn, .ws-toggle, .tk, .hunt-tab')) {
+  for (const hover of $$('.talk, .seg button, .audio-btn, .pill-btn, .ws-toggle, .tk, .hunt-tab, .surprise-terms, .surprise-back')) {
     hover.addEventListener('mouseenter', () => audio.tick());
   }
   // Project cards: the hover sound only; the background reacts instead of the card.

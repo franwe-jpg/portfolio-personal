@@ -143,10 +143,12 @@ export interface UiCopy {
     ticket: string;
     /** "No." label on the big ticket of the toast. */
     ticketNo: string;
-    /** Header on the surprise screens. */
-    screenHeader: (total: number) => string;
-    /** Shown on the screen Franco is looking at once every ticket is found. */
-    surprise: string;
+    /** Header on the surprise screens, above the quote. */
+    screenHeader: string;
+    /** Prize line under the surprise shot, the terms link and its route. */
+    prize: string;
+    terms: string;
+    termsHref: string;
   };
 
   panel: {
@@ -348,8 +350,10 @@ const es: UiCopy = {
     ticketFound: 'ENCONTRADO',
     ticket: 'TICKET',
     ticketNo: 'Nº',
-    screenHeader: (total) => `★  ${total} / ${total} TICKETS  ★`,
-    surprise: 'Lo mejor siempre está escondido donde casi nadie se anima a mirar.',
+    screenHeader: 'De lo más profundo de mi corazón, te comparto:',
+    prize: '¡Y te ganaste una landing page desarrollada por mí! Saca captura y enviámela.',
+    terms: 'Ver condiciones',
+    termsHref: '/tyc/',
   },
 
   panel: {
@@ -544,8 +548,10 @@ const en: UiCopy = {
     ticketFound: 'FOUND',
     ticket: 'TICKET',
     ticketNo: 'No.',
-    screenHeader: (total) => `★  ${total} / ${total} TICKETS  ★`,
-    surprise: 'The best things are always hidden where almost nobody dares to look.',
+    screenHeader: 'From the bottom of my heart, I share this with you:',
+    prize: 'And you have won a landing page built by me! Take a screenshot and send it to me.',
+    terms: 'See the terms',
+    termsHref: '/en/tyc/',
   },
 
   panel: {

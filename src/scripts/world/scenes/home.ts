@@ -221,6 +221,7 @@ export function home(scene: T.Scene, css3d: Css3dLayer): HomeDiorama {
   // the screen plane (muted, looping, no controls). Underneath, the colour-band canvas stays as
   // fallback while the iframe has not loaded or if it is blocked.
   let tvSurprise = false;
+  let tvActive = false;
   let tvEl: HTMLDivElement | null = null;
   let tvFrame: HTMLIFrameElement | null = null;
   const tvCmd = (func: string, args: unknown[] = []) =>
@@ -249,8 +250,14 @@ export function home(scene: T.Scene, css3d: Css3dLayer): HomeDiorama {
     tvFrame.referrerPolicy = 'strict-origin-when-cross-origin';
     tvFrame.src = `${TV_ORIGIN}/embed/${TV_VIDEO}?autoplay=1&mute=1&loop=1&playlist=${TV_VIDEO}&controls=0&rel=0&playsinline=1&iv_load_policy=3&disablekb=1&enablejsapi=1`;
     // Once the player is up, hand it the bar's volume (the embed itself loads muted so it can autoplay).
+    // During the surprise the player stays paused and muted (the piano plays instead).
     tvFrame.addEventListener('load', () =>
       setTimeout(() => {
+        if (tvSurprise) {
+          tvCmd('pauseVideo');
+          tvCmd('mute');
+          return;
+        }
         tvCmd('playVideo');
         setVolume(tvVol);
       }, 900),
@@ -260,11 +267,15 @@ export function home(scene: T.Scene, css3d: Css3dLayer): HomeDiorama {
   }
   // Plays only with the diorama active and the world in view; paused, a still frame remains.
   function onActive(on: boolean): void {
+    tvActive = on;
     if (on) {
       mountTv();
       if (tvEl) {
         tvEl.style.display = tvSurprise ? 'none' : '';
-        tvCmd('playVideo');
+        if (tvSurprise) {
+          tvCmd('pauseVideo');
+          tvCmd('mute');
+        } else tvCmd('playVideo');
       }
     } else if (tvEl) {
       tvCmd('pauseVideo');
@@ -276,10 +287,18 @@ export function home(scene: T.Scene, css3d: Css3dLayer): HomeDiorama {
   const clock = makeClock(root, 3.0, 2.4, -4.77);
   // POV: the centre of the TV screen, straight ahead of Franco.
   const pov = { target: toWorld(root, 0, 1.19, -4.56), back: new T.Vector3(0, 0, 1) };
-  // The surprise covers the player but leaves its sound running; off, the player shows again.
+  // The surprise covers the player and pauses it muted (the piano plays instead); off, the
+  // player shows again with the bar's volume, and resumes only if this diorama is the active one.
   const surprise = (on: boolean) => {
     tvSurprise = on;
     if (tvEl) tvEl.style.display = on ? 'none' : '';
+    if (on) {
+      tvCmd('pauseVideo');
+      tvCmd('mute');
+    } else {
+      setVolume(tvVol);
+      if (tvActive) tvCmd('playVideo');
+    }
     tvScreen.material.map = on ? SUR.main.tex : bands.tex.tex;
     tvScreen.material.needsUpdate = true;
   };
