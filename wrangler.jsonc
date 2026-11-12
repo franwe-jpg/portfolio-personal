@@ -35,6 +35,14 @@
     }
   ],
 
+  // Contact form notifications (src/pages/api/contact.ts). Sends only to addresses
+  // verified in Email Routing; the recipient is the CONTACT_TO secret, so the
+  // address never lands in this public repo. The sender must be an address on
+  // a domain with Email Routing enabled (francosolersistemas.com).
+  "send_email": [
+    { "name": "CONTACT_EMAIL" }
+  ],
+
   // Astro sessions storage (auto-provisioned on the first deploy).
   "kv_namespaces": [
     { "binding": "SESSION", "id": "489c9b070846454bbc9fbed8fab6b602" }

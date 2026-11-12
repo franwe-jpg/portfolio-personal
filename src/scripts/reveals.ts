@@ -52,7 +52,9 @@ function armReveals(page: Page): void {
     } else if (node.classList.contains('chips')) {
       gsap.from(node.children, { y: 14, opacity: 0, duration: 0.8, ease: 'expo.out', stagger: 0.05 });
     } else if (node.classList.contains('contact-big')) {
-      gsap.from(node.querySelectorAll('.mail, .socials li, .pill-btn'), {
+      // The button rises through its ticket host: GSAP and the button's CSS transform transition fight,
+      // which left it stuck 18px low and out of line with its ticket.
+      gsap.from(node.querySelectorAll('.mail, .socials li, .tk-host'), {
         y: 18,
         opacity: 0,
         duration: 1,

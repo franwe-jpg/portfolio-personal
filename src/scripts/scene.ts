@@ -14,9 +14,21 @@ import { world } from './world/handle';
  * diorama; a change runs behind the cell curtain and repaints tag, title and status. Works the
  * same with the world built, still loading or replaced by the fallback illustration.
  */
+/** The scene that matches the Argentina clock right now (what `auto` shows). */
+export const isCurrentScene = (): boolean => state.scene === sceneFor(argNow());
+
+/** "Franco está en la oficina", or "Franco, a esta hora, está en la oficina" when another time was picked. */
+function paintTitle(): void {
+  const scene = t.mundo.scenes[state.scene];
+  const title = isCurrentScene() ? scene.title : scene.titleAt;
+  const node = byId('sceneTitle');
+  if (node.textContent !== title) node.textContent = title;
+}
+
 export function tickStatus(): void {
   byId('statusTxt').textContent = statusLine(state.scene);
   byId('clock').textContent = t.mundo.clock(argNow().time);
+  paintTitle();
 }
 
 export function paintSceneInfo(animate: boolean): void {
@@ -25,7 +37,6 @@ export function paintSceneInfo(animate: boolean): void {
   const tagEl = byId('sceneTag');
   if (animate) scramble(tagEl, tag, 0.55);
   else tagEl.textContent = tag;
-  byId('sceneTitle').textContent = scene.title;
   for (const button of $$<HTMLButtonElement>('.seg button')) {
     button.setAttribute('aria-pressed', String(button.dataset.mode === state.mode));
   }

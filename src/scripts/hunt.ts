@@ -19,6 +19,31 @@ import { world } from './world/handle';
 const HUNT_KEY = 'fs-tickets';
 const TOTAL = HUNT_TOTAL;
 
+/**
+ * The terms page opens in this same tab. Its link leaves a mark in sessionStorage; when the
+ * visitor comes back and the page loads from scratch (no bfcache), the gate enters on its own
+ * and the surprise plays again. The mark expires so a much later visit starts normally.
+ */
+const RESUME_KEY = 'fs-resume-surprise';
+const RESUME_TTL = 30 * 60e3;
+let resumeAudio: boolean | null = null;
+
+function takeResumeMark(): boolean | null {
+  try {
+    const raw = sessionStorage.getItem(RESUME_KEY);
+    sessionStorage.removeItem(RESUME_KEY);
+    if (!raw) return null;
+    const mark = JSON.parse(raw) as { at?: unknown; audio?: unknown };
+    if (typeof mark.at !== 'number' || Date.now() - mark.at > RESUME_TTL) return null;
+    return mark.audio === true;
+  } catch {
+    return null;
+  }
+}
+
+/** Audio choice to enter with when the surprise must resume (back from the terms page), or null. */
+export const pendingResume = (): boolean | null => resumeAudio;
+
 function loadFound(): Set<string> {
   try {
     return new Set<string>(JSON.parse(localStorage.getItem(HUNT_KEY) ?? '[]'));
@@ -94,6 +119,8 @@ const ticketSvg = (n: number) => `<svg viewBox="0 0 400 190" xmlns="http://www.w
 
 export function initHunt(): void {
   const found = loadFound(); // storage blocked: progress lasts this visit only
+  const mark = takeResumeMark();
+  if (mark !== null && found.size >= TOTAL) resumeAudio = mark;
   const save = () => {
     try {
       localStorage.setItem(HUNT_KEY, JSON.stringify([...found]));
@@ -188,6 +215,29 @@ export function initHunt(): void {
     audio.tick();
     endSurpriseView();
   });
+  byId('surpriseTerms').addEventListener('click', () => {
+    try {
+      sessionStorage.setItem(RESUME_KEY, JSON.stringify({ at: Date.now(), audio: state.audio }));
+    } catch {
+      /* storage blocked: coming back shows the gate as usual */
+    }
+  });
+  // Restored from the bfcache: the surprise is still on screen, the mark is not needed.
+  addEventListener('pageshow', (e) => {
+    if (!e.persisted) return;
+    try {
+      sessionStorage.removeItem(RESUME_KEY);
+    } catch {
+      /* ignore */
+    }
+  });
+  // Back from the terms page: the gate entered on its own; once inicio is up, replay the surprise.
+  if (resumeAudio !== null) {
+    on('app:enter', () => {
+      resumeAudio = null;
+      setTimeout(() => void showSurprise(), 500);
+    });
+  }
   on('app:pageswap', (e) => {
     if (e.detail !== 'mundo') endSurpriseView();
   });
@@ -202,8 +252,11 @@ export function initHunt(): void {
 
   for (const slot of $$('.tk')) {
     const id = slot.dataset.tk ?? '';
+    // Visible hints that point at this hiding spot leave together with the ticket.
+    const hints = $$(`[data-tk-hint="${id}"]`);
     if (found.has(id)) {
       slot.remove();
+      for (const hint of hints) hint.remove();
       continue;
     }
     slot.addEventListener('click', (e) => {
@@ -214,7 +267,7 @@ export function initHunt(): void {
       save();
       paint();
       // A ticket can have more than one hiding spot (the gate one also hides on the about page).
-      for (const node of $$(`.tk[data-tk="${id}"]`)) {
+      for (const node of [...$$(`.tk[data-tk="${id}"]`), ...hints]) {
         node.classList.add('is-taken');
         setTimeout(() => node.remove(), 320);
       }

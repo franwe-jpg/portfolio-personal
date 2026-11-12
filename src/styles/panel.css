@@ -34,8 +34,6 @@
 .msg.franco { justify-self: start; background: var(--s2); border-top-left-radius: 4px; }
 .msg.me { justify-self: end; background: var(--text); color: var(--ink); border-top-right-radius: 4px; }
 .msg.me .who { color: var(--muted); }
-.msg.mock { background: transparent; border: 1px dashed var(--line); color: #c3cad4; }
-.msg .tag { display: inline-block; margin-top: 8px; padding: 3px 7px; border-radius: 5px; background: var(--s3); font: 500 9.5px var(--font-mono); letter-spacing: .08em; color: var(--tmuted); white-space: normal; }
 .msg.sys { justify-self: stretch; max-width: none; background: rgba(255,255,255,.03); border: 1px solid var(--s3); font: 400 12px/1.5 var(--font-mono); color: var(--tmuted); }
 .msg.typing { font: 400 12px var(--font-mono); color: var(--tmuted); background: none; padding: 4px 2px; }
 .msg.typing span { animation: blink 1.2s infinite; }
@@ -49,6 +47,14 @@
 .composer-meta { display: flex; justify-content: flex-end; gap: 12px; font: 400 10.5px var(--font-mono); letter-spacing: .04em; color: var(--tmuted); font-variant-numeric: tabular-nums; }
 .composer-meta .is-over { color: #e8a33d; }
 .cform { display: grid; gap: 14px; margin-top: 18px; }
+.cmail { display: grid; gap: 14px; }
+.cmail[hidden], .cwa[hidden] { display: none; }
+.cwa { display: grid; gap: 14px; justify-items: start; }
+.cwa p { margin: 0; color: var(--tmuted); font-size: 14px; }
+/* WhatsApp green, with dark text for contrast (white on #25d366 fails AA). */
+.btn-wa { display: inline-flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 50px; padding: 12px 22px; border-radius: 999px; background: #25d366; color: #0b1f12; font: 600 16px var(--font-body); text-decoration: none; transition: background-color .18s, transform .18s var(--e-out), box-shadow .18s; }
+.btn-wa:hover { background: #2ee673; transform: translateY(-2px); box-shadow: 0 14px 30px -14px rgba(37,211,102,.7); }
+@media (prefers-reduced-motion: reduce) { .btn-wa { transition: none; } .btn-wa:hover { transform: none; } }
 .field { display: grid; gap: 6px; }
 .field > label, .field > .lbl { font: 500 10.5px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--tmuted); }
 .field input, .field textarea { width: 100%; padding: 11px 13px; border-radius: 10px; border: 1px solid var(--line); background: var(--g0); color: var(--text); font-size: 16px; }
@@ -99,6 +105,20 @@
 /* host tweaks: hosts take over the margins/alignment of the element they wrap */
 .tk-host--gate { margin-top: 22px; }
 .tk-host--gate .enter { margin-top: 0; }
+/* gate hint: a thin red arrow that keeps curling (pig tail) towards the ticket's hiding spot */
+.tk-host > .tk-hint { position: absolute; z-index: 0; left: calc(100% + 52px); top: 50%; width: 76px; height: 43px; margin-top: -26px; overflow: visible; pointer-events: none; animation: tk-hint-bob 2.8s ease-in-out infinite; }
+.tk-hint path { fill: none; stroke: #e5484d; stroke-opacity: .8; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.tk-hint-tail { stroke-dasharray: 1; stroke-dashoffset: 1; animation: tk-hint-curl 2.8s cubic-bezier(.45,0,.25,1) infinite; }
+.tk-hint-head { opacity: 0; animation: tk-hint-head 2.8s ease-out infinite; }
+@keyframes tk-hint-curl { 0% { stroke-dashoffset: 1; opacity: 1; } 55%, 82% { stroke-dashoffset: 0; opacity: 1; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+@keyframes tk-hint-head { 0%, 50% { opacity: 0; } 58%, 82% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes tk-hint-bob { 0%, 100% { transform: translateX(0) rotate(0); } 50% { transform: translateX(-5px) rotate(-3deg); } }
+.tk-hint.is-taken { opacity: 0; transition: opacity .3s; }
+@media (prefers-reduced-motion: reduce) {
+  .tk-host > .tk-hint, .tk-hint-tail, .tk-hint-head { animation: none; }
+  .tk-hint-tail { stroke-dashoffset: 0; }
+  .tk-hint-head { opacity: 1; }
+}
 .tk-host--block { display: block; margin-top: 48px; }
 .tk-host--block > .projects { margin-top: 0; }
 .tk-host--photo { display: block; justify-self: end; width: min(300px, 100%); }
