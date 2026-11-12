@@ -4,6 +4,7 @@ import { busyCursor } from './cursor';
 import { byId } from './dom';
 import { COARSE, REDUCE } from './env';
 import { heroIntro } from './hero';
+import { pendingResume } from './hunt';
 import { t } from './i18n';
 import { loader, onProgressLabel, renderProgress, startLoading } from './loader';
 import { createParticles, type Particles } from './particles';
@@ -141,4 +142,7 @@ export function initGate(): void {
   });
   byId('enter').addEventListener('click', () => requestEnter(true));
   byId('mute').addEventListener('click', () => requestEnter(false));
+  // Back from the terms page: enter right away (as soon as the loader is done) to resume the surprise.
+  const resume = pendingResume();
+  if (resume !== null) requestEnter(resume);
 }

@@ -9,6 +9,8 @@ export interface SceneCopy {
   name: string;
   status: string;
   title: string;
+  /** Title while this scene is shown although it is not the current one (picked on the clock or the switcher). */
+  titleAt: string;
   /** Appended to the chat panel title ("Franco (IA) · en la oficina"). */
   where: string;
   /** First message in the panel when it opens on this scene. */
@@ -48,15 +50,16 @@ export interface UiCopy {
   };
 
   header: {
-    backToGate: string;
+    /** Back arrow, by where it leads: the gate (from inicio), inicio, or the current scene (from another scene of the world). */
+    back: { gate: string; inicio: string; now: string };
     brand: string;
     brandSr: string;
     navLabel: string;
     nav: { mundo: string; proyectos: string; sobre: string };
     /** Skip link: first Tab stop after entering, jumps to the active page's heading. */
     skip: string;
-    /** Link to the other language: visible short label and its screen-reader name, written in that language. */
-    lang: { label: string; sr: string };
+    /** Language flags: name of the link to the other language, written in that language. */
+    lang: { sr: string };
   };
 
   sound: {
@@ -171,24 +174,25 @@ export interface UiCopy {
     form: {
       name: string;
       via: string;
-      telegram: string;
+      whatsapp: string;
       mail: string;
-      handle: string;
-      handlePlaceholder: string;
+      /** WhatsApp option: a line above the button, the button, and the message prefilled in the chat. */
+      waNote: string;
+      waCta: string;
+      waText: string;
       mailHandle: string;
       mailPlaceholder: string;
       message: string;
       send: string;
+      /** Send button label while the message is on its way. */
+      sending: string;
       errName: string;
-      errTelegram: string;
       errMail: string;
       errMessage: string;
-      /** The visitor's bubble: message, then name and contact. */
-      summary: (message: string, name: string, via: string, handle: string) => string;
-      /** Franco's acknowledgement; `via` is one of `ackVia`, a phrase like "on Telegram". */
-      ack: (name: string, via: string) => string;
-      ackVia: { telegram: string; mail: string };
-      ackTag: string;
+      /** The visitor's bubble: message, then name and email. */
+      summary: (message: string, name: string, mail: string) => string;
+      /** Confirmation once /api/contact accepted the message. */
+      ack: (name: string, mail: string) => string;
     };
     composer: {
       label: string;
@@ -224,13 +228,13 @@ const es: UiCopy = {
   },
 
   header: {
-    backToGate: 'Volver a la entrada',
+    back: { gate: 'Volver a la entrada', inicio: 'Volver al inicio', now: 'Volver a la hora actual' },
     brand: 'FrancoSolerSistemas',
     brandSr: 'FrancoSolerSistemas, volver al inicio',
     navLabel: 'Páginas',
     nav: { mundo: 'Mundo', proyectos: 'Proyectos', sobre: 'Sobre mí' },
     skip: 'Saltar al contenido',
-    lang: { label: 'EN', sr: 'English version' },
+    lang: { sr: 'English version' },
   },
 
   sound: {
@@ -274,6 +278,7 @@ const es: UiCopy = {
         name: 'OFICINA',
         status: 'EN LA OFICINA',
         title: 'Franco está en la oficina',
+        titleAt: 'Franco, a esta hora, está en la oficina',
         where: 'en la oficina',
         hello:
           'Estoy en la oficina. Mientras tanto te responde mi versión IA: preguntame por mis proyectos, mi formación o cómo trabajo.',
@@ -283,6 +288,7 @@ const es: UiCopy = {
         name: 'UNIVERSIDAD',
         status: 'EN LA UNIVERSIDAD',
         title: 'Franco está en la universidad',
+        titleAt: 'Franco, a esta hora, está en la universidad',
         where: 'en la universidad',
         hello:
           'Estoy en clase, en la universidad. Mientras tanto te responde mi versión IA: preguntame por mis proyectos, mi formación o cómo trabajo.',
@@ -292,9 +298,10 @@ const es: UiCopy = {
         name: 'DISPONIBLE',
         status: 'DISPONIBLE',
         title: 'Franco está disponible',
+        titleAt: 'Franco, a esta hora, está disponible',
         where: 'disponible',
         hello:
-          'Ya terminé el día. Esto no lo contesta una IA: dejame tu mensaje y te respondo yo, por Telegram o por mail.',
+          'Ya terminé el día. Esto no lo contesta una IA: escribime por WhatsApp o dejame tu mensaje por mail, y te respondo yo.',
       },
     },
     surpriseBack: 'Volver al mundo',
@@ -350,7 +357,7 @@ const es: UiCopy = {
     ticketFound: 'ENCONTRADO',
     ticket: 'TICKET',
     ticketNo: 'Nº',
-    screenHeader: 'De lo más profundo de mi corazón, te comparto:',
+    screenHeader: 'De lo más profundo de mí, te comparto esta frase:',
     prize: '¡Y te ganaste una landing page desarrollada por mí! Saca captura y enviámela.',
     terms: 'Ver condiciones',
     termsHref: '/tyc/',
@@ -370,23 +377,22 @@ const es: UiCopy = {
     errorNetwork: 'No pude conectarme. Probá de nuevo en un momento, o escribime por mail.',
     form: {
       name: 'Tu nombre',
-      via: 'Respondeme por',
-      telegram: 'Telegram',
+      via: 'Hablame por',
+      whatsapp: 'WhatsApp',
       mail: 'Mail',
-      handle: 'Tu usuario de Telegram',
-      handlePlaceholder: '@usuario',
+      waNote: 'Te abre un chat conmigo en WhatsApp. Te contesto yo.',
+      waCta: 'Escribime por WhatsApp',
+      waText: 'Hola Franco, te escribo desde tu portfolio.',
       mailHandle: 'Tu mail',
       mailPlaceholder: 'nombre@dominio.com',
       message: 'Mensaje',
       send: 'Enviar mensaje',
+      sending: 'Enviando…',
       errName: 'Escribí tu nombre.',
-      errTelegram: 'Ingresá un usuario de Telegram válido: 5 a 32 caracteres, letras, números o guion bajo.',
       errMail: 'Ingresá un mail válido.',
       errMessage: 'Escribí tu mensaje.',
-      summary: (message, name, via, handle) => `${message}\n\n— ${name} · ${via}: ${handle}`,
-      ack: (name, via) => `Gracias, ${name}. Cuando esté conectado, esto me llega directo y te respondo ${via}.`,
-      ackVia: { telegram: 'por Telegram', mail: 'por mail' },
-      ackTag: 'EJEMPLO · no se envió nada (falta /api/contact)',
+      summary: (message, name, mail) => `${message}\n\n— ${name} · ${mail}`,
+      ack: (name, mail) => `Gracias, ${name}. Ya me llegó tu mensaje; te respondo a ${mail}.`,
     },
     composer: {
       label: 'Tu pregunta para Franco',
@@ -422,13 +428,13 @@ const en: UiCopy = {
   },
 
   header: {
-    backToGate: 'Back to the entrance',
+    back: { gate: 'Back to the entrance', inicio: 'Back to home', now: 'Back to the current time' },
     brand: 'FrancoSolerSistemas',
     brandSr: 'FrancoSolerSistemas, back to the start',
     navLabel: 'Pages',
     nav: { mundo: 'World', proyectos: 'Projects', sobre: 'About me' },
     skip: 'Skip to content',
-    lang: { label: 'ES', sr: 'Versión en español' },
+    lang: { sr: 'Versión en español' },
   },
 
   sound: {
@@ -472,6 +478,7 @@ const en: UiCopy = {
         name: 'OFFICE',
         status: 'AT THE OFFICE',
         title: 'Franco is at the office',
+        titleAt: 'At this hour, Franco is at the office',
         where: 'at the office',
         hello:
           'I am at the office. In the meantime my AI version answers for me: ask me about my projects, my studies or how I work.',
@@ -481,6 +488,7 @@ const en: UiCopy = {
         name: 'UNIVERSITY',
         status: 'AT UNIVERSITY',
         title: 'Franco is at university',
+        titleAt: 'At this hour, Franco is at university',
         where: 'at university',
         hello:
           'I am in class, at university. In the meantime my AI version answers for me: ask me about my projects, my studies or how I work.',
@@ -490,9 +498,10 @@ const en: UiCopy = {
         name: 'AVAILABLE',
         status: 'AVAILABLE',
         title: 'Franco is available',
+        titleAt: 'At this hour, Franco is available',
         where: 'available',
         hello:
-          'My day is done. This is not an AI answering: leave me your message and I will reply myself, on Telegram or by email.',
+          'My day is done. This is not an AI answering: message me on WhatsApp or leave me a note by email, and I will reply myself.',
       },
     },
     surpriseBack: 'Back to the world',
@@ -548,7 +557,7 @@ const en: UiCopy = {
     ticketFound: 'FOUND',
     ticket: 'TICKET',
     ticketNo: 'No.',
-    screenHeader: 'From the bottom of my heart, I share this with you:',
+    screenHeader: 'From deep within me, I share this quote with you:',
     prize: 'And you have won a landing page built by me! Take a screenshot and send it to me.',
     terms: 'See the terms',
     termsHref: '/en/tyc/',
@@ -568,23 +577,22 @@ const en: UiCopy = {
     errorNetwork: 'I could not connect. Try again in a moment, or write to me by email.',
     form: {
       name: 'Your name',
-      via: 'Reply to me on',
-      telegram: 'Telegram',
+      via: 'Talk to me on',
+      whatsapp: 'WhatsApp',
       mail: 'Email',
-      handle: 'Your Telegram username',
-      handlePlaceholder: '@username',
+      waNote: 'Opens a chat with me on WhatsApp. I reply myself.',
+      waCta: 'Message me on WhatsApp',
+      waText: 'Hi Franco, I am writing from your portfolio.',
       mailHandle: 'Your email',
       mailPlaceholder: 'name@domain.com',
       message: 'Message',
       send: 'Send message',
+      sending: 'Sending…',
       errName: 'Enter your name.',
-      errTelegram: 'Enter a valid Telegram username: 5 to 32 characters, letters, numbers or underscores.',
       errMail: 'Enter a valid email address.',
       errMessage: 'Write your message.',
-      summary: (message, name, via, handle) => `${message}\n\n— ${name} · ${via}: ${handle}`,
-      ack: (name, via) => `Thanks, ${name}. Once I am online this reaches me directly and I will reply ${via}.`,
-      ackVia: { telegram: 'on Telegram', mail: 'by email' },
-      ackTag: 'EXAMPLE · nothing was sent (/api/contact is missing)',
+      summary: (message, name, mail) => `${message}\n\n— ${name} · ${mail}`,
+      ack: (name, mail) => `Thanks, ${name}. Your message reached me; I will reply to ${mail}.`,
     },
     composer: {
       label: 'Your question for Franco',

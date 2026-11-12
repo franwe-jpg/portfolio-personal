@@ -7,7 +7,8 @@ import {
   MAX_QUESTION_CHARS,
   SYSTEM_PROMPT,
 } from '../../lib/persona';
-import { DEFAULT_LANG, LANGS, type Lang } from '../../i18n/config';
+import type { Lang } from '../../i18n/config';
+import { hashIp, json, methodNotAllowed, resolveLang, verifyHuman } from '../../lib/api';
 
 export const prerender = false;
 
@@ -19,14 +20,6 @@ const TEMPERATURE = 0.3;
 const MAX_HISTORY_TURNS = 4;
 /** Answers are bounded by max_tokens; this only bounds what a client can send. */
 const MAX_HISTORY_ANSWER_CHARS = 1500;
-
-/** Used only when the IP_SALT secret is not configured. */
-const FALLBACK_SALT = 'portfolio-personal-fallback-salt';
-
-const SITEVERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
-/** Turnstile tokens are at most 2048 characters; anything longer is not one. */
-const MAX_TURNSTILE_TOKEN_CHARS = 2048;
-const SITEVERIFY_TIMEOUT_MS = 5000;
 
 // Visitor-facing copy, in the language of the page the visitor is reading.
 // The machine-facing 400-level errors below stay English on purpose.
@@ -95,69 +88,6 @@ function techEmojiReply(): string {
     picked.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
   }
   return picked.join(' ');
-}
-
-/** Falls back to the default rather than rejecting an unexpected value. */
-function resolveLang(value: unknown): Lang {
-  return typeof value === 'string' && (LANGS as readonly string[]).includes(value)
-    ? (value as Lang)
-    : DEFAULT_LANG;
-}
-
-function json(data: unknown, status: number): Response {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { 'content-type': 'application/json; charset=utf-8' },
-  });
-}
-
-/** Salted SHA-256 of the client IP. The raw IP is never persisted. */
-async function hashIp(ip: string): Promise<string> {
-  const salt = env.IP_SALT ?? FALLBACK_SALT;
-  const bytes = new TextEncoder().encode(`${salt}:${ip}`);
-  const digest = await crypto.subtle.digest('SHA-256', bytes);
-  return Array.from(new Uint8Array(digest))
-    .map((byte) => byte.toString(16).padStart(2, '0'))
-    .join('');
-}
-
-type HumanCheck = 'passed' | 'rejected' | 'unavailable';
-
-/**
- * Verifies the Turnstile token sent by the page. `unavailable` means the check
- * itself could not run (missing secret, siteverify down), not that the visitor
- * failed it.
- */
-async function verifyHuman(token: unknown, ip: string | null): Promise<HumanCheck> {
-  // There is no widget secret in `astro dev`, so skip the check there. Guarded
-  // by DEV: a production deploy with a missing secret must fail closed below.
-  if (import.meta.env.DEV && !env.TURNSTILE_SECRET) return 'passed';
-  if (!env.TURNSTILE_SECRET) return 'unavailable';
-
-  if (typeof token !== 'string' || token.length === 0 || token.length > MAX_TURNSTILE_TOKEN_CHARS) {
-    return 'rejected';
-  }
-
-  const form = new FormData();
-  form.append('secret', env.TURNSTILE_SECRET);
-  form.append('response', token);
-  if (ip) form.append('remoteip', ip);
-
-  try {
-    const response = await fetch(SITEVERIFY_URL, {
-      method: 'POST',
-      body: form,
-      signal: AbortSignal.timeout(SITEVERIFY_TIMEOUT_MS),
-    });
-    if (!response.ok) return 'unavailable';
-    const outcome = (await response.json()) as { success?: unknown; 'error-codes'?: unknown };
-    if (outcome.success === true) return 'passed';
-    // A failure on Cloudflare's side is not the visitor's fault.
-    const codes = Array.isArray(outcome['error-codes']) ? outcome['error-codes'] : [];
-    return codes.includes('internal-error') ? 'unavailable' : 'rejected';
-  } catch {
-    return 'unavailable';
-  }
 }
 
 type Turn = { question: string; answer: string };
@@ -310,8 +240,4 @@ async function logExchange(ipHash: string, question: string, answer: string, sou
   }
 }
 
-export const ALL: APIRoute = () =>
-  new Response(JSON.stringify({ error: 'Method not allowed.' }), {
-    status: 405,
-    headers: { 'content-type': 'application/json; charset=utf-8', allow: 'POST' },
-  });
+export const ALL: APIRoute = methodNotAllowed;

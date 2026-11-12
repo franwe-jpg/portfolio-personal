@@ -217,13 +217,29 @@ export function home(scene: T.Scene, css3d: Css3dLayer): HomeDiorama {
   const barHit = mesh(new T.BoxGeometry(BAR_W + 0.3, 0.36, 0.1), mat.signal, root, 0, BAR_Y, BAR_Z);
   barHit.visible = false;
   let tvVol = 0.5;
-  // The TV plays a YouTube video: the official embedded player sits on the CSS3D layer right over
-  // the screen plane (muted, looping, no controls). Underneath, the colour-band canvas stays as
-  // fallback while the iframe has not loaded or if it is blocked.
+  // The TV plays a YouTube video: the official embedded player sits on the CSS3D layer, which lies
+  // UNDER the WebGL canvas, aligned with the screen plane (muted, looping, no controls). Once the
+  // player has loaded, the screen mesh turns into a transparent hole so the player shows through it,
+  // and depth testing keeps whatever stands in front (Franco's head in the POV shot) on top. Until
+  // then, during the surprise or with the diorama inactive, the colour bands paint the screen.
   let tvSurprise = false;
   let tvActive = false;
+  let tvLoaded = false;
   let tvEl: HTMLDivElement | null = null;
   let tvFrame: HTMLIFrameElement | null = null;
+  const scrMat = tvScreen.material;
+  let tvHole = false;
+  function syncScreen(): void {
+    const on = tvLoaded && tvActive && !tvSurprise;
+    if (on === tvHole) return;
+    tvHole = on;
+    // NoBlending writes the fragment as is: black with alpha 0, a see-through pixel on the canvas.
+    scrMat.blending = on ? T.NoBlending : T.NormalBlending;
+    scrMat.opacity = on ? 0 : 1;
+    scrMat.color.setHex(on ? 0x000000 : 0xffffff);
+    scrMat.fog = !on;
+    scrMat.needsUpdate = true;
+  }
   const tvCmd = (func: string, args: unknown[] = []) =>
     tvFrame?.contentWindow?.postMessage(JSON.stringify({ event: 'command', func, args }), TV_ORIGIN);
   function setVolume(v: number): void {
@@ -253,6 +269,8 @@ export function home(scene: T.Scene, css3d: Css3dLayer): HomeDiorama {
     // During the surprise the player stays paused and muted (the piano plays instead).
     tvFrame.addEventListener('load', () =>
       setTimeout(() => {
+        tvLoaded = true;
+        syncScreen();
         if (tvSurprise) {
           tvCmd('pauseVideo');
           tvCmd('mute');
@@ -281,6 +299,7 @@ export function home(scene: T.Scene, css3d: Css3dLayer): HomeDiorama {
       tvCmd('pauseVideo');
       tvEl.style.display = 'none';
     }
+    syncScreen();
   }
   let tvLast = -1;
   // Back wall, halfway between the TV and the right end of the wall.
@@ -299,8 +318,9 @@ export function home(scene: T.Scene, css3d: Css3dLayer): HomeDiorama {
       setVolume(tvVol);
       if (tvActive) tvCmd('playVideo');
     }
-    tvScreen.material.map = on ? SUR.main.tex : bands.tex.tex;
-    tvScreen.material.needsUpdate = true;
+    scrMat.map = on ? SUR.main.tex : bands.tex.tex;
+    scrMat.needsUpdate = true;
+    syncScreen();
   };
   // Surprise shot: the TV, straight on, between the sofa and the screen.
   const shot = { mesh: tvScreen, dist: 1.9, lift: 0.04 };

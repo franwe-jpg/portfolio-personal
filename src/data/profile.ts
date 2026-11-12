@@ -5,6 +5,8 @@ export interface ProfileLinks {
   instagram: string;
   github: string;
   email: string;
+  /** WhatsApp number in wa.me format: country code, the mobile 9 for Argentina, area code and number; digits only. */
+  whatsapp: string;
 }
 
 /** The parts that read the same in every language. */
@@ -56,6 +58,7 @@ export const profile: Profile = {
     instagram: 'https://www.instagram.com/fr4ncosoler/',
     github: 'https://github.com/franwe-jpg',
     email: 'francomartin2012@hotmail.com',
+    whatsapp: '5492804282525',
   },
   tools: ['React', 'TypeScript', 'FastAPI', 'SQLite', 'Astro', 'Cloudflare Workers', 'Workers AI', 'D1'],
 };
@@ -66,8 +69,9 @@ export const PROFILE_COPY: Record<Lang, ProfileCopy> = {
     tagline: 'Franco Martin Soler — Analista Programador',
     headline: 'Analista Programador y estudiante avanzado de Licenciatura en Sistemas.',
     quote: 'Haciendo del mundo un lugar mejor, pero no tanto...',
-    lead: 'Soy Franco Martin Soler, tengo 22 años y vivo en Trelew, Chubut. Me recibí de Analista Programador en 2025 y estoy cursando 4.º año de la Licenciatura en Sistemas en la UNPSJB.',
+    lead: 'Soy Franco Martin Soler, tengo 23 años y vivo en Trelew, Chubut. Me recibí de Analista Programador en 2025 y estoy cursando 4.º año de la Licenciatura en Sistemas en la UNPSJB.',
     facts: [
+      { label: 'Nacimiento', value: '17/10/2003' },
       { label: 'Título', value: 'Analista Programador · 2025' },
       { label: 'Cursando', value: 'Licenciatura en Sistemas · UNPSJB · 4.º año' },
       { label: 'Secundario', value: 'Técnico en Informática · ESETP N.º 724 · 2022' },
@@ -117,8 +121,9 @@ export const PROFILE_COPY: Record<Lang, ProfileCopy> = {
     tagline: 'Franco Martin Soler — Software Analyst',
     headline: 'Software analyst and senior-year student of Licenciatura en Sistemas.',
     quote: 'Making the world a better place, but only a little...',
-    lead: 'I am Franco Martin Soler, 22, and I live in Trelew, Chubut. I graduated as a software analyst in 2025 and I am in the fourth year of the Licenciatura en Sistemas at UNPSJB.',
+    lead: 'I am Franco Martin Soler, 23, and I live in Trelew, Chubut. I graduated as a software analyst in 2025 and I am in the fourth year of the Licenciatura en Sistemas at UNPSJB.',
     facts: [
+      { label: 'Born', value: '17 October 2003' },
       { label: 'Degree', value: 'Software Analyst · 2025' },
       { label: 'Studying', value: 'Licenciatura en Sistemas · UNPSJB · 4th year' },
       { label: 'High school', value: 'IT Technician · ESETP No. 724 · 2022' },

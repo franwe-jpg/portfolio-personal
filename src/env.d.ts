@@ -10,5 +10,7 @@ declare namespace Cloudflare {
     IP_SALT?: string;
     /** Turnstile widget secret for siteverify. Set with `wrangler secret put TURNSTILE_SECRET`. */
     TURNSTILE_SECRET?: string;
+    /** Where contact form messages are emailed (a verified Email Routing address). Set with `wrangler secret put CONTACT_TO`. */
+    CONTACT_TO?: string;
   }
 }

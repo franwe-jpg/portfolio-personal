@@ -22,6 +22,11 @@ const { t } = Astro.props;
       <span class="tk-host tk-host--gate">
         <button class="enter" id="enter" type="button"><span id="enterTxt">{t.gate.enter}</span><Icon name="arrow-ne" size={14} /></button>
         <Ticket id="entrada" dir="right" />
+        {/* Hint: a thin red arrow with a pig-tail curl, pointing at the hiding spot (src/scripts/hunt.ts removes it with the ticket). */}
+        <svg class="tk-hint" data-tk-hint="entrada" viewBox="0 0 92 52" aria-hidden="true">
+          <path class="tk-hint-tail" pathLength="1" d="M88 44C76 46 64 42 60 32C56 21 69 14 72 24C75 34 58 40 46 34C34 28 24 25 10 26" />
+          <path class="tk-hint-head" d="M18 20L10 26L18 31" />
+        </svg>
       </span>
     </div>
   </div>

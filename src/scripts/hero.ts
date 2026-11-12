@@ -72,11 +72,6 @@ export function heroIntro(): void {
 export function initHero(): void {
   const brand = byId('brandName');
   brand.closest('.brand')?.addEventListener('pointerenter', () => scramble(brand, t.header.brand, 0.6));
-  // Back arrow: the gate only exists at load time, so go back by reloading without a hash. Hunt progress stays in storage.
-  byId('backGate').addEventListener('click', () => {
-    history.replaceState(null, '', location.pathname + location.search);
-    location.reload();
-  });
   for (const selector of ['#inicio .hero-eyebrow', '#inicio .hero-title .l1', '#inicio .hero-title .l2', '#inicio .hero-desc']) {
     splitHeroWords($(selector));
   }

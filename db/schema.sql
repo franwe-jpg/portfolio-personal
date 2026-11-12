@@ -23,3 +23,21 @@ CREATE TABLE IF NOT EXISTS chat_log (
 );
 
 CREATE INDEX IF NOT EXISTS chat_log_created_at ON chat_log (created_at DESC);
+
+-- Messages sent from the contact form (home scene, "Mail" option).
+--
+-- Every accepted message is stored here first, so it is never lost even if the
+-- notification email fails; `emailed` records whether that email went out.
+-- `ip_hash` is the same salted digest as above and backs the per-IP daily limit.
+CREATE TABLE IF NOT EXISTS contact_message (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  created_at TEXT NOT NULL,
+  ip_hash    TEXT NOT NULL,
+  lang       TEXT NOT NULL,
+  name       TEXT NOT NULL,
+  email      TEXT NOT NULL,
+  message    TEXT NOT NULL,
+  emailed    INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS contact_message_ip_day ON contact_message (ip_hash, created_at);
