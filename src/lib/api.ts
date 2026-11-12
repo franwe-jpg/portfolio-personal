@@ -31,7 +31,7 @@ export function resolveLang(value: unknown): Lang {
     : DEFAULT_LANG;
 }
 
-/** Salted SHA-256 of the client IP. The raw IP is never persisted. */
+/** Salted SHA-256 of the client IP: the key of the per-network daily limits (the logs also keep the raw IP). */
 export async function hashIp(ip: string): Promise<string> {
   const salt = env.IP_SALT ?? FALLBACK_SALT;
   const bytes = new TextEncoder().encode(`${salt}:${ip}`);

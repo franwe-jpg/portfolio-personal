@@ -79,10 +79,10 @@ export const POST: APIRoute = async ({ request }) => {
       .first<{ n: number }>();
     if ((sent?.n ?? 0) >= DAILY_LIMIT) return json({ error: COPY[lang].quota }, 429);
     const row = await env.DB.prepare(
-      `INSERT INTO contact_message (created_at, ip_hash, lang, name, email, message)
-       VALUES (?1, ?2, ?3, ?4, ?5, ?6) RETURNING id`,
+      `INSERT INTO contact_message (created_at, ip, ip_hash, lang, name, email, message)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7) RETURNING id`,
     )
-      .bind(now.toISOString(), ipHash, lang, name, email, message)
+      .bind(now.toISOString(), clientIp, ipHash, lang, name, email, message)
       .first<{ id: number }>();
     id = row?.id ?? null;
   } catch (error) {

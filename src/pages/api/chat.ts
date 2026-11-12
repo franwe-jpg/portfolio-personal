@@ -186,7 +186,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   if (isEmojiOnly(trimmed)) {
     const answer = techEmojiReply();
-    await logExchange(ipHash, trimmed, answer, 'emoji-rule');
+    await logExchange(clientIp, ipHash, trimmed, answer, 'emoji-rule');
     return json({ answer }, 200);
   }
 
@@ -219,21 +219,22 @@ export const POST: APIRoute = async ({ request }) => {
     return json({ error: UNAVAILABLE_MESSAGE[lang] }, 503);
   }
 
-  await logExchange(ipHash, trimmed, answer, MODEL);
+  await logExchange(clientIp, ipHash, trimmed, answer, MODEL);
   return json({ answer }, 200);
 };
 
 /**
- * Best-effort transcript. A logging failure must never cost the visitor an
+ * Best-effort transcript in chat_log_v2 (chat_log belongs to the v1 site, which
+ * shares this database). A logging failure must never cost the visitor an
  * answer already produced, so this error is deliberately swallowed.
  */
-async function logExchange(ipHash: string, question: string, answer: string, source: string) {
+async function logExchange(ip: string | null, ipHash: string, question: string, answer: string, source: string) {
   try {
     await env.DB.prepare(
-      `INSERT INTO chat_log (created_at, ip_hash, question, answer, model)
-       VALUES (?1, ?2, ?3, ?4, ?5)`,
+      `INSERT INTO chat_log_v2 (created_at, ip, ip_hash, question, answer, model)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6)`,
     )
-      .bind(new Date().toISOString(), ipHash, question, answer, source)
+      .bind(new Date().toISOString(), ip, ipHash, question, answer, source)
       .run();
   } catch {
     // Ignored on purpose: the visitor already has their answer.
