@@ -49,6 +49,7 @@ export function initPointer(): void {
 
   const parallaxEls = $$('[data-depth]');
   let lastTick = performance.now();
+  let settled = false;
   const tickLoop = (now: number) => {
     requestAnimationFrame(tickLoop);
     const dt = Math.min(50, now - lastTick);
@@ -57,7 +58,10 @@ export function initPointer(): void {
     const k = 1 - Math.pow(0.92, dt / 16.667);
     pointer.nx += (pointer.tx - pointer.nx) * k;
     pointer.ny += (pointer.ty - pointer.ny) * k;
-    if (!REDUCE) {
+    // Once the easing has caught up, the parallax styles stop being rewritten (no style work while still).
+    const still = Math.abs(pointer.tx - pointer.nx) + Math.abs(pointer.ty - pointer.ny) < 1e-4;
+    if (!REDUCE && !(still && settled)) {
+      settled = still;
       for (const node of parallaxEls) {
         const depth = +(node.dataset.depth ?? 0) || 0;
         // Writes `translate`, so GSAP keeps `transform` for itself.
