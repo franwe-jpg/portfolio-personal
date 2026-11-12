@@ -1,6 +1,7 @@
 import type { Scene } from '../i18n/ui';
 import { audio } from './audio';
 import { askChat, HISTORY_TURNS, humanCheck, type Turn } from './chat';
+import { sendContact } from './contact';
 import { busyCursor } from './cursor';
 import { $$, byId, el } from './dom';
 import { REDUCE } from './env';
@@ -11,8 +12,8 @@ import { world } from './world/handle';
 
 /**
  * Side panel over the world: AI chat in the office and the university (connected to /api/chat
- * through the Turnstile human check), direct contact at home (form, mock until /api/contact
- * exists). Opening it puts the world in the POV view; closing it, or leaving the page, undoes
+ * through the Turnstile human check), direct contact at home (a WhatsApp link, or an email form
+ * sent to /api/contact behind the same check). Opening it puts the world in the POV view; closing it, or leaving the page, undoes
  * that. On narrow screens it is a bottom sheet whose handle drags down to close.
  */
 type PanelKind = 'chat' | 'contact';
@@ -44,15 +45,11 @@ function setConn(api: ApiStatus): void {
   conn.textContent = api === 'live' ? t.panel.live : api === 'offline' ? t.panel.offline : t.panel.checking;
 }
 
-function addMsg(kind: MsgKind, text: string, opts: { who?: string; mock?: boolean; tag?: string } = {}): HTMLLIElement {
+function addMsg(kind: MsgKind, text: string, opts: { who?: string } = {}): HTMLLIElement {
   // appendChild, not append: the generated Cloudflare types merge HTMLRewriter's Element into the DOM one.
-  const li = el('li', `msg ${kind}${opts.mock ? ' mock' : ''}`);
+  const li = el('li', `msg ${kind}`);
   if (opts.who) li.appendChild(el('span', 'who', opts.who));
   li.appendChild(el('span', undefined, text));
-  if (opts.tag) {
-    li.appendChild(el('br'));
-    li.appendChild(el('span', 'tag', opts.tag));
-  }
   msgs().appendChild(li);
   const body = byId('panelBody');
   body.scrollTo({ top: body.scrollHeight, behavior: REDUCE ? 'auto' : 'smooth' });
@@ -105,7 +102,9 @@ export async function openPanel(): Promise<void> {
       backdrop().classList.add('is-open');
       panel().classList.add('is-open');
     });
-    setTimeout(() => (chatForm().hidden ? byId('cName') : q()).focus({ preventScroll: true }), REDUCE ? 30 : 380);
+    // Contact mode starts on its channel choice (WhatsApp by default), chat mode on the composer.
+    const first = () => (chatForm().hidden ? contactForm().querySelector<HTMLElement>('input[name="via"]:checked') : q());
+    setTimeout(() => first()?.focus({ preventScroll: true }), REDUCE ? 30 : 380);
   }, delay * 1000);
 }
 
@@ -241,8 +240,7 @@ function bindChat(): void {
   });
 }
 
-// ---------- direct contact (mock until /api/contact exists) ----------
-const TELEGRAM_HANDLE = /^@?[A-Za-z][A-Za-z0-9_]{4,31}$/;
+// ---------- direct contact: WhatsApp link, or email through /api/contact ----------
 const MAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 function setErr(input: HTMLElement, err: HTMLElement, text: string): void {
@@ -254,16 +252,17 @@ function setErr(input: HTMLElement, err: HTMLElement, text: string): void {
 function bindContact(): void {
   const form = contactForm();
   const viaInputs = $$<HTMLInputElement>('input[name="via"]', form);
-  const via = () => viaInputs.find((r) => r.checked)?.value ?? 'telegram';
-  const handle = byId<HTMLInputElement>('cHandle');
+  const via = () => viaInputs.find((r) => r.checked)?.value ?? 'whatsapp';
+  const name = byId<HTMLInputElement>('cName');
+  const mail = byId<HTMLInputElement>('cHandle');
+  const msg = byId<HTMLTextAreaElement>('cMsg');
+  // WhatsApp shows only the button to Franco's chat; email shows the form.
   function syncVia(): void {
-    const tg = via() === 'telegram';
-    byId('cHandleLbl').textContent = tg ? t.panel.form.handle : t.panel.form.mailHandle;
-    handle.placeholder = tg ? t.panel.form.handlePlaceholder : t.panel.form.mailPlaceholder;
-    handle.type = tg ? 'text' : 'email';
-    handle.autocomplete = tg ? 'off' : 'email';
-    handle.inputMode = tg ? 'text' : 'email';
-    setErr(handle, byId('cHandleErr'), '');
+    const wa = via() === 'whatsapp';
+    byId('cWa').hidden = !wa;
+    byId('cMail').hidden = wa;
+    // Only the email form needs a Turnstile token; WhatsApp visitors never load the widget.
+    if (!wa) humanCheck.load();
   }
   for (const r of viaInputs) {
     r.addEventListener('change', () => {
@@ -271,38 +270,54 @@ function bindContact(): void {
       syncVia();
     });
   }
+  syncVia();
+  const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+  let sending = false;
   form.addEventListener('submit', (e) => {
     e.preventDefault();
-    const name = byId<HTMLInputElement>('cName');
-    const msg = byId<HTMLTextAreaElement>('cMsg');
+    if (via() !== 'mail' || sending) return;
     const n = name.value.trim();
-    const hv = handle.value.trim();
+    const hv = mail.value.trim();
     const m = msg.value.trim();
-    const tg = via() === 'telegram';
-    const okHandle = tg ? TELEGRAM_HANDLE.test(hv) : MAIL.test(hv);
+    const okMail = MAIL.test(hv);
     setErr(name, byId('cNameErr'), n ? '' : t.panel.form.errName);
-    setErr(handle, byId('cHandleErr'), okHandle ? '' : tg ? t.panel.form.errTelegram : t.panel.form.errMail);
+    setErr(mail, byId('cHandleErr'), okMail ? '' : t.panel.form.errMail);
     setErr(msg, byId('cMsgErr'), m ? '' : t.panel.form.errMessage);
-    const bad = ([[!n, name], [!okHandle, handle], [!m, msg]] as [boolean, HTMLElement][]).find(([b]) => b);
+    const bad = ([[!n, name], [!okMail, mail], [!m, msg]] as [boolean, HTMLElement][]).find(([b]) => b);
     if (bad) {
       bad[1].focus();
       return;
     }
-    const handleShown = tg && !hv.startsWith('@') ? `@${hv}` : hv;
-    addMsg('me', t.panel.form.summary(m, n, tg ? t.panel.form.telegram : t.panel.form.mail, handleShown), { who: t.panel.who.me });
-    setTimeout(
-      () => {
-        addMsg('franco', t.panel.form.ack(n, tg ? t.panel.form.ackVia.telegram : t.panel.form.ackVia.mail), {
-          who: t.panel.who.franco,
-          mock: true,
-          tag: t.panel.form.ackTag,
-        });
-        audio.tick();
-      },
-      REDUCE ? 100 : 500,
-    );
-    msg.value = '';
+    void send(n, hv, m);
   });
+
+  async function send(n: string, hv: string, m: string): Promise<void> {
+    sending = true;
+    busyCursor.begin();
+    if (submit) {
+      submit.disabled = true;
+      submit.textContent = t.panel.form.sending;
+    }
+    const token = await humanCheck.takeToken();
+    const result = await sendContact({ name: n, email: hv, message: m }, token);
+    // Tokens are single-use: start solving the next one right away.
+    humanCheck.renew();
+    if (result.kind === 'sent') {
+      addMsg('me', t.panel.form.summary(m, n, hv), { who: t.panel.who.me });
+      addMsg('franco', t.panel.form.ack(n, hv), { who: t.panel.who.franco });
+      msg.value = '';
+    } else {
+      // The fields stay filled so the visitor can retry or copy the text.
+      addMsg('sys', result.kind === 'offline' ? t.panel.errorNetwork : (result.message ?? t.panel.errorStatus(result.status)));
+    }
+    audio.tick();
+    if (submit) {
+      submit.disabled = false;
+      submit.textContent = t.panel.form.send;
+    }
+    busyCursor.end();
+    sending = false;
+  }
 }
 
 export function initPanel(): void {

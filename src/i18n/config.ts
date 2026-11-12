@@ -42,10 +42,6 @@ export function pathForLang(lang: Lang): string {
   return lang === 'en' ? '/en/' : '/';
 }
 
-export function otherLang(lang: Lang): Lang {
-  return lang === 'en' ? 'es' : 'en';
-}
-
 /**
  * Explicit language choice, persisted so the automatic geo redirect can never
  * override a deliberate pick. Mirrors THEME_STORAGE_KEY's role: the inline

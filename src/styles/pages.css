@@ -23,7 +23,7 @@
 .page-inicio { background: var(--inicio-bg); color: var(--ink); }
 #rain { position: absolute; inset: 0; width: 100%; height: 100%; display: block; opacity: .8; pointer-events: none; }
 .rain-shade { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(62% 56% at 50% 50%, rgba(231,234,238,.88) 0%, rgba(231,234,238,.5) 60%, rgba(231,234,238,0) 100%); }
-.w { display: inline-block; white-space: pre; transition: transform .3s var(--e-out), color .2s, text-shadow .2s; will-change: transform; }
+.w { display: inline-block; white-space: pre; transition: transform .3s var(--e-out), color .2s, text-shadow .2s; }
 .w.is-hot { color: var(--ink); transform: translateY(-4px) skewX(-4deg); text-shadow: -2px 0 rgba(255,60,90,.55), 2px 0 rgba(31,191,117,.75); }
 .spark { position: absolute; z-index: 2; width: 4px; height: 4px; border-radius: 50%; background: var(--signal); box-shadow: 0 0 8px rgba(31,191,117,.9); pointer-events: none; }
 .hero-actions { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 14px; margin-top: 6px; }

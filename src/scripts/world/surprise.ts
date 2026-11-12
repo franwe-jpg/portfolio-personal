@@ -63,21 +63,30 @@ function drawPhrase(target: CanvasTex, shown: number, { left = false } = {}): vo
   c.fillStyle = '#ff5a5f';
   c.fillText(t.hunt.screenHeader, x, 44);
   const maxW = left ? 350 : W - 120;
-  // Largest size whose wrapped lines fit between the header and the signature.
+  // The signature sits right under the phrase and the whole block stays above the lower band
+  // of the screen, which the prize line and, in some shots, Franco's head cover.
+  c.font = `400 13px ${MONO}`;
+  const sig = wrapLines(c, `— ${phrase.source}`, left ? 350 : W - 100);
+  const SIG_LH = 17;
+  const SIG_GAP = 16;
+  const sigH = SIG_GAP + sig.length * SIG_LH;
   const top = 70;
-  const bottom = H - 84;
-  const sizes = left ? [31, 28, 25, 22, 20, 18] : [36, 32, 28, 25, 22, 20];
+  const bottom = H - 96;
+  // Largest size whose wrapped lines and the signature fit between the header and that band.
+  const sizes = left ? [31, 28, 25, 22, 20, 18, 16] : [36, 32, 28, 25, 22, 20, 18];
   let size = sizes[sizes.length - 1];
   let lines: string[] = [];
   for (const candidate of sizes) {
     size = candidate;
     c.font = `500 ${size}px "Instrument Sans", system-ui, sans-serif`;
     lines = wrapLines(c, phrase.text, maxW);
-    if (lines.length * size * 1.28 <= bottom - top) break;
+    if (lines.length * size * 1.28 + sigH <= bottom - top) break;
   }
   const lh = size * 1.28;
   c.fillStyle = '#f3f5f7';
-  const y0 = (top + bottom) / 2 - ((lines.length - 1) * lh) / 2;
+  const blockH = lines.length * lh + sigH;
+  const y0 = top + Math.max(0, (bottom - top - blockH) / 2) + lh / 2;
+  const sigY = y0 + (lines.length - 1) * lh + lh / 2 + SIG_GAP + SIG_LH / 2;
   let rem = shown;
   let caret: { x: number; y: number } | null = null;
   for (const [i, l] of lines.entries()) {
@@ -95,8 +104,7 @@ function drawPhrase(target: CanvasTex, shown: number, { left = false } = {}): vo
   } else {
     c.font = `400 13px ${MONO}`;
     c.fillStyle = '#8a94a3';
-    const sig = wrapLines(c, `— ${phrase.source}`, left ? 350 : W - 100);
-    for (const [i, l] of sig.entries()) c.fillText(l, x, H - 64 - (sig.length - 1 - i) * 17);
+    for (const [i, l] of sig.entries()) c.fillText(l, x, sigY + i * SIG_LH);
   }
   target.tex.needsUpdate = true;
 }

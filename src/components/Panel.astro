@@ -1,4 +1,5 @@
 ---
+import { profile } from '../data/profile';
 import type { UiCopy } from '../i18n/ui';
 import Icon from './Icon.astro';
 
@@ -9,6 +10,7 @@ interface Props {
 
 const { t } = Astro.props;
 const MAX_QUESTION = 500;
+const waHref = `https://wa.me/${profile.links.whatsapp}?text=${encodeURIComponent(t.panel.form.waText)}`;
 ---
 
 <div class="panel-backdrop" id="panelBackdrop" hidden></div>
@@ -28,37 +30,56 @@ const MAX_QUESTION = 500;
     <ol class="msgs" id="msgs" aria-live="polite" aria-relevant="additions"></ol>
     <form class="cform" id="contactForm" novalidate hidden>
       <div class="field">
-        <label for="cName">{t.panel.form.name}</label>
-        <input id="cName" name="name" autocomplete="name" maxlength="80" aria-describedby="cNameErr" />
-        <span class="err" id="cNameErr" aria-live="polite"></span>
-      </div>
-      <div class="field">
         <span class="lbl" id="cViaLbl">{t.panel.form.via}</span>
         <div class="segctl" role="radiogroup" aria-labelledby="cViaLbl">
-          <input type="radio" name="via" id="viaTg" value="telegram" checked /><label for="viaTg">{t.panel.form.telegram}</label>
+          <input type="radio" name="via" id="viaWa" value="whatsapp" checked /><label for="viaWa">{t.panel.form.whatsapp}</label>
           <input type="radio" name="via" id="viaMail" value="mail" /><label for="viaMail">{t.panel.form.mail}</label>
         </div>
       </div>
-      <div class="field">
-        <label for="cHandle" id="cHandleLbl">{t.panel.form.handle}</label>
-        <input
-          id="cHandle"
-          name="handle"
-          autocomplete="off"
-          maxlength="120"
-          placeholder={t.panel.form.handlePlaceholder}
-          aria-describedby="cHandleErr"
-          autocapitalize="off"
-          spellcheck="false"
-        />
-        <span class="err" id="cHandleErr" aria-live="polite"></span>
+      {/* WhatsApp: no form, just the green button that opens a chat with Franco (message prefilled). */}
+      <div class="cwa" id="cWa">
+        <p>{t.panel.form.waNote}</p>
+        <a class="btn-wa" href={waHref} target="_blank" rel="noopener noreferrer">
+          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 3a9 9 0 0 0-7.8 13.5L3 21l4.6-1.2A9 9 0 1 0 12 3z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" />
+            <path
+              d="M9.2 7.8c.2-.4.5-.4.7-.4h.5c.2 0 .4 0 .6.5l.7 1.7c.1.2.1.4 0 .6l-.5.6c-.1.2-.2.3 0 .6.3.6 1.4 2 3 2.6.3.1.4.1.6-.1l.6-.8c.2-.2.4-.2.6-.1l1.6.8c.2.1.4.2.4.4 0 .5-.1 1.2-.7 1.6-.6.4-1.4.6-2.4.3-1-.3-2.4-.9-3.6-2.1-1.3-1.3-2-2.6-2.3-3.5-.3-1-.1-1.8.2-2.3z"
+              fill="currentColor"
+            />
+          </svg>
+          {t.panel.form.waCta}
+        </a>
       </div>
-      <div class="field">
-        <label for="cMsg">{t.panel.form.message}</label>
-        <textarea id="cMsg" name="message" maxlength="1000" aria-describedby="cMsgErr"></textarea>
-        <span class="err" id="cMsgErr" aria-live="polite"></span>
+      {/* Email: name, address and message, sent to /api/contact (stored in D1 and emailed to Franco). */}
+      <div class="cmail" id="cMail" hidden>
+        <div class="field">
+          <label for="cName">{t.panel.form.name}</label>
+          <input id="cName" name="name" autocomplete="name" maxlength="80" aria-describedby="cNameErr" />
+          <span class="err" id="cNameErr" aria-live="polite"></span>
+        </div>
+        <div class="field">
+          <label for="cHandle">{t.panel.form.mailHandle}</label>
+          <input
+            id="cHandle"
+            name="email"
+            type="email"
+            inputmode="email"
+            autocomplete="email"
+            maxlength="120"
+            placeholder={t.panel.form.mailPlaceholder}
+            aria-describedby="cHandleErr"
+            autocapitalize="off"
+            spellcheck="false"
+          />
+          <span class="err" id="cHandleErr" aria-live="polite"></span>
+        </div>
+        <div class="field">
+          <label for="cMsg">{t.panel.form.message}</label>
+          <textarea id="cMsg" name="message" maxlength="1000" aria-describedby="cMsgErr"></textarea>
+          <span class="err" id="cMsgErr" aria-live="polite"></span>
+        </div>
+        <button class="btn-primary" type="submit">{t.panel.form.send}</button>
       </div>
-      <button class="btn-primary" type="submit">{t.panel.form.send}</button>
     </form>
   </div>
   <form class="composer" id="chatForm">

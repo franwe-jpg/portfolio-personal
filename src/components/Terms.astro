@@ -1,10 +1,13 @@
 ---
 import type { Lang } from '../i18n/config';
+import Icon from './Icon.astro';
 
 /**
  * The "terms and conditions" of the ticket-hunt prize: a joke page. One real sentence in bold,
  * then a wall of formal-sounding nonsense generated at build time from word pools with a seeded
- * PRNG (same text on every build), and a bold punchline at the end.
+ * PRNG (same text on every build), and a bold punchline at the end. It opens in the same tab
+ * from the surprise view: both back controls return to the site, which resumes the surprise
+ * (src/scripts/hunt.ts).
  */
 interface Props {
   lang: Lang;
@@ -22,7 +25,8 @@ const COPY = {
       'Seguro no leíste todo, pero no te preocupes, es lo que todos hacemos 🙂👍 (lamentablemente). Por tu suerte, no había nada importante (vuelve a mirar).',
     article: 'Artículo N.º',
     notice: 'Los artículos anteriores y los próximos a continuación no tienen ningún tipo de sentido:',
-    back: 'Volver al sitio',
+    back: 'Volver atrás',
+    backSr: 'Volver a la sorpresa',
     home: '/',
     credit: 'Música de la sorpresa: "Gymnopedie No 1", Kevin MacLeod (incompetech.com), CC BY 4.0.',
     pools: {
@@ -123,7 +127,8 @@ const COPY = {
       'You surely did not read all of it, but do not worry, that is what we all do 🙂👍 (unfortunately). Luckily for you, there was nothing important in it (look again).',
     article: 'Article No.',
     notice: 'The previous articles and the ones that follow make no sense whatsoever:',
-    back: 'Back to the site',
+    back: 'Go back',
+    backSr: 'Back to the surprise',
     home: '/en/',
     credit: 'Surprise music: "Gymnopedie No 1", Kevin MacLeod (incompetech.com), CC BY 4.0.',
     pools: {
@@ -257,12 +262,14 @@ const articles = Array.from({ length: ARTICLES }, (_, i) => {
 });
 ---
 
+<a class="terms-back" href={copy.home} data-back title={copy.backSr} aria-label={copy.backSr}>
+  <Icon name="back" size={16} />
+</a>
 <main class="terms">
   <header>
     <h1>{copy.title}</h1>
     <p class="subtitle">{copy.subtitle}</p>
   </header>
-  <a class="pill-btn" href={copy.home}>{copy.back}</a>
   <p class="lead"><strong>{copy.opening}</strong></p>
   {
     articles.map((a) => (
@@ -283,10 +290,30 @@ const articles = Array.from({ length: ARTICLES }, (_, i) => {
   }
   <p class="lead closing"><strong>{copy.closing}</strong></p>
   <footer>
-    <a class="pill-btn" href={copy.home}>{copy.back}</a>
+    <a class="pill-btn" href={copy.home} data-back>{copy.back}</a>
     <p class="credit">{copy.credit}</p>
   </footer>
 </main>
+
+<script>
+  // Back to the surprise: the previous history entry when it is this site (the bfcache may even
+  // keep it as it was); otherwise the link's own href, the home page. Either way the site reads the
+  // resume mark the terms link left and opens the surprise again.
+  for (const link of document.querySelectorAll<HTMLAnchorElement>('[data-back]')) {
+    link.addEventListener('click', (event) => {
+      let sameSite = false;
+      try {
+        sameSite = !!document.referrer && new URL(document.referrer).origin === location.origin;
+      } catch {
+        /* malformed referrer: use the href */
+      }
+      if (sameSite && history.length > 1) {
+        event.preventDefault();
+        history.back();
+      }
+    });
+  }
+</script>
 
 <style>
   :global(html) {
@@ -382,6 +409,28 @@ const articles = Array.from({ length: ARTICLES }, (_, i) => {
   footer .pill-btn {
     margin: 0;
   }
+  /* Same round arrow as the site's header (.back-gate in base.css), self-contained here. */
+  .terms-back {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 2;
+    display: inline-grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid #15181d;
+    background: rgba(231, 234, 238, 0.85);
+    color: #15181d;
+    transition: transform 0.2s, background-color 0.2s, color 0.2s, border-color 0.2s;
+  }
+  .terms-back:hover {
+    transform: translateX(-2px);
+    background: #1fbf75;
+    border-color: #1fbf75;
+    color: #0e1013;
+  }
   .notice {
     font-size: 17px;
     text-align: left;
@@ -390,8 +439,12 @@ const articles = Array.from({ length: ARTICLES }, (_, i) => {
     .pill-btn {
       transition: none;
     }
-    .pill-btn:hover {
+    .pill-btn:hover,
+    .terms-back:hover {
       transform: none;
+    }
+    .terms-back {
+      transition: none;
     }
   }
   .credit {

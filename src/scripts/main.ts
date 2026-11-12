@@ -1,4 +1,5 @@
 import { audio, initAudio } from './audio';
+import { initBack } from './back';
 import { initCursor } from './cursor';
 import { DEBUG } from './env';
 import { initGalleries } from './gallery';
@@ -34,6 +35,7 @@ initReveals();
 initHero();
 initGalleries();
 initRouter();
+initBack();
 initStage();
 initPanel();
 initHunt();
