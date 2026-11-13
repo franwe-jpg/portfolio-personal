@@ -26,11 +26,11 @@ const MAX_HISTORY_ANSWER_CHARS = 1500;
 const QUOTA_MESSAGE: Record<Lang, string> = {
   es:
     `Por hoy llegamos al límite de ${DAILY_LIMIT} preguntas desde tu red. ` +
-    'Mañana se renueva, y mientras tanto escribime a francomartin2012@hotmail.com ' +
+    'Mañana se renueva, y mientras tanto escribime a francomsoler@gmail.com ' +
     'que te respondo yo en persona.',
   en:
     `We've hit today's limit of ${DAILY_LIMIT} questions from your network. ` +
-    'It resets tomorrow, and in the meantime write to francomartin2012@hotmail.com ' +
+    'It resets tomorrow, and in the meantime write to francomsoler@gmail.com ' +
     'and I will answer you myself.',
 };
 const UNAVAILABLE_MESSAGE: Record<Lang, string> = {
