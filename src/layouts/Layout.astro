@@ -6,10 +6,12 @@ import { UI } from '../i18n/ui';
 interface Props {
   lang: Lang;
   title: string;
+  /** Text of the browser tab; defaults to `title`, which still feeds the Open Graph and Twitter cards. */
+  tabTitle?: string;
   description: string;
 }
 
-const { lang, title, description } = Astro.props;
+const { lang, title, tabTitle = title, description } = Astro.props;
 
 // `Astro.site` comes from `site` in astro.config.mjs; it falls back to the
 // request URL so the tags stay valid before the domain is configured.
@@ -124,7 +126,7 @@ const FAVICON =
       href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap"
     />
 
-    <title>{title}</title>
+    <title>{tabTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonical} />
 
