@@ -57,7 +57,7 @@ export const profile: Profile = {
     linkedin: 'https://www.linkedin.com/in/franco-martin-soler-19745a346',
     instagram: 'https://www.instagram.com/fr4ncosoler/',
     github: 'https://github.com/franwe-jpg',
-    email: 'francomartin2012@hotmail.com',
+    email: 'francomsoler@gmail.com',
     whatsapp: '5492804282525',
   },
   tools: ['React', 'TypeScript', 'FastAPI', 'SQLite', 'Astro', 'Cloudflare Workers', 'Workers AI', 'D1'],

@@ -1,5 +1,6 @@
 import { audio, initAudio } from './audio';
 import { initBack } from './back';
+import { initBrandEye } from './brand-eye';
 import { initCursor } from './cursor';
 import { DEBUG } from './env';
 import { initGalleries } from './gallery';
@@ -33,6 +34,7 @@ initRain();
 initGlyphFields();
 initReveals();
 initHero();
+initBrandEye();
 initGalleries();
 initRouter();
 initBack();

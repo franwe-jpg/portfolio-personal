@@ -65,21 +65,13 @@ body[data-page="inicio"] .hud-top { background: rgba(231,234,238,.94); -webkit-b
 /* Back to the entrance gate (the page reloads; ticket progress is kept in storage). */
 .back-gate { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; border: 1px solid currentColor; background: transparent; color: inherit; opacity: .75; transition: opacity .2s, transform .2s var(--e-out), background-color .2s, color .2s; }
 .back-gate:hover { opacity: 1; transform: translateX(-2px); background: var(--signal); border-color: var(--signal); color: var(--g0); }
-.brand { display: inline-flex; align-items: center; text-decoration: none; font: 600 clamp(17px, 1.6vw, 22px)/1 var(--font-body); letter-spacing: -.03em; white-space: nowrap; }
-/* The sheen is a gradient clipped to the letters that slides across them. */
-.brand-name {
-  --b1: var(--text); --b2: var(--signal); --b3: #a9ffd8;
-  background-image: linear-gradient(100deg, var(--b1) 0%, var(--b1) 32%, var(--b2) 48%, var(--b3) 54%, var(--b2) 60%, var(--b1) 76%, var(--b1) 100%);
-  background-size: 260% 100%; background-position: 130% 0;
-  -webkit-background-clip: text; background-clip: text; color: transparent;
-  animation: brand-sheen 4.2s linear infinite;
-  filter: drop-shadow(0 0 8px rgba(31,191,117,.35));
-  transition: filter .25s;
-}
-.brand:hover .brand-name { filter: drop-shadow(0 0 12px rgba(31,191,117,.7)); }
-@keyframes brand-sheen { to { background-position: -130% 0; } }
-body.on-paper .brand-name { --b1: var(--ink); --b2: var(--signal-dim); --b3: var(--signal); filter: none; }
-@media (prefers-reduced-motion: reduce) { .brand-name { animation: none; background-position: 50% 0; } }
+.brand { display: inline-flex; align-items: center; text-decoration: none; color: inherit; }
+/* Wordmark: "FS" on the gate's dark key cap, the rest of the word right after it at the same size, then the eye. */
+.brand-word { display: inline-flex; align-items: baseline; font: 700 21px/1 var(--font-body); letter-spacing: -.02em; white-space: nowrap; }
+.brand-key { padding: .34em .3em .32em .32em; border-radius: .3em; background: #10120d; color: #fff; box-shadow: inset 0 0 0 1px #2b313b; transition: transform .25s var(--e-out), box-shadow .25s; }
+.brand-rest { margin-left: .06em; }
+.brand-eye { flex: none; width: .78em; height: .78em; margin-left: .16em; align-self: center; transform: translateY(.02em); }
+.brand:hover .brand-key { transform: translateY(-1px); box-shadow: inset 0 0 0 1px var(--signal); }
 .brand-mark { display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid currentColor; border-radius: 8px; font: 500 12px var(--font-mono); letter-spacing: .02em; }
 .nav { display: flex; gap: 4px; }
 .nav a { position: relative; font: 500 11px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; text-decoration: none; padding: 8px 8px; border-radius: 6px; white-space: nowrap; }
@@ -93,10 +85,10 @@ body.on-paper .brand-name { --b1: var(--ink); --b2: var(--signal-dim); --b3: var
 .nav .lang-switch .flag-front { z-index: 1; }
 .nav .lang-switch .flag-behind { transform: translate(7px, -5px) scale(.78); opacity: .7; filter: saturate(.7); transition: transform .25s var(--e-out), opacity .25s, filter .25s; }
 .nav .lang-switch:hover .flag-behind, .nav .lang-switch:focus-visible .flag-behind { transform: translate(11px, -7px) scale(.86); opacity: 1; filter: none; }
-@media (max-width: 640px) { .brand { font-size: 14px; } .brand-row { gap: 6px; } .back-gate { width: 26px; height: 26px; } .back-gate svg { width: 13px; height: 13px; } .nav a { padding: 8px 4px; letter-spacing: .04em; font-size: 10.5px; } .nav a::after { left: 4px; right: 4px; } }
-@media (max-width: 400px) { .hud-top { gap: 6px; } .brand { font-size: 13px; } .back-gate { width: 24px; height: 24px; } .nav a { padding: 8px 3px; letter-spacing: 0; font-size: 10px; } .nav a::after { left: 3px; right: 3px; } .nav .lang-switch, .nav .lang-switch .flag { width: 18px; height: 18px; } .nav .lang-switch { margin: 0 6px 0 6px; } }
-/* Very narrow phones: the wordmark collapses to the initials so the menu still fits. */
-@media (max-width: 340px) { .brand-name { font-size: 0; } .brand-name::after { content: "FS"; font-size: 14px; } }
+@media (max-width: 640px) { .brand-word { font-size: 17px; } .brand-row { gap: 6px; } .back-gate { width: 26px; height: 26px; } .back-gate svg { width: 13px; height: 13px; } .nav a { padding: 8px 4px; letter-spacing: .04em; font-size: 10.5px; } .nav a::after { left: 4px; right: 4px; } }
+@media (max-width: 400px) { .hud-top { gap: 6px; } .brand-word { font-size: 16px; } .back-gate { width: 24px; height: 24px; } .nav a { padding: 8px 3px; letter-spacing: 0; font-size: 10px; } .nav a::after { left: 3px; right: 3px; } .nav .lang-switch, .nav .lang-switch .flag { width: 18px; height: 18px; } .nav .lang-switch { margin: 0 6px 0 6px; } }
+/* Narrow phones: a smaller wordmark and a tighter menu so the flags still fit. */
+@media (max-width: 359px) { .brand-row { gap: 4px; } .brand-word { font-size: 11.5px; } .nav a { padding: 8px 2px; font-size: 9.5px; } .nav a::after { left: 2px; right: 2px; } }
 
 /* fixed bottom HUD: audio + clock (persist over every page) */
 .hud-bottom { position: fixed; z-index: 41; bottom: calc(16px + var(--sb)); display: flex; align-items: center; gap: 10px; font: 500 11px var(--font-mono); letter-spacing: .08em; color: var(--text); transition: color .4s; }
