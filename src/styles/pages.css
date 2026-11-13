@@ -38,6 +38,11 @@
 .hero-title > span { display: block; }
 .hero-title .l2 { font-weight: 400; color: var(--muted); }
 .hero-desc { margin: 0 auto; max-width: 46ch; font-size: clamp(16px, 1.5vw, 19px); line-height: 1.5; color: #3f4753; text-wrap: pretty; }
+/* Social links: outline icons in the bottom-right corner, in line with the bottom HUD. */
+.inicio-social { position: absolute; z-index: 2; right: var(--gr); bottom: calc(16px + var(--sb)); display: flex; align-items: center; gap: 6px; }
+.inicio-social a { display: grid; place-items: center; width: 40px; height: 40px; color: var(--ink); border-radius: 8px; transition: transform .2s ease, color .2s ease; }
+.inicio-social a:hover { transform: translateY(-2px); color: var(--signal-dim); }
+.inicio-social a:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
 .pill-btn {
   --fg: var(--text); --bg: var(--g0);
   display: inline-flex; align-items: center; gap: 10px; min-height: 48px; padding: 12px 24px; border-radius: 999px;

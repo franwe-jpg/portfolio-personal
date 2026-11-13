@@ -1,7 +1,6 @@
 import { gsap } from 'gsap';
 import { $, $$, byId } from './dom';
 import { COARSE, REDUCE } from './env';
-import { t } from './i18n';
 import { scramble } from './scramble';
 import { glitch } from './transitions';
 
@@ -70,8 +69,6 @@ export function heroIntro(): void {
 }
 
 export function initHero(): void {
-  const brand = byId('brandName');
-  brand.closest('.brand')?.addEventListener('pointerenter', () => scramble(brand, t.header.brand, 0.6));
   for (const selector of ['#inicio .hero-eyebrow', '#inicio .hero-title .l1', '#inicio .hero-title .l2', '#inicio .hero-desc']) {
     splitHeroWords($(selector));
   }

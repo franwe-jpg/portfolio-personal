@@ -21,7 +21,24 @@ const FLAGS: Record<Lang, string> = { es: '/banderas/ar.png', en: '/banderas/gb.
       <Icon name="back" size={16} />
     </button>
     <a class="brand" href="#inicio" data-go="inicio">
-      <span class="brand-name" id="brandName" aria-hidden="true">{t.header.brand}</span>
+      {/* Wordmark: the gate's "FS" key cap, the rest of the word, and the gate's eye (moved by src/scripts/brand-eye.ts). */}
+      <span class="brand-word" aria-hidden="true">
+        <span class="brand-key">{t.header.brand.slice(0, 2)}</span><span class="brand-rest">{t.header.brand.slice(2)}</span>
+        <svg class="brand-eye" viewBox="0 0 64 64" focusable="false">
+          <clipPath id="brandEyeOpen"><rect data-part="open" x="0" y="18" width="64" height="28" /></clipPath>
+          <circle cx="32" cy="32" r="31" fill="#1fbf75" stroke="#10120d" stroke-opacity=".25" stroke-width="2" />
+          <g clip-path="url(#brandEyeOpen)">
+            <circle cx="32" cy="32" r="29.5" fill="#fff" />
+            <g data-part="pupil">
+              <circle cx="32" cy="32" r="14.5" fill="#10120d" />
+              <circle cx="27" cy="27" r="4.2" fill="#fff" />
+              <circle cx="36" cy="36" r="2" fill="#fff" />
+            </g>
+          </g>
+          <rect data-part="lid-top" x="3" y="16.6" width="58" height="2.2" fill="rgba(16,18,13,.55)" />
+          <rect data-part="lid-bottom" x="3" y="45.2" width="58" height="2.2" fill="rgba(16,18,13,.55)" />
+        </svg>
+      </span>
       <span class="sr-only">{t.header.brandSr}</span>
     </a>
   </div>
