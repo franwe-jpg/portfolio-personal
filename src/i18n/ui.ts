@@ -52,6 +52,7 @@ export interface UiCopy {
   header: {
     /** Back arrow, by where it leads: the gate (from inicio), inicio, or the current scene (from another scene of the world). */
     back: { gate: string; inicio: string; now: string };
+    /** Wordmark: the first two letters go on the key cap, the rest follows it. */
     brand: string;
     brandSr: string;
     navLabel: string;
@@ -231,8 +232,8 @@ const es: UiCopy = {
 
   header: {
     back: { gate: 'Volver a la entrada', inicio: 'Volver al inicio', now: 'Volver a la hora actual' },
-    brand: 'FrancoSolerSistemas',
-    brandSr: 'FrancoSolerSistemas, volver al inicio',
+    brand: 'FSistemas',
+    brandSr: 'FSistemas, volver al inicio',
     navLabel: 'Páginas',
     nav: { mundo: 'Mundo', proyectos: 'Proyectos', sobre: 'Sobre mí' },
     skip: 'Saltar al contenido',
@@ -432,8 +433,8 @@ const en: UiCopy = {
 
   header: {
     back: { gate: 'Back to the entrance', inicio: 'Back to home', now: 'Back to the current time' },
-    brand: 'FrancoSolerSistemas',
-    brandSr: 'FrancoSolerSistemas, back to the start',
+    brand: 'FSistemas',
+    brandSr: 'FSistemas, back to the start',
     navLabel: 'Pages',
     nav: { mundo: 'World', proyectos: 'Projects', sobre: 'About me' },
     skip: 'Skip to content',
