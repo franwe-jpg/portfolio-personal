@@ -1,5 +1,7 @@
 import { audio } from './audio';
 import { $$, byId } from './dom';
+import { requestEnter } from './gate';
+import { ghostClick } from './ghost-click';
 import { t } from './i18n';
 import { closePanel } from './panel';
 import { advanceQuote, currentQuote } from './quotes';
@@ -187,10 +189,29 @@ export function initHunt(): void {
     }
   }
   on('app:panelclose', clearScreens);
+  /**
+   * The last ticket was the gate one: the visitor has not entered yet, so a stand-in mouse clicks
+   * "Ingresar" and the entry lands straight on mundo. Resolves once mundo is the active page.
+   */
+  async function enterFromGate(): Promise<void> {
+    const landed = new Promise<void>((resolve) => {
+      const onSwap = (e: Event) => {
+        if ((e as CustomEvent).detail !== 'mundo') return;
+        document.removeEventListener('app:pageswap', onSwap);
+        resolve();
+      };
+      document.addEventListener('app:pageswap', onSwap);
+    });
+    await ghostClick(byId('enter'));
+    audio.tick();
+    requestEnter(true, 'mundo');
+    await landed;
+  }
   async function showSurprise(): Promise<void> {
     finalePending = false;
     closeToast();
     setOpen(false);
+    if (!state.entered) await enterFromGate();
     if (state.page !== 'mundo') await router.go('mundo');
     else if (state.panelOpen) closePanel();
     if (state.page !== 'mundo') return;
@@ -278,6 +299,8 @@ export function initHunt(): void {
       }
       audio.chime();
       announce(found.size);
+      // Found from the gate: this click is the user gesture the later enter (with sound) needs.
+      if (found.size >= TOTAL && !state.entered) audio.unlock();
       if (found.size >= TOTAL) {
         finalePending = true;
         setTimeout(() => {
