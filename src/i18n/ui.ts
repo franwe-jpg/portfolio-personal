@@ -99,6 +99,8 @@ export interface UiCopy {
     switcherLabel: string;
     modes: { auto: string; autoNow: string; office: string; uni: string; home: string };
     dragHint: [string, string];
+    /** Touch screens: the same hint for fingers. */
+    dragHintTouch: [string, string];
     sceneTag: (scene: SceneCopy) => string;
     statusLine: (scene: SceneCopy, time: string) => string;
     scenes: Record<Scene, SceneCopy>;
@@ -274,6 +276,7 @@ const es: UiCopy = {
     switcherLabel: 'Escena',
     modes: { auto: 'Auto', autoNow: ' (ahora)', office: 'Oficina', uni: 'Universidad', home: 'Disponible' },
     dragHint: ['Arrastrá para girar', 'Rueda para acercar'],
+    dragHintTouch: ['Deslizá para girar', 'Dos dedos para mover y acercar'],
     sceneTag: (scene) => `ESCENA ${scene.n} · ${scene.name}`,
     statusLine: (scene, time) => `AHORA · ${scene.status} · ${time} ART`,
     scenes: {
@@ -475,6 +478,7 @@ const en: UiCopy = {
     switcherLabel: 'Scene',
     modes: { auto: 'Auto', autoNow: ' (now)', office: 'Office', uni: 'University', home: 'Available' },
     dragHint: ['Drag to rotate', 'Scroll to zoom'],
+    dragHintTouch: ['Swipe to rotate', 'Two fingers to move and zoom'],
     sceneTag: (scene) => `SCENE ${scene.n} · ${scene.name}`,
     statusLine: (scene, time) => `NOW · ${scene.status} · ${time} ART`,
     scenes: {

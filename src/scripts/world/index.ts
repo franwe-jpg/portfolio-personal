@@ -40,7 +40,7 @@ export async function initWorld(): Promise<WorldApi> {
   const lights = createLights(scene);
   const { hemi, sun } = lights;
   const cam = createCameraRig(st, css3d);
-  const { rig, orbit, para, view, pov } = cam;
+  const { rig, orbit, para, pan, view, pov } = cam;
 
   // Build one diorama per frame so the busy cursor keeps animating.
   await nextFrame();
@@ -99,6 +99,25 @@ export async function initWorld(): Promise<WorldApi> {
   let snowLast = -1;
   const input = bindInput({ canvas, camera, rig: cam, dioramas, interactive: () => cam.cam.viewMode === 'mundo' });
 
+  /**
+   * The two-finger slide stays near the diorama: a short leash at the home zoom that grows as the
+   * view zooms in (the closer the camera, the more of the map is off screen). Close-ups (chat,
+   * surprise) and the other views take it back to the centre.
+   */
+  function clampPan(): void {
+    if (cam.cam.focused || cam.cam.viewMode !== 'mundo') {
+      pan.gx = pan.gy = pan.gz = 0;
+      return;
+    }
+    const max = view.halfH * (0.15 + 0.6 * Math.max(0, 1 - 1 / view.userZoom));
+    const len = Math.hypot(pan.gx, pan.gy, pan.gz);
+    if (len > max) {
+      const k = max / len;
+      pan.gx *= k;
+      pan.gy *= k;
+      pan.gz *= k;
+    }
+  }
   function frame(now: number): void {
     if (!running) return;
     requestAnimationFrame(frame);
@@ -116,6 +135,10 @@ export async function initWorld(): Promise<WorldApi> {
     const damp = REDUCE ? 1 : 0.1;
     orbit.az += (orbit.goalAz - orbit.az) * damp;
     orbit.el += (orbit.goalEl - orbit.el) * damp;
+    clampPan();
+    pan.x += (pan.gx - pan.x) * damp;
+    pan.y += (pan.gy - pan.y) * damp;
+    pan.z += (pan.gz - pan.z) * damp;
     // Pointer parallax on the rig: frozen while dragging so the drag keeps priority,
     // stronger on inicio where there is no drag at all.
     if (!input.dragging && !REDUCE) {
@@ -224,6 +247,7 @@ export async function initWorld(): Promise<WorldApi> {
     orbit.az = orbit.goalAz = orbit.vAz = 0;
     orbit.el = orbit.goalEl = 0;
     view.userZoom = 1;
+    Object.assign(pan, { x: 0, y: 0, z: 0, gx: 0, gy: 0, gz: 0 });
     const z = cam.homeZoom();
     camSet({ x: SCENE_X[key], y: view.camY, z: 0, az: REDUCE ? 0 : -0.12, zoom: REDUCE ? z : z * 0.88 });
     if (!REDUCE) gsap.to(rig, { az: 0, zoom: z, duration: 1.2, ease: 'expo.out' });

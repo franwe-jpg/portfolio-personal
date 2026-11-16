@@ -11,7 +11,8 @@ import { setStatic } from './figure';
 import type { Dioramas } from './types';
 
 /**
- * Pointer on the canvas (mundo view only): drag to orbit with inertia, wheel and pinch to zoom,
+ * Pointer on the canvas (mundo view only): drag to orbit with inertia (sideways) and tilt (up and
+ * down), wheel and pinch to zoom, two fingers also slide the view and twist it,
  * hover and tap on Franco (static, ring, label, `app:talk`), the wall clock (hover outline, tap
  * spins to the next scene) and the living-room TV (hover border, tap opens the video, the bar
  * above sets the volume).
@@ -43,13 +44,17 @@ export interface WorldInput {
 
 export function bindInput(core: InputCore): WorldInput {
   const { canvas, camera, rig, dioramas } = core;
-  const { orbit, view } = rig;
+  const { orbit, view, pan } = rig;
   const cursor = byId('cursor');
   const label = byId('francoLabel');
   const drag = { active: false, id: -1, sx: 0, sy: 0, lx: 0, ly: 0, moved: false, lastT: 0, v: 0 };
   const pointers = new Map<number, { x: number; y: number }>();
   let pinch0 = 0;
   let zoom0 = 1;
+  /** Two-finger gesture, previous sample: midpoint (slide) and angle (twist). */
+  const two = { mx: 0, my: 0, ang: 0, twist: 0, az0: 0 };
+  const _right = new T.Vector3();
+  const _up = new T.Vector3();
   let hovered = false;
   const raycaster = new T.Raycaster();
   const ndc = new T.Vector2();
@@ -132,6 +137,36 @@ export function bindInput(core: InputCore): WorldInput {
     if (on) audio.tick();
   }
 
+  /**
+   * Two fingers: the midpoint slides the look-at point so the map follows the fingers (screen
+   * axes, at the target's depth), and turning the fingers past a small dead zone twists the
+   * orbit. The twist maps from the gesture's start, not per event: each finger reports on its own,
+   * so the angle swings back and forth between events and an incremental dead zone would drift.
+   * The loop clamps the slide (`clampPan`).
+   */
+  function twoFinger(a: { x: number; y: number }, c: { x: number; y: number }): void {
+    const mx = (a.x + c.x) / 2;
+    const my = (a.y + c.y) / 2;
+    const dist = view.dist / (rig.rig.zoom * view.userZoom);
+    const perPx = (2 * dist * Math.tan((camera.fov * Math.PI) / 360)) / view.h;
+    _right.setFromMatrixColumn(camera.matrixWorld, 0);
+    _up.setFromMatrixColumn(camera.matrixWorld, 1);
+    const dx = (mx - two.mx) * perPx;
+    const dy = (my - two.my) * perPx;
+    pan.gx += -_right.x * dx + _up.x * dy;
+    pan.gy += -_right.y * dx + _up.y * dy;
+    pan.gz += -_right.z * dx + _up.z * dy;
+    two.mx = mx;
+    two.my = my;
+    const ang = Math.atan2(c.y - a.y, c.x - a.x);
+    let d = ang - two.ang;
+    if (d > Math.PI) d -= Math.PI * 2;
+    else if (d < -Math.PI) d += Math.PI * 2;
+    two.ang = ang;
+    two.twist += d;
+    const TWIST_DEAD = 0.12;
+    orbit.goalAz = two.az0 + Math.sign(two.twist) * Math.max(0, Math.abs(two.twist) - TWIST_DEAD);
+  }
   canvas.addEventListener('pointerdown', (e) => {
     if (locked()) return;
     const tv = inSurprise() ? null : tvUi();
@@ -147,7 +182,9 @@ export function bindInput(core: InputCore): WorldInput {
       const [a, c] = [...pointers.values()];
       pinch0 = Math.hypot(a.x - c.x, a.y - c.y);
       zoom0 = view.userZoom;
+      Object.assign(two, { mx: (a.x + c.x) / 2, my: (a.y + c.y) / 2, ang: Math.atan2(c.y - a.y, c.x - a.x), twist: 0, az0: orbit.goalAz });
       drag.active = false;
+      orbit.vAz = 0;
       return;
     }
     Object.assign(drag, {
@@ -177,6 +214,7 @@ export function bindInput(core: InputCore): WorldInput {
     if (pointers.size === 2 && pinch0) {
       const [a, c] = [...pointers.values()];
       view.userZoom = Math.max(0.75, Math.min(1.8, (zoom0 * Math.hypot(a.x - c.x, a.y - c.y)) / pinch0));
+      twoFinger(a, c);
       return;
     }
     if (drag.active && e.pointerId === drag.id) {
@@ -189,7 +227,7 @@ export function bindInput(core: InputCore): WorldInput {
         orbit.goalAz -= dx * k;
         drag.v = ((-dx * k) / Math.max(1, now - drag.lastT)) * 16;
         drag.lastT = now;
-        if (e.pointerType === 'mouse') orbit.goalEl = Math.max(-0.12, Math.min(0.16, orbit.goalEl + dy * 0.0025));
+        orbit.goalEl = Math.max(-0.12, Math.min(0.16, orbit.goalEl + dy * 0.0025));
       }
       drag.lx = e.clientX;
       drag.ly = e.clientY;

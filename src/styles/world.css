@@ -86,6 +86,8 @@ body.panel-open .wtop, body.panel-open .drag-hint { opacity: .12; }
 @media (max-width: 767px) { body.panel-open .wtop { opacity: 0; } }
 .drag-hint { position: absolute; z-index: 3; right: var(--gr); bottom: calc(86px + var(--sb)); font: 400 10px var(--font-mono); letter-spacing: .12em; color: var(--tmuted); text-transform: uppercase; pointer-events: none; text-align: right; }
 @media (max-width: 767px) { .drag-hint { display: none; } }
+.drag-hint .hint-touch { display: none; }
+@media (hover: none) and (pointer: coarse) { .drag-hint .hint-fine { display: none; } .drag-hint .hint-touch { display: inline; } }
 
 /* cell mask for scene switches */
 .cellmask { position: absolute; inset: 0; z-index: 4; display: grid; pointer-events: none; }
