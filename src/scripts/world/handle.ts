@@ -20,7 +20,7 @@ export interface WorldApi {
   focusOn(): number;
   /** Back to the iso rig. */
   unfocus(): void;
-  /** Surprise (Fase 8): `quote` on every screen, special shot on the current one; resolves when the "clip" ends. */
+  /** Surprise (Fase 8): `quote` on every screen, special shot on the current one; resolves once the phrase is fully typed. */
   surprise(quote: Quote): Promise<void>;
   /** Screens back to their usual content. */
   endSurprise(): void;

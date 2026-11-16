@@ -95,6 +95,9 @@ body.panel-open .wtop, body.panel-open .drag-hint { opacity: .12; }
 /* surprise view: camera framed on the screen, HUD dimmed, the prize line, the terms link and a way back */
 .surprise-hud { position: fixed; z-index: 41; left: 50%; bottom: calc(16px + var(--sb)); transform: translateX(-50%); display: grid; justify-items: center; gap: 12px; width: min(92vw, 720px); text-align: center; }
 .surprise-hud[hidden] { display: none; }
+.surprise-hud:not([hidden]) { animation: surprise-hud-in .6s var(--e-out) both; }
+@keyframes surprise-hud-in { from { opacity: 0; transform: translate(-50%, 12px); } to { opacity: 1; transform: translate(-50%, 0); } }
+@media (prefers-reduced-motion: reduce) { .surprise-hud:not([hidden]) { animation: none; } }
 /* The prize line sits in a framed box so it reads as part of the screenshot. */
 .surprise-prize { margin: 0; padding: 12px 18px; border: 1.5px solid rgba(243,245,247,.85); border-radius: 6px; background: rgba(14,16,19,.55); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); color: var(--text); font: 500 15px/1.4 var(--font-body); text-shadow: 0 1px 8px rgba(0,0,0,.6); }
 .surprise-row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }

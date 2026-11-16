@@ -166,6 +166,8 @@ export function initHunt(): void {
   // Surprise: go to the world and frame the screen of the current scene (monitor, projector or TV).
   let finalePending = false;
   let onScreens = false;
+  /** Bumped by every surprise run: a run that was left (or replayed) does not show the HUD late. */
+  let surpriseRun = 0;
   // The quote leaves the screens (and the piano stops) once the viewing is over: "back", a page
   // change, a scene change or closing a chat opened over it. "Ver sorpresa" brings it back.
   function clearScreens(): void {
@@ -177,6 +179,7 @@ export function initHunt(): void {
   function endSurpriseView(unfocus = true): void {
     if (!inSurprise()) return;
     document.body.classList.remove('surprise-view');
+    surpriseRun++;
     hud.hidden = true;
     if (unfocus) {
       world?.unfocus();
@@ -204,12 +207,14 @@ export function initHunt(): void {
     }
     if (state.page !== 'mundo' || state.panelOpen) return;
     document.body.classList.add('surprise-view');
-    hud.hidden = false;
+    const run = ++surpriseRun;
+    hud.hidden = true;
     onScreens = true;
     startPiano();
-    // The quote, the prize line and the terms link stay until the visitor leaves (back, Escape,
-    // another page or scene): the screenshot needs them on screen.
+    // The prize line, the terms link and "back" show once the phrase is typed, and stay until the
+    // visitor leaves (back, Escape, another page or scene): the screenshot needs them on screen.
     await world.surprise(quote);
+    if (run === surpriseRun && inSurprise()) hud.hidden = false;
   }
   back.addEventListener('click', () => {
     audio.tick();
