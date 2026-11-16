@@ -102,7 +102,7 @@ export const PROFILE_COPY: Record<Lang, ProfileCopy> = {
     ],
     services: [
       {
-        title: 'Landing pages y sistemas a medida',
+        title: 'Páginas web y sistemas a medida',
         text: 'Del sitio de presentación al sistema completo, frontend y backend.',
       },
       { title: 'Integraciones', text: 'Conecto lo tuyo con AFIP/ARCA, Mercado Pago, WhatsApp y servicios parecidos.' },
@@ -154,7 +154,7 @@ export const PROFILE_COPY: Record<Lang, ProfileCopy> = {
     ],
     services: [
       {
-        title: 'Landing pages and custom systems',
+        title: 'Websites and custom systems',
         text: 'From the presentation site to the full system, frontend and backend.',
       },
       { title: 'Integrations', text: 'I connect your business with AFIP/ARCA, Mercado Pago, WhatsApp and similar services.' },
