@@ -209,7 +209,8 @@ export async function initWorld(): Promise<WorldApi> {
   });
   // The label only exists on the interactive view.
   const setLabel = (on: boolean) => {
-    labelOn = on && cam.cam.viewMode === 'mundo';
+    // Close-ups (chat, surprise) keep it off: a late tween (the intro dolly) must not bring it back.
+    labelOn = on && cam.cam.viewMode === 'mundo' && !cam.cam.focused;
     label.classList.toggle('is-on', labelOn);
   };
 
