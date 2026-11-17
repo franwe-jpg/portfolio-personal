@@ -16,11 +16,6 @@ export interface Profile {
   links: ProfileLinks;
 }
 
-export interface Fact {
-  label: string;
-  value: string;
-}
-
 export interface TimelineItem {
   when: string;
   title: string;
@@ -41,7 +36,8 @@ export interface ProfileCopy {
   headline: string;
   quote: string;
   lead: string;
-  facts: Fact[];
+  /** Short lines under the intro, one per row (above the curl command). */
+  traits: string[];
   photoAlt: string;
   jobs: TimelineItem[];
   events: TimelineItem[];
@@ -69,13 +65,7 @@ export const PROFILE_COPY: Record<Lang, ProfileCopy> = {
     headline: 'Analista Programador y estudiante avanzado de Licenciatura en Sistemas.',
     quote: 'Haciendo del mundo un lugar mejor, pero no tanto...',
     lead: 'Soy Franco Martin Soler, tengo 23 años y vivo en Trelew, Chubut. Me recibí de Analista Programador en 2025 y estoy cursando 4.º año de la Licenciatura en Sistemas en la UNPSJB.',
-    facts: [
-      { label: 'Nacimiento', value: '17/10/2003' },
-      { label: 'Título', value: 'Analista Programador · 2025' },
-      { label: 'Cursando', value: 'Licenciatura en Sistemas · UNPSJB · 4.º año' },
-      { label: 'Secundario', value: 'Técnico en Informática · ESETP N.º 724 · 2022' },
-      { label: 'Base', value: 'Trelew, Chubut, Argentina' },
-    ],
+    traits: ['Usuario de Linux', 'Jugador de Xbox', 'Oyente de Airbag'],
     photoAlt: 'Franco Martin Soler, de perfil, con gorra, en la montaña.',
     jobs: [
       { when: 'Ahora', now: true, title: 'Legislatura de Chubut', text: 'Trabajando en lo mío. Es mi primer año ahí.' },
@@ -134,13 +124,7 @@ export const PROFILE_COPY: Record<Lang, ProfileCopy> = {
     headline: 'Software analyst and senior-year student of Licenciatura en Sistemas.',
     quote: 'Making the world a better place, but only a little...',
     lead: 'I am Franco Martin Soler, 23, and I live in Trelew, Chubut. I graduated as a software analyst in 2025 and I am in the fourth year of the Licenciatura en Sistemas at UNPSJB.',
-    facts: [
-      { label: 'Born', value: '17 October 2003' },
-      { label: 'Degree', value: 'Software Analyst · 2025' },
-      { label: 'Studying', value: 'Licenciatura en Sistemas · UNPSJB · 4th year' },
-      { label: 'High school', value: 'IT Technician · ESETP No. 724 · 2022' },
-      { label: 'Based in', value: 'Trelew, Chubut, Argentina' },
-    ],
+    traits: ['Linux user', 'Xbox player', 'Airbag listener'],
     photoAlt: 'Franco Martin Soler, in profile, wearing a cap, in the mountains.',
     jobs: [
       { when: 'Now', now: true, title: 'Legislature of Chubut', text: 'Working in my field. It is my first year there.' },
