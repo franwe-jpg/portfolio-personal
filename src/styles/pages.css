@@ -80,6 +80,59 @@
 .about-photo img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .6s var(--e-out); }
 .about-photo:hover img { transform: scale(1.04); }
 @media (min-width: 900px) { .about-grid { grid-template-columns: 1.1fr 1fr; gap: 72px; } }
+/* Photos: kept low-key. A one-line heading, then one group of photos laid out by
+   src/scripts/photos.ts: portrait photos take the band's full height, landscape ones stack in
+   pairs, every photo at its own ratio. The arrow swaps the group: below the photos, to the right;
+   on wide screens out in the right margin, halfway down, so the photos stay aligned with the page. */
+.photos-head { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 14px; row-gap: 4px; }
+.photos-head .eyebrow { flex-basis: 100%; margin-bottom: 6px; }
+.photos-title { margin: 0; font: 500 clamp(19px, 1.9vw, 24px)/1.25 var(--font-body); letter-spacing: -.01em; }
+.photos-stage { position: relative; display: flex; flex-direction: column; margin-top: 18px; }
+.photos { --row-h: 105px; display: flex; flex-wrap: wrap; gap: 6px; }
+/* Before the script runs: flex rows at about --row-h, a short last row is not stretched. */
+.photos::after { content: ""; flex-grow: 1000000; }
+.photo { position: relative; margin: 0; min-width: 0; flex: calc(var(--r) * 100) 1 calc(var(--r) * var(--row-h)); aspect-ratio: var(--r); max-height: calc(var(--row-h) * 1.6); border-radius: 8px; overflow: hidden; background: var(--paper-3); }
+.photo[hidden] { display: none; }
+/* Placed by the script: absolute boxes, the grid gets its height inline. */
+.photos.is-laid { display: block; position: relative; }
+.photos.is-laid::after { display: none; }
+.photos.is-laid .photo { position: absolute; flex: none; aspect-ratio: auto; max-height: none; }
+.photo-open { display: block; width: 100%; height: 100%; padding: 0; border: 0; background: none; }
+.photo img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .6s var(--e-out); }
+.photo:hover img { transform: scale(1.04); }
+.photo figcaption { position: absolute; left: 10px; right: 10px; bottom: 8px; font: 500 10px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: #fff; text-shadow: 0 1px 8px rgba(0,0,0,.7); opacity: 0; transition: opacity .3s; pointer-events: none; }
+.photo:hover figcaption { opacity: 1; }
+/* "Ver más fotos": the label and an arrow in a ring. */
+.photos-more { align-self: flex-end; display: inline-flex; align-items: center; gap: 12px; margin-top: 14px; padding: 4px 0; border: 0; background: none; color: var(--ink); text-align: right; }
+.photos-arrow { order: 2; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(21,24,29,.25); background: var(--paper); transition: background-color .25s, color .25s, border-color .25s, transform .35s var(--e-out); }
+.photos-more:hover .photos-arrow { background: var(--ink); color: var(--paper); border-color: var(--ink); transform: translateX(3px); }
+.photos-more-txt { display: grid; gap: 3px; font: 500 10.5px/1.3 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; }
+.photos-count { color: var(--muted); }
+@media (min-width: 700px) {
+  .photos { gap: 8px; }
+  .photo { border-radius: 10px; }
+}
+/* Wide screens: the arrow sits in the right margin, centred in it and halfway down the photos. */
+@media (min-width: 1300px) {
+  .photos-more { position: absolute; top: 50%; left: calc(100% + (100vw - 100%) / 4); margin: 0; flex-direction: column; gap: 10px; text-align: center; transform: translate(-50%, -50%); }
+  .photos-arrow { order: 0; width: 56px; height: 56px; }
+  .photos-more-txt { justify-items: center; max-width: 76px; }
+}
+/* Viewer: the photo nearly full screen, rounded, over the dimmed page. */
+.lightbox { padding: 0; border: 0; background: none; max-width: none; max-height: none; overflow: visible; }
+.lightbox::backdrop { background: rgba(10,12,15,.74); }
+.lightbox-img { display: block; width: auto; height: auto; max-width: calc(100vw - 32px); max-height: calc(100dvh - 48px); border-radius: 16px; box-shadow: 0 30px 80px -20px rgba(0,0,0,.6); }
+.lightbox-close { position: absolute; top: 12px; right: 12px; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(255,255,255,.35); background: rgba(14,16,19,.55); color: #fff; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); transition: background-color .2s; }
+.lightbox-close:hover { background: rgba(14,16,19,.85); }
+@media (min-width: 700px) { .lightbox-img { max-width: 92vw; max-height: 90vh; } }
+.lightbox[open] { animation: lightbox-in .35s var(--e-out); }
+.lightbox[open]::backdrop { animation: lightbox-fade .3s ease-out; }
+.lightbox.is-closing { animation: lightbox-out .18s ease-in forwards; }
+.lightbox.is-closing::backdrop { animation: lightbox-fade .18s ease-in reverse forwards; }
+@keyframes lightbox-in { from { opacity: 0; transform: scale(.96); } }
+@keyframes lightbox-out { to { opacity: 0; transform: scale(.97); } }
+@keyframes lightbox-fade { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .lightbox[open], .lightbox[open]::backdrop, .lightbox.is-closing, .lightbox.is-closing::backdrop { animation: none; } }
 .quote { margin: 18px 0 0; font: 400 18px var(--font-body); color: var(--muted); }
 .facts { display: grid; gap: 0; margin: 28px 0 0; border-top: 1px solid rgba(21,24,29,.12); }
 .facts div { display: grid; grid-template-columns: 120px 1fr; gap: 16px; padding: 14px 0; border-bottom: 1px solid rgba(21,24,29,.12); }
@@ -102,20 +155,13 @@
 .svc .n { font: 500 11px var(--font-mono); letter-spacing: .1em; color: var(--muted); }
 .svc h3 { margin: 0; font: 500 19px/1.25 var(--font-body); }
 .svc p { margin: 6px 0 0; color: var(--muted); font-size: 15px; }
-.photos-note { margin: 18px 0 0; font: 400 18px var(--font-body); color: var(--muted); }
-/* Photo grid: dense auto-fill, landscape shots take two columns, portrait ones two rows. */
-.photos { display: grid; gap: 12px; margin-top: 40px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 200px), 1fr)); grid-auto-rows: 190px; grid-auto-flow: dense; }
-.photo { position: relative; margin: 0; border-radius: 14px; overflow: hidden; background: var(--paper-3); border: 1px solid rgba(21,24,29,.08); }
-.photo.wide { grid-column: span 2; }
-.photo.tall { grid-row: span 2; }
-.photo img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .6s var(--e-out); }
-.photo:hover img { transform: scale(1.04); }
-.photo figcaption { position: absolute; left: 12px; bottom: 10px; font: 500 10.5px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: #fff; text-shadow: 0 1px 8px rgba(0,0,0,.6); opacity: 0; transition: opacity .3s; }
-.photo:hover figcaption { opacity: 1; }
-/* Empty slot shown until the photo exists. */
-.photo.slot { display: grid; place-items: center; border: 1px dashed rgba(21,24,29,.22); background: transparent; font: 500 11px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
-/* Phones: two fixed columns, so a wide photo takes the full row instead of forcing a sliver column. */
-@media (max-width: 600px) { .photos { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 140px; gap: 10px; } }
+/* "¿Querés preguntarme más cosas?": the one dark card, a link to the chat in the world. */
+.svc-ask { background: var(--ink); color: var(--paper); border-color: var(--ink); text-decoration: none; transition: transform .35s var(--e-out), box-shadow .35s var(--e-out); }
+.svc-ask p { color: rgba(231,234,238,.7); }
+.svc-ask-arrow { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(231,234,238,.35); transition: transform .35s var(--e-out), background-color .25s, color .25s; }
+.svc-ask:hover { transform: translateY(-3px); box-shadow: 0 18px 36px -20px rgba(21,24,29,.6); }
+.svc-ask:hover .svc-ask-arrow { background: var(--signal); border-color: var(--signal); color: var(--ink); transform: translateX(4px); }
+@media (prefers-reduced-motion: reduce) { .svc-ask, .svc-ask-arrow { transition: none; } .svc-ask:hover, .svc-ask:hover .svc-ask-arrow { transform: none; } }
 .tools { margin-top: 56px; display: grid; gap: 14px; }
 .tools-head { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: baseline; justify-content: space-between; }
 .tools-note { font: 400 10.5px var(--font-mono); letter-spacing: .08em; color: var(--muted); text-transform: uppercase; }

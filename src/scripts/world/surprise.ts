@@ -181,7 +181,7 @@ export interface SurpriseCore {
 }
 
 export interface SurpriseControl {
-  /** `quote` on every screen, special shot on the current scene; resolves when the "clip" has ended. */
+  /** `quote` on every screen, special shot on the current scene; resolves once the phrase is fully typed. */
   surprise(quote: Quote): Promise<void>;
   /** Screens back to what they were showing. */
   endSurprise(): void;
@@ -244,13 +244,15 @@ export function createSurprise(core: SurpriseCore): SurpriseControl {
     phrase = quote;
     for (const k of SCENES) dioramas[k].surprise?.(true);
     const typeDur = Math.min(phrase.text.length * 0.055, 9);
+    // The push-in keeps going a bit after the phrase is typed; the promise resolves after `beat`.
     const tail = 2.2;
+    const beat = 0.5;
     const lead = surpriseShot(typeDur + tail);
     const run = ++surRun;
     return new Promise((resolve) => {
       if (REDUCE) {
         drawSurprise(1);
-        setTimeout(resolve, 2500);
+        setTimeout(resolve, beat * 1000);
         return;
       }
       const st = { k: 0 };
@@ -275,7 +277,7 @@ export function createSurprise(core: SurpriseCore): SurpriseControl {
             surTyping = false;
             drawSurprise(1);
           }
-          setTimeout(resolve, tail * 1000);
+          setTimeout(resolve, beat * 1000);
         },
       });
     });

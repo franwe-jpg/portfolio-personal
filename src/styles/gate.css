@@ -35,3 +35,15 @@ body.leaving .gate-copy, body.leaving .mute, body.leaving .loadbar, body.leaving
 .enter[aria-busy="true"] { background: var(--paper-2); color: var(--muted); transform: none; }
 .mute { position: fixed; z-index: 51; left: 50%; transform: translateX(-50%); bottom: calc(36px + var(--sb)); font: 500 12px var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink); background: none; border: 0; border-bottom: 1px solid var(--ink); padding: 6px 0 2px; }
 .blackout { position: fixed; inset: 0; z-index: 60; background: var(--g0); opacity: 0; pointer-events: none; }
+
+/* Stand-in mouse that clicks "Ingresar" when the last ticket is found on the gate (src/scripts/ghost-click.ts). */
+.ghost-cursor { position: fixed; left: 0; top: 0; z-index: 120; pointer-events: none; will-change: transform; }
+.ghost-cursor img { display: block; transform-origin: 0 0; filter: drop-shadow(0 2px 3px rgba(0,0,0,.35)); }
+.ghost-ripple { position: absolute; left: -16px; top: -16px; width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--signal, #1fbf75); opacity: 0; }
+.ghost-cursor.is-press .ghost-ripple { animation: ghost-ripple .6s ease-out; }
+@keyframes ghost-ripple { from { transform: scale(.3); opacity: .95; } to { transform: scale(1.9); opacity: 0; } }
+body.ghost-driving, body.ghost-driving * { cursor: none !important; }
+body.ghost-driving #gate, body.ghost-driving #mute { pointer-events: none; }
+.enter.is-ghost-hover { transform: translateY(-2px); background: var(--ink); color: var(--paper); box-shadow: 0 1px 0 rgba(0,0,0,.04), 0 14px 30px -12px rgba(21,24,29,.45); }
+.enter.is-ghost-hover svg { transform: translate(2px, 2px); }
+.enter.is-ghost-press { transform: translateY(0) scale(.96); }

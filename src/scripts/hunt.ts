@@ -1,5 +1,7 @@
 import { audio } from './audio';
 import { $$, byId } from './dom';
+import { requestEnter } from './gate';
+import { ghostClick } from './ghost-click';
 import { t } from './i18n';
 import { closePanel } from './panel';
 import { advanceQuote, currentQuote } from './quotes';
@@ -166,6 +168,8 @@ export function initHunt(): void {
   // Surprise: go to the world and frame the screen of the current scene (monitor, projector or TV).
   let finalePending = false;
   let onScreens = false;
+  /** Bumped by every surprise run: a run that was left (or replayed) does not show the HUD late. */
+  let surpriseRun = 0;
   // The quote leaves the screens (and the piano stops) once the viewing is over: "back", a page
   // change, a scene change or closing a chat opened over it. "Ver sorpresa" brings it back.
   function clearScreens(): void {
@@ -177,6 +181,7 @@ export function initHunt(): void {
   function endSurpriseView(unfocus = true): void {
     if (!inSurprise()) return;
     document.body.classList.remove('surprise-view');
+    surpriseRun++;
     hud.hidden = true;
     if (unfocus) {
       world?.unfocus();
@@ -184,10 +189,29 @@ export function initHunt(): void {
     }
   }
   on('app:panelclose', clearScreens);
+  /**
+   * The last ticket was the gate one: the visitor has not entered yet, so a stand-in mouse clicks
+   * "Ingresar" and the entry lands straight on mundo. Resolves once mundo is the active page.
+   */
+  async function enterFromGate(): Promise<void> {
+    const landed = new Promise<void>((resolve) => {
+      const onSwap = (e: Event) => {
+        if ((e as CustomEvent).detail !== 'mundo') return;
+        document.removeEventListener('app:pageswap', onSwap);
+        resolve();
+      };
+      document.addEventListener('app:pageswap', onSwap);
+    });
+    await ghostClick(byId('enter'));
+    audio.tick();
+    requestEnter(true, 'mundo');
+    await landed;
+  }
   async function showSurprise(): Promise<void> {
     finalePending = false;
     closeToast();
     setOpen(false);
+    if (!state.entered) await enterFromGate();
     if (state.page !== 'mundo') await router.go('mundo');
     else if (state.panelOpen) closePanel();
     if (state.page !== 'mundo') return;
@@ -204,12 +228,14 @@ export function initHunt(): void {
     }
     if (state.page !== 'mundo' || state.panelOpen) return;
     document.body.classList.add('surprise-view');
-    hud.hidden = false;
+    const run = ++surpriseRun;
+    hud.hidden = true;
     onScreens = true;
     startPiano();
-    // The quote, the prize line and the terms link stay until the visitor leaves (back, Escape,
-    // another page or scene): the screenshot needs them on screen.
+    // The prize line, the terms link and "back" show once the phrase is typed, and stay until the
+    // visitor leaves (back, Escape, another page or scene): the screenshot needs them on screen.
     await world.surprise(quote);
+    if (run === surpriseRun && inSurprise()) hud.hidden = false;
   }
   back.addEventListener('click', () => {
     audio.tick();
@@ -273,6 +299,8 @@ export function initHunt(): void {
       }
       audio.chime();
       announce(found.size);
+      // Found from the gate: this click is the user gesture the later enter (with sound) needs.
+      if (found.size >= TOTAL && !state.entered) audio.unlock();
       if (found.size >= TOTAL) {
         finalePending = true;
         setTimeout(() => {

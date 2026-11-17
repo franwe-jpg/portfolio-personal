@@ -6,8 +6,9 @@ import type { Stage } from './renderer';
 
 /**
  * Camera rig: a perspective camera on the old isometric angles. `rig` is what the camera moves
- * tween (position, extra angles, zoom); `orbit` is the drag, `para` the pointer parallax; the
- * POV camera (behind Franco, Fase 6) blends in through `pov.mix`.
+ * tween (position, extra angles, zoom); `orbit` is the drag, `para` the pointer parallax, `pan`
+ * the two-finger slide of the look-at point (touch); the POV camera (behind Franco, Fase 6)
+ * blends in through `pov.mix`.
  */
 export const BASE_AZ = Math.PI / 4;
 /** True isometric elevation. */
@@ -41,6 +42,8 @@ export interface CameraRig {
   rig: Rig;
   orbit: { az: number; el: number; goalAz: number; goalEl: number; vAz: number };
   para: { az: number; el: number };
+  /** Look-at offset in world units (`x/y/z`, eased towards the goal `gx/gy/gz`). */
+  pan: { x: number; y: number; z: number; gx: number; gy: number; gz: number };
   view: { userZoom: number; halfH: number; dist: number; w: number; h: number; camY: number };
   pov: Pov;
   /** Mutable view state shared with the loop and the input. */
@@ -56,6 +59,7 @@ export function createCameraRig(st: Stage, css3d: Css3dLayer): CameraRig {
   const rig: Rig = { x: 0, y: CAM_Y, z: 0, az: 0, el: 0, zoom: 1 };
   const orbit = { az: 0, el: 0, goalAz: 0, goalEl: 0, vAz: 0 };
   const para = { az: 0, el: 0 };
+  const pan = { x: 0, y: 0, z: 0, gx: 0, gy: 0, gz: 0 };
   const view = { userZoom: 1, halfH: 7, dist: 33, w: 1, h: 1, camY: CAM_Y };
   const cam = { focused: false, viewMode: 'off' as ViewMode, elapsed: 0 };
   const pov: Pov = { mix: 0, fov: FOV, pos: new T.Vector3(), target: new T.Vector3() };
@@ -94,12 +98,15 @@ export function createCameraRig(st: Stage, css3d: Css3dLayer): CameraRig {
     const el = BASE_EL + rig.el + orbit.el + para.el;
     // Zoom maps to distance: zoom 1 reproduces the old framing.
     const dist = view.dist / (rig.zoom * view.userZoom);
+    const tx = rig.x + pan.x;
+    const ty = rig.y + pan.y + bob;
+    const tz = rig.z + pan.z;
     camera.position.set(
-      rig.x + dist * Math.cos(el) * Math.sin(az),
-      rig.y + bob + dist * Math.sin(el),
-      rig.z + dist * Math.cos(el) * Math.cos(az),
+      tx + dist * Math.cos(el) * Math.sin(az),
+      ty + dist * Math.sin(el),
+      tz + dist * Math.cos(el) * Math.cos(az),
     );
-    _ct.set(rig.x, rig.y + bob, rig.z);
+    _ct.set(tx, ty, tz);
     if (pov.mix > 0) {
       camera.position.lerp(pov.pos, pov.mix);
       _ct.lerp(pov.target, pov.mix);
@@ -115,5 +122,5 @@ export function createCameraRig(st: Stage, css3d: Css3dLayer): CameraRig {
     camera.updateMatrixWorld();
   }
 
-  return { rig, orbit, para, view, pov, cam, homeZoom, resize, applyCamera, render };
+  return { rig, orbit, para, pan, view, pov, cam, homeZoom, resize, applyCamera, render };
 }
