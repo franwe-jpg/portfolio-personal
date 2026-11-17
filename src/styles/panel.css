@@ -16,6 +16,10 @@
 @media (max-width: 767px) {
   .panel { top: auto; left: 0; width: auto; height: 80vh; height: 80svh; border-left: 0; border-top: 1px solid var(--line); border-radius: 18px 18px 0 0; transform: translateY(104%); padding-top: 0; padding-left: env(safe-area-inset-left, 0px); box-shadow: 0 -30px 60px -30px rgba(0,0,0,.6); }
   .panel.is-dragging { transition: none; }
+  /* Lowered: only the handle and the title bar stay above the bottom edge (src/scripts/panel.ts, setMin). */
+  .panel.is-open.is-min { transform: translateY(calc(100% - var(--peek, 96px) - var(--sb))); transition: transform .5s var(--e-out); }
+  .panel.is-min .panel-head { cursor: pointer; border-bottom-color: transparent; }
+  .panel-backdrop.is-open.is-min { opacity: 0; pointer-events: none; }
   .panel-handle { display: grid; place-items: center; height: 26px; touch-action: none; cursor: grab; border: 0; background: none; width: 100%; padding: 0; }
   .panel-handle::before { content: ""; width: 44px; height: 4px; border-radius: 4px; background: var(--line); }
 }
@@ -39,6 +43,24 @@
 .msg.typing span { animation: blink 1.2s infinite; }
 @keyframes blink { 50% { opacity: .35; } }
 .composer { padding: 12px 20px calc(16px + var(--sb)); border-top: 1px solid var(--s3); display: grid; gap: 8px; }
+/* Suggested questions: a strip that keeps moving; it stops under the pointer, a finger or keyboard focus. */
+/* `clip`, not just `hidden`: a hidden box can still be scrolled (focusing a chip did), which shifted the strip off its chips.
+   A clipped grid item is not a scroll container, so it needs `min-width: 0` to stay as wide as the panel. */
+.suggestions { min-width: 0; margin: 0 -20px; overflow: hidden; overflow: clip; -webkit-mask-image: linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent); mask-image: linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent); }
+.suggestions[hidden] { display: none; }
+.suggestions-track { display: flex; width: max-content; padding: 2px 0; animation: suggestions-marquee var(--suggestions-duration, 40s) linear infinite; }
+.suggestions:hover .suggestions-track, .suggestions.is-held .suggestions-track, .suggestions:focus-within .suggestions-track { animation-play-state: paused; }
+/* Margin, not gap: each half of the track then measures exactly the same. */
+.suggestion { flex: none; margin-right: 8px; padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--s2); color: var(--text); font: 400 13.5px var(--font-body); white-space: nowrap; transition: background-color .2s, border-color .2s, color .2s; }
+.suggestion:hover { border-color: var(--signal); color: var(--signal); }
+.suggestion:focus-visible { outline: 2px solid var(--signal); outline-offset: 1px; }
+@keyframes suggestions-marquee { to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) {
+  /* No motion: the strip stays still and scrolls by hand. */
+  .suggestions { overflow-x: auto; -webkit-mask-image: none; mask-image: none; }
+  .suggestions-track { animation: none; padding: 2px 20px; }
+  .suggestion[aria-hidden="true"] { display: none; }
+}
 .composer-row { display: flex; gap: 8px; align-items: flex-end; }
 .composer textarea { flex: 1; resize: none; min-height: 46px; max-height: 140px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--g0); color: var(--text); font-size: 16px; line-height: 1.4; }
 .composer textarea:focus { outline: none; border-color: var(--signal); }
