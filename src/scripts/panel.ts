@@ -4,7 +4,7 @@ import { askChat, HISTORY_TURNS, humanCheck, type Turn } from './chat';
 import { sendContact } from './contact';
 import { busyCursor } from './cursor';
 import { $$, byId, el, wait } from './dom';
-import { REDUCE } from './env';
+import { COARSE, REDUCE } from './env';
 import { t } from './i18n';
 import { router } from './router';
 import { worldLoaded } from './stage';
@@ -111,8 +111,17 @@ export async function openPanel(): Promise<void> {
       backdrop().classList.add('is-open');
       panel().classList.add('is-open');
     });
-    setTimeout(() => firstField()?.focus({ preventScroll: true }), REDUCE ? 30 : 380);
+    setTimeout(focusComposer, REDUCE ? 30 : 380);
   }, delay * 1000);
+}
+
+/**
+ * Moves focus into the open dialog. On touch screens focusing the composer pops up the
+ * keyboard, so focus lands on the close button and the keyboard waits for a tap on the field.
+ */
+function focusComposer(): void {
+  if (COARSE) byId('panelClose').focus({ preventScroll: true });
+  else firstField()?.focus({ preventScroll: true });
 }
 
 export function closePanel(): void {
@@ -184,7 +193,7 @@ function setMin(min: boolean): void {
   }
   // Up: back to the composer, ready to keep chatting, once the sheet is up (focusing mid-slide held the slide back).
   setTimeout(() => {
-    if (state.panelOpen && !isMin()) firstField()?.focus({ preventScroll: true });
+    if (state.panelOpen && !isMin()) focusComposer();
   }, REDUCE ? 30 : 380);
 }
 
@@ -311,7 +320,8 @@ async function useSuggestion(chip: HTMLButtonElement): Promise<void> {
   if (!remainingSuggestions().length) byId('suggestions').hidden = true;
   else syncMarquee();
   const input = q();
-  input.focus({ preventScroll: true });
+  // On touch screens the keyboard only opens when the visitor taps the field itself.
+  if (!COARSE) input.focus({ preventScroll: true });
   chat.drafting = true;
   if (REDUCE) {
     input.value = question;
@@ -328,7 +338,7 @@ async function useSuggestion(chip: HTMLButtonElement): Promise<void> {
   }
   chat.drafting = false;
   syncComposer();
-  input.setSelectionRange(input.value.length, input.value.length);
+  if (document.activeElement === input) input.setSelectionRange(input.value.length, input.value.length);
 }
 
 function bindSuggestions(): void {
