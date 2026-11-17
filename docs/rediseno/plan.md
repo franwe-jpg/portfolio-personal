@@ -45,6 +45,10 @@ No se midieron fps reales: las capturas headless usan GPU por software. Si hace 
 
 ## Decisiones
 
+- **2026-11-17** — Ajustes pedidos por el usuario (rama `fix/chat-movil`):
+  - **Parallax del inicio en celular.** La frase "Analista Programador · Trelew, Chubut" tenía profundidad negativa: al inclinar el celular hacia atrás bajaba mientras el resto subía, y con 18 px de separación terminaba encima del título. Ahora va a `0.3`, como la descripción.
+  - **Teclado del chat.** En pantallas táctiles el teclado solo se abre al tocar el campo: abrir el panel, subir la hoja o elegir una pregunta sugerida dejan el foco en la cruz del diálogo. En la compu el cursor sigue yendo directo al campo.
+  - **IA en "disponible".** La escena de la casa sigue siendo contacto directo, pero suma el botón "Hablar con mi IA" debajo de WhatsApp y mail; el mensaje de Franco lo menciona junto con el reloj del mapa. En modo IA, una flecha arriba a la izquierda vuelve al contacto. El modo IA se pierde al cambiar de escena. Cuando el panel cambia de modo o de escena y borra los mensajes, también borra el historial que se le manda a la IA (antes lo conservaba aunque ya no se viera).
 - **2026-11-17** — Ajustes pedidos por el usuario (rama `fix/loader-movil`):
   - **Logo de la entrada descentrado en celular.** Las partículas se dibujan en coordenadas de pantalla con la posición del canvas medida una sola vez; si el layout se movía después sin evento `resize` (fuentes, barras del navegador), convergían a un punto viejo. Ahora `particles.ts` vuelve a medir en cada frame de partículas.
   - **Tele en el primer plano.** El mundo se mide por la caja de `#stage3d` (y un `ResizeObserver`), no por `innerWidth`/`innerHeight`: en celular esos valores siguen al zoom con dos dedos y al volver no llega `resize`, así que el canvas quedaba estirado y la capa CSS3D (el reproductor de YouTube) más chica que la pantalla de la tele.

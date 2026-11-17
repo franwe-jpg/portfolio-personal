@@ -17,9 +17,15 @@ const waHref = `https://wa.me/${profile.links.whatsapp}?text=${encodeURIComponen
 <aside class="panel" id="panel" role="dialog" aria-modal="true" aria-labelledby="panelTitle" aria-describedby="panelSub" hidden>
   <button class="panel-handle" id="panelHandle" type="button" tabindex="-1" aria-hidden="true"></button>
   <header class="panel-head">
-    <div>
-      <h2 class="panel-title" id="panelTitle">{t.panel.title(t.mundo.scenes.office.where)}</h2>
-      <p class="panel-sub" id="panelSub"></p>
+    <div class="panel-headline">
+      {/* Only in the home scene's AI chat: back to the direct-contact options. */}
+      <button class="icon-btn panel-back" type="button" id="panelBack" aria-label={t.panel.backContact} title={t.panel.backContact} hidden>
+        <Icon name="back" size={14} />
+      </button>
+      <div>
+        <h2 class="panel-title" id="panelTitle">{t.panel.title(t.mundo.scenes.office.where)}</h2>
+        <p class="panel-sub" id="panelSub"></p>
+      </div>
     </div>
     <button class="icon-btn" type="button" id="panelClose" aria-label={t.panel.close}>
       <Icon name="close" size={14} />
@@ -80,6 +86,8 @@ const waHref = `https://wa.me/${profile.links.whatsapp}?text=${encodeURIComponen
         </div>
         <button class="btn-primary" type="submit">{t.panel.form.send}</button>
       </div>
+      {/* Either channel: switch this panel to the AI chat instead. */}
+      <button class="btn-ai" type="button" id="cAi">{t.panel.aiCta}</button>
     </form>
   </div>
   <form class="composer" id="chatForm">
