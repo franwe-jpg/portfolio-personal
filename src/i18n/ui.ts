@@ -331,7 +331,7 @@ const es: UiCopy = {
     now: 'Ahora',
     photos: {
       eyebrow: 'Fotos',
-      title: 'Cuando no programo, saco fotos.',
+      title: 'Además de programar, me gusta sacar fotos.',
       note: 'Una selección de lo que voy sacando con el celular.',
     },
     stack: {
@@ -533,7 +533,7 @@ const en: UiCopy = {
     now: 'Now',
     photos: {
       eyebrow: 'Photos',
-      title: 'When I am not coding, I take photos.',
+      title: 'Besides coding, I like taking photos.',
       note: 'A selection of what I shoot with my phone.',
     },
     stack: {
