@@ -1,6 +1,6 @@
 ---
 import perfil from '../assets/perfil-profile.webp';
-import { photoPagesFor } from '../data/photos';
+import { PHOTOS_FIRST_GROUP, photosFor } from '../data/photos';
 import { profile, PROFILE_COPY } from '../data/profile';
 import type { Lang } from '../i18n/config';
 import type { UiCopy } from '../i18n/ui';
@@ -15,7 +15,7 @@ interface Props {
 
 const { lang, t } = Astro.props;
 const copy = PROFILE_COPY[lang];
-const photoPages = photoPagesFor(lang);
+const photos = photosFor(lang);
 const year = new Date().getFullYear();
 ---
 
@@ -97,23 +97,24 @@ const year = new Date().getFullYear();
         </div>
         <div class="photos reveal" id="photos" aria-labelledby="fotosH">
           {
-            photoPages.map((page, index) => (
-              <div class="photos-page" data-photo-page={index} hidden={index > 0}>
-                {page.map((photo) => (
-                  <figure class="photo" style={`--r: ${(photo.width / photo.height).toFixed(3)}`}>
-                    <img src={photo.src} alt={photo.alt} width={photo.width} height={photo.height} loading="lazy" decoding="async" />
-                    <figcaption>{photo.caption}</figcaption>
-                  </figure>
-                ))}
-              </div>
+            photos.map((photo, index) => (
+              <figure class="photo" style={`--r: ${(photo.width / photo.height).toFixed(3)}`} hidden={index >= PHOTOS_FIRST_GROUP}>
+                <img src={photo.src} alt={photo.alt} width={photo.width} height={photo.height} loading="lazy" decoding="async" />
+                {photo.date && <figcaption>{photo.date}</figcaption>}
+              </figure>
             ))
           }
         </div>
         {
-          photoPages.length > 1 && (
+          photos.length > PHOTOS_FIRST_GROUP && (
             <button class="photos-more" id="photosMore" type="button" aria-controls="photos">
-              {t.sobre.photos.more}
-              <span class="photos-count" id="photosCount">{`1/${photoPages.length}`}</span>
+              <span class="photos-arrow" aria-hidden="true">
+                <Icon name="arrow-right" size={18} />
+              </span>
+              <span class="photos-more-txt">
+                {t.sobre.photos.more}
+                <span class="photos-count" id="photosCount" />
+              </span>
             </button>
           )
         }

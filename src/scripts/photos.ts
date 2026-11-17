@@ -4,20 +4,53 @@ import { $$, byId } from './dom';
 import { REDUCE } from './env';
 
 /**
- * Justified rows: splits the group into a fixed number of rows (2, or 3 on narrow screens) that
- * each fill the width exactly, choosing the breaks (in order) that keep the rows' heights as even
- * as possible. Every photo keeps its own ratio, nothing is cropped, no row is left half empty,
- * and since the groups add up to similar widths the section keeps about the same height from one
- * group to the next. The CSS flex layout is the fallback until this runs.
+ * The "Fotos" section: one group of photos at a time, in justified rows, and "Ver más fotos"
+ * swapping the whole group for the next (wrapping to the first after the last).
+ *
+ * Groups are sized to the screen: a wide grid shows `WIDE.groups` groups in 2 rows (about 9
+ * photos each), a narrow one `NARROW.groups` in 3 rows (about 7). The photos are cut into groups
+ * by their summed ratio, not by count, so every group fills its rows at about the same height
+ * and the section does not jump from one group to the next.
  */
-function justify(page: HTMLElement): void {
-  const items = [...page.children] as HTMLElement[];
-  const W = page.clientWidth - 1;
+const WIDE = { groups: 3, rows: 2 };
+const NARROW = { groups: 4, rows: 3 };
+const NARROW_BELOW = 700;
+
+const ratioOf = (item: HTMLElement) => parseFloat(item.style.getPropertyValue('--r')) || 1;
+
+/** Cuts `items` (in order) into `count` runs whose summed ratios are as even as possible. */
+function group(items: HTMLElement[], count: number): HTMLElement[][] {
+  const total = items.reduce((sum, item) => sum + ratioOf(item), 0);
+  const groups: HTMLElement[][] = [[]];
+  let acc = 0;
+  for (const [i, item] of items.entries()) {
+    const r = ratioOf(item);
+    const goal = (total * groups.length) / count;
+    const left = items.length - i;
+    const slots = count - groups.length;
+    // Close the current group when adding this photo would overshoot its share by more than
+    // stopping short does (and keep enough photos for the groups still to fill).
+    if (groups.length < count && groups[groups.length - 1].length && (acc + r - goal > goal - acc || left <= slots)) {
+      groups.push([]);
+    }
+    groups[groups.length - 1].push(item);
+    acc += r;
+  }
+  return groups;
+}
+
+/**
+ * Justified rows: lays `items` in `rows` rows that each fill the grid's width exactly, choosing
+ * the breaks (in order) that keep the row heights as even as possible. Every photo keeps its own
+ * ratio, nothing is cropped and no row is left half empty.
+ */
+function justify(grid: HTMLElement, items: HTMLElement[], rowsWanted: number): void {
+  const W = grid.clientWidth - 1;
   if (!items.length || W <= 0) return;
-  const gap = parseFloat(getComputedStyle(page).columnGap) || 0;
-  const ratio = items.map((item) => parseFloat(item.style.getPropertyValue('--r')) || 1);
+  const gap = parseFloat(getComputedStyle(grid).columnGap) || 0;
+  const ratio = items.map(ratioOf);
   const n = items.length;
-  const rows = Math.min(n, W < 520 ? 3 : 2);
+  const rows = Math.min(n, rowsWanted);
   const heightOf = (from: number, to: number) => {
     let sum = 0;
     for (let k = from; k < to; k++) sum += ratio[k];
@@ -46,58 +79,66 @@ function justify(page: HTMLElement): void {
       items[k].style.height = `${h.toFixed(2)}px`;
     }
   }
-  page.classList.add('is-justified');
+  grid.classList.add('is-justified');
 }
 
-/**
- * "Ver más fotos": the section shows one group of photos at a time; the button fades the
- * current group out and the next one in, wrapping to the first after the last. Hidden groups
- * keep their lazy images unloaded, so the next group is prefetched once the current one shows.
- */
 export function initPhotos(): void {
   const grid = document.getElementById('photos');
   if (!grid) return;
-  const pages = $$('.photos-page', grid);
+  const items = $$('.photo', grid);
+  const more = document.getElementById('photosMore');
+  const count = more ? byId('photosCount') : null;
+  let mode = NARROW;
+  let groups: HTMLElement[][] = [items];
   let current = 0;
   let busy = false;
-  // Re-justify the visible group whenever the width changes (also the first time it gets a size).
-  let lastW = 0;
-  new ResizeObserver(() => {
-    if (grid.clientWidth === lastW) return;
-    lastW = grid.clientWidth;
-    justify(pages[current]);
-  }).observe(grid);
 
-  const more = document.getElementById('photosMore');
-  if (!more) return;
-  const count = byId('photosCount');
-
+  function show(): void {
+    const visible = new Set(groups[current]);
+    for (const item of items) item.hidden = !visible.has(item);
+    justify(grid!, groups[current], mode.rows);
+    if (count) count.textContent = `${current + 1}/${groups.length}`;
+  }
   const prefetch = (index: number) => {
-    for (const img of $$<HTMLImageElement>('img', pages[index % pages.length])) img.loading = 'eager';
+    for (const img of $$<HTMLImageElement>('img', grid)) {
+      if (groups[index % groups.length].includes(img.parentElement as HTMLElement)) img.loading = 'eager';
+    }
   };
 
+  // Regroup when the grid crosses the breakpoint; re-justify on any width change. The group
+  // that holds the first photo on screen stays the current one.
+  let lastW = 0;
+  new ResizeObserver(() => {
+    const w = grid.clientWidth;
+    if (!w || w === lastW) return;
+    lastW = w;
+    const next = w < NARROW_BELOW ? NARROW : WIDE;
+    if (next !== mode || groups.length === 1) {
+      const anchor = groups[current][0];
+      mode = next;
+      groups = group(items, mode.groups);
+      current = Math.max(0, groups.findIndex((g) => g.includes(anchor)));
+    }
+    show();
+  }).observe(grid);
+
+  if (!more) return;
   more.addEventListener('click', async () => {
     if (busy) return;
     busy = true;
     audio.tick();
-    const from = pages[current];
-    current = (current + 1) % pages.length;
-    const to = pages[current];
-    if (!REDUCE) await gsap.to(from, { opacity: 0, y: -6, duration: 0.2, ease: 'power2.in' });
-    from.hidden = true;
-    gsap.set(from, { clearProps: 'opacity,transform' });
-    to.hidden = false;
-    justify(to);
-    count.textContent = `${current + 1}/${pages.length}`;
-    if (!REDUCE) await gsap.fromTo(to, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.45, ease: 'expo.out', clearProps: 'opacity,transform' });
+    if (!REDUCE) await gsap.to(grid, { opacity: 0, y: -6, duration: 0.2, ease: 'power2.in' });
+    current = (current + 1) % groups.length;
+    show();
+    if (!REDUCE) await gsap.fromTo(grid, { opacity: 0, y: 8 }, { opacity: 1, y: 0, duration: 0.45, ease: 'expo.out', clearProps: 'opacity,transform' });
     prefetch(current + 1);
     busy = false;
   });
-  // Once the section is reached, the second group starts loading so the first click is instant.
+  // Once the section is reached, the next group starts loading so the first click is instant.
   const io = new IntersectionObserver((entries) => {
     if (!entries.some((e) => e.isIntersecting)) return;
     io.disconnect();
-    prefetch(1);
+    prefetch(current + 1);
   });
   io.observe(more);
 }
