@@ -114,31 +114,62 @@ export function makeCat(m: T.Material, pose: CatPose = 'sit', patch: T.Material 
       s.rotation.y = Math.PI / 2 - a;
     }
   } else {
-    blob(root, 0, 0.17, -0.02, 0.1, 0.17, 0.13);
-    blob(root, 0, 0.12, 0.08, 0.09, 0.1, 0.08);
+    // Sitting, seen up close in the POV shot, so smooth surfaces like the poodle: wide haunches, an
+    // upright chest, front legs together, a round head with cheeks, and the tail wrapped round the paws.
+    // The patches sit inside the fur and only show as a thin cap, so they read as markings, not lumps.
+    const smooth = (parent: T.Object3D, x: number, y: number, z: number, sx: number, sy = sx, sz = sx, material: T.Material = m) => {
+      const p = mesh(SPH, material, parent, x, y, z);
+      p.scale.set(sx, sy, sz);
+      return p;
+    };
+    const spot = patch ?? m;
+    smooth(root, 0, 0.11, -0.05, 0.13, 0.11, 0.13); // haunches
+    for (const s of [-1, 1]) smooth(root, 0.085 * s, 0.085, -0.03, 0.06, 0.08, 0.1); // thighs
+    smooth(root, 0, 0.23, 0.02, 0.09, 0.14, 0.09); // chest
+    smooth(root, -0.035, 0.2, -0.07, 0.085, 0.1, 0.09, spot); // patch on the back
+    // Front legs: rounded at both ends and tucked into the chest, so no flat cut shows.
+    const leg = new T.CapsuleGeometry(0.022, 0.15, 4, 12);
+    for (const s of [-1, 1]) {
+      const l = mesh(leg, m, root, 0.033 * s, 0.1, 0.075);
+      l.rotation.x = 0.12;
+      smooth(root, 0.033 * s, 0.016, 0.092, 0.03, 0.018, 0.04); // paws
+    }
     head = new T.Group();
-    head.position.set(0, 0.37, 0.06);
+    head.position.set(0, 0.4, 0.05);
     root.add(head);
-    blob(head, 0, 0, 0, 0.085, 0.08, 0.085);
+    smooth(head, 0, 0, 0, 0.085, 0.078, 0.078); // skull
+    smooth(head, 0, -0.026, 0.02, 0.078, 0.05, 0.06); // cheeks
+    smooth(head, 0.03, 0.03, -0.006, 0.065, 0.058, 0.072, spot); // patch over one eye and ear
+    smooth(head, 0, -0.035, 0.07, 0.032, 0.022, 0.018); // muzzle
+    smooth(head, 0, -0.018, 0.084, 0.011, 0.008, 0.007, mat.catNose);
+    // Four-sided cones turned so a flat face looks forward; the pink inner ear sits on that face.
+    const earGeo = new T.ConeGeometry(0.034, 0.075, 4).rotateY(Math.PI / 4);
+    const innerGeo = new T.ConeGeometry(0.02, 0.05, 4).rotateY(Math.PI / 4);
     for (const s of [-1, 1]) {
-      const e = mesh(ear, patch && s > 0 ? patch : m, head, 0.055 * s, 0.075, 0);
-      e.castShadow = false;
+      const ear = new T.Group();
+      ear.position.set(0.05 * s, 0.065, -0.01);
+      ear.rotation.set(-0.15, 0, -0.3 * s);
+      head.add(ear);
+      mesh(earGeo, s > 0 ? spot : m, ear, 0, 0, 0).castShadow = false;
+      const inner = mesh(innerGeo, mat.catNose, ear, 0, -0.01, 0.011);
+      inner.castShadow = false;
+      // Eyes: amber with a slit pupil.
+      smooth(head, 0.034 * s, 0.006, 0.066, 0.017, 0.019, 0.01, mat.eye).castShadow = false;
+      smooth(head, 0.034 * s, 0.006, 0.075, 0.0045, 0.014, 0.003, mat.black).castShadow = false;
     }
-    for (const s of [-1, 1]) {
-      const e = mesh(new T.PlaneGeometry(0.02, 0.012), mat.eye, head, 0.03 * s, 0.01, 0.082);
-      e.castShadow = false;
-    }
-    for (const s of [-1, 1]) mesh(new T.CylinderGeometry(0.02, 0.022, 0.2, 5), m, root, 0.05 * s, 0.1, 0.12);
-    if (patch) {
-      puff(patch, root, 0.065, 0.2, -0.05, 0.06, 0.07, 0.08);
-      puff(patch, root, -0.06, 0.1, 0.02, 0.05, 0.06, 0.06);
-      puff(patch, head, 0.045, 0.04, 0.03, 0.05, 0.045, 0.05);
-    }
+    // Tail: from under the haunches, round one side, its tip over the front paws.
     tail = new T.Group();
-    tail.position.set(0, 0.06, -0.1);
+    tail.position.set(0, 0.02, -0.14);
     root.add(tail);
-    const tl = mesh(new T.CylinderGeometry(0.008, 0.02, 0.3, 5), m, tail, 0, 0, -0.15);
-    tl.rotation.x = -Math.PI / 2;
+    const curve = new T.CatmullRomCurve3([
+      new T.Vector3(0, 0.01, 0),
+      new T.Vector3(0.12, 0.0, 0.04),
+      new T.Vector3(0.15, 0.0, 0.17),
+      new T.Vector3(0.09, 0.01, 0.27),
+      new T.Vector3(0.02, 0.025, 0.27),
+    ]);
+    mesh(new T.TubeGeometry(curve, 24, 0.018, 8), spot, tail, 0, 0, 0);
+    smooth(tail, 0.02, 0.025, 0.27, 0.019, 0.019, 0.019, spot); // rounded tip
   }
   const ph = Math.random() * 6;
   function update(t: number): void {
@@ -150,9 +181,13 @@ export function makeCat(m: T.Material, pose: CatPose = 'sit', patch: T.Material 
     } else if (pose === 'eat') {
       if (head) head.rotation.x = 0.75 + Math.sin(t * 5) * 0.07;
       if (tail) tail.rotation.y = Math.sin(t * 0.8) * 0.35;
-    } else if (tail) {
-      tail.rotation.y = Math.sin(t * 1.3) * 0.6 + Math.sin(t * 2.9) * 0.15;
-      tail.rotation.x = 0.15 + Math.sin(t * 0.9) * 0.1;
+    } else {
+      // Wrapped tail: only a small sway; the head looks around now and then.
+      if (tail) tail.rotation.y = Math.sin(t * 1.3) * 0.08 + Math.sin(t * 2.9) * 0.03;
+      if (head) {
+        head.rotation.y = Math.sin(t * 0.35) * 0.35;
+        head.rotation.z = Math.sin(t * 0.5) * 0.06;
+      }
     }
   }
   return { root, update };
