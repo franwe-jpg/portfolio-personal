@@ -14,8 +14,6 @@ export interface Profile {
   name: string;
   initials: string;
   links: ProfileLinks;
-  /** Tools used across projects, shown as chips; no fixed stack. */
-  tools: string[];
 }
 
 export interface Fact {
@@ -48,6 +46,8 @@ export interface ProfileCopy {
   jobs: TimelineItem[];
   events: TimelineItem[];
   services: Service[];
+  /** How I work, shown as chips under "Qué hago": skills and methods, not a stack. */
+  skills: string[];
 }
 
 export const profile: Profile = {
@@ -60,7 +60,6 @@ export const profile: Profile = {
     email: 'francomsoler@gmail.com',
     whatsapp: '5492804282525',
   },
-  tools: ['React', 'TypeScript', 'FastAPI', 'SQLite', 'Astro', 'Cloudflare Workers', 'Workers AI', 'D1'],
 };
 
 export const PROFILE_COPY: Record<Lang, ProfileCopy> = {
@@ -111,7 +110,20 @@ export const PROFILE_COPY: Record<Lang, ProfileCopy> = {
         title: 'Mantenimiento',
         text: 'Después de la entrega sigo: el mantenimiento es parte de la vida de cualquier software.',
       },
-      { title: 'Logos', text: 'Diseño gráfico e identidad para que todo hable el mismo idioma.' },
+      {
+        title: 'Diseño a medida',
+        text: 'Cuido cada detalle del frontend para que el sitio tenga identidad propia y no parezca uno más hecho con IA.',
+      },
+    ],
+    skills: [
+      'Desarrollo con IA',
+      'Arquitectura de sistemas',
+      'Bases de datos',
+      'Integraciones con APIs',
+      'Despliegue y hosting',
+      'Testing y verificación',
+      'Relevamiento con el cliente',
+      'Diseño frontend a medida',
     ],
   },
   en: {
@@ -163,7 +175,20 @@ export const PROFILE_COPY: Record<Lang, ProfileCopy> = {
         title: 'Maintenance',
         text: 'I stay after delivery: maintenance is part of the life of any software.',
       },
-      { title: 'Logos', text: 'Graphic design and identity so everything speaks the same language.' },
+      {
+        title: 'Custom design',
+        text: 'I polish every detail of the frontend so the site has its own identity and does not look like one more AI-made site.',
+      },
+    ],
+    skills: [
+      'AI-assisted development',
+      'System architecture',
+      'Databases',
+      'API integrations',
+      'Deployment and hosting',
+      'Testing and verification',
+      'Requirements gathering with clients',
+      'Custom frontend design',
     ],
   },
 };

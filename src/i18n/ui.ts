@@ -125,7 +125,7 @@ export interface UiCopy {
     events: string;
     now: string;
     photos: { eyebrow: string; title: string; note: string; more: string; open: string; viewer: string; close: string };
-    stack: { eyebrow: string; title: string; toolsHead: string; toolsNote: string };
+    stack: { eyebrow: string; title: string; askTitle: string; askText: string; toolsHead: string; toolsNote: string };
     contact: {
       eyebrow: string;
       title: string;
@@ -341,8 +341,10 @@ const es: UiCopy = {
     stack: {
       eyebrow: 'Qué hago',
       title: 'Construyo lo que el problema necesita.',
-      toolsHead: 'Herramientas usadas en proyectos',
-      toolsNote: 'No hay un stack fijo: elijo según lo que haya que construir',
+      askTitle: '¿Querés preguntarme más cosas?',
+      askText: 'Vení al chat y hablame en el mundo.',
+      toolsHead: 'Cómo trabajo',
+      toolsNote: 'La IA escribe código; yo decido qué construir, cómo, y verifico que funcione',
     },
     contact: {
       eyebrow: 'Contacto',
@@ -547,8 +549,10 @@ const en: UiCopy = {
     stack: {
       eyebrow: 'What I do',
       title: 'I build what the problem needs.',
-      toolsHead: 'Tools used in projects',
-      toolsNote: 'No fixed stack: I pick according to what has to be built',
+      askTitle: 'Want to ask me more?',
+      askText: 'Come to the chat and talk to me in the world.',
+      toolsHead: 'How I work',
+      toolsNote: 'AI writes code; I decide what to build, how, and check that it works',
     },
     contact: {
       eyebrow: 'Contact',

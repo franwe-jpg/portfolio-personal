@@ -155,7 +155,9 @@ other external systems is also central to how I work.
 - Integrations with external services: yes — AFIP/ARCA, Mercado Pago, WhatsApp
   and similar.
 - Hosting and domain: yes, I can include them.
-- Graphic design and logos: yes.
+- Logos and graphic identity: no. Visual design: yes — on every site I polish
+  each detail of the frontend so it looks good, has its own touch and stands
+  apart from the generic sites AI churns out.
 - SEO: yes. Visitors rarely say "SEO"; they ask whether I can help them show up
   on Google, improve their positioning, or get more visibility online. Treat
   all of those as SEO and answer yes.

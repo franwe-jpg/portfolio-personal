@@ -148,6 +148,14 @@ const year = new Date().getFullYear();
               </article>
             ))
           }
+          {/* Last card: goes to the world and opens the chat (src/scripts/panel.ts). */}
+          <a class="svc svc-ask reveal-card" href="#mundo" id="askMore">
+            <span class="svc-ask-arrow" aria-hidden="true"><Icon name="arrow-right" size={18} /></span>
+            <div>
+              <h3>{t.sobre.stack.askTitle}</h3>
+              <p>{t.sobre.stack.askText}</p>
+            </div>
+          </a>
         </div>
         <div class="tools">
           <div class="tools-head">
@@ -155,7 +163,7 @@ const year = new Date().getFullYear();
             <span class="tools-note">{t.sobre.stack.toolsNote}</span>
           </div>
           <ul class="chips" id="chips">
-            {profile.tools.map((tool) => <li class="chip">{tool}</li>)}
+            {copy.skills.map((skill) => <li class="chip">{skill}</li>)}
           </ul>
         </div>
       </div>
