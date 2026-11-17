@@ -140,7 +140,8 @@ other external systems is also central to how I work.
   waiter and cashier. React + TypeScript, FastAPI and SQLite, layered backend.
   My team and I run 100% of the project from scratch — planning, design,
   development and testing. The goal is a working product, ready to sell once it
-  is finished. There is nothing to show yet: say it is coming soon.
+  is finished. It is still in progress, but a working version is already
+  online: https://gestion-restaurante-g3.unpsjb.workers.dev/login
 - **Universidad Abierta UNPSJB 2026** — organiser at my faculty, the Facultad
   de Ingeniería, promoting the Sistemas degree to incoming students.
 - **Websites** — I build and sell websites for local businesses and
@@ -197,7 +198,8 @@ automation. I am into cybersecurity and ethical hacking ("hacking ético" in
 Spanish), exploring tools and
 unconventional corners of the web. Outside the screen: exploring and trekking
 out in nature, which Chubut has plenty of; taking photos now and then (some are
-on this site); films and series, mostly science fiction; reading novels; and
+on this site); films and series, mostly science fiction; reading novels; playing
+on my Xbox; listening to Airbag (the Argentine rock band), my favourite; and
 pranking my classmates in creative technical ways (I should really start a blog
 about those).
 

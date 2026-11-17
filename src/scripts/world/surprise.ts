@@ -211,7 +211,7 @@ export function createSurprise(core: SurpriseCore): SurpriseControl {
     // Portrait phones: the vertical FOV is what the camera keeps, so at the desktop distance the
     // screen's width overflows the viewport. Widen the FOV to keep the same horizontal field
     // instead of backing off (further back, Franco's head covers the TV).
-    const aspect = innerWidth / innerHeight;
+    const aspect = cam.view.w / cam.view.h;
     const SHOT_FOV = 40;
     const DESK_ASPECT = 1.6;
     const fov = aspect < DESK_ASPECT ? Math.min(100, (2 * Math.atan((Math.tan((SHOT_FOV / 2) * (Math.PI / 180)) * DESK_ASPECT) / aspect) * 180) / Math.PI) : SHOT_FOV;

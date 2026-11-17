@@ -117,6 +117,16 @@ export function createParticles(): Particles {
     fctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
+  /**
+   * The particle phases draw in viewport coordinates from the mark's last measured rect. On phones the
+   * layout can still move after the first measure without a `resize` event (late fonts, the browser bar,
+   * the viewport settling), which left the particles converging off-centre. Re-measure every particle frame.
+   */
+  function syncLayout(): void {
+    const r = cv.getBoundingClientRect();
+    if (r.left !== MR.left || r.top !== MR.top || r.width !== W || r.height !== H || innerWidth !== VW || innerHeight !== VH) resize();
+  }
+
   function build(): void {
     // Rasterise the cap once; the colour channel tells which part a pixel belongs to.
     const ow = 256;
@@ -330,6 +340,7 @@ export function createParticles(): Particles {
     }
 
     // Particle phases draw on the full-screen layer, in viewport coordinates.
+    syncLayout();
     const c = fctx;
     c.clearRect(0, 0, VW, VH);
     const { S, x, y } = capRect();

@@ -3,7 +3,7 @@ import { audio } from './audio';
 import { askChat, HISTORY_TURNS, humanCheck, type Turn } from './chat';
 import { sendContact } from './contact';
 import { busyCursor } from './cursor';
-import { $$, byId, el } from './dom';
+import { $$, byId, el, wait } from './dom';
 import { REDUCE } from './env';
 import { t } from './i18n';
 import { router } from './router';
@@ -16,7 +16,8 @@ import { world } from './world/handle';
  * Side panel over the world: AI chat in the office and the university (connected to /api/chat
  * through the Turnstile human check), direct contact at home (a WhatsApp link, or an email form
  * sent to /api/contact behind the same check). Opening it puts the world in the POV view; closing it, or leaving the page, undoes
- * that. On narrow screens it is a bottom sheet whose handle drags down to close.
+ * that. On narrow screens it is a bottom sheet whose handle drags it down to a title bar (the close-up of
+ * Franco stays on screen) and back up; the close button closes it.
  */
 type PanelKind = 'chat' | 'contact';
 const KIND_OF: Record<Scene, PanelKind> = { office: 'chat', uni: 'chat', home: 'contact' };
@@ -30,6 +31,8 @@ const chat = {
   kind: null as PanelKind | null,
   scene: null as Scene | null,
   waiting: false,
+  /** A suggested question is being typed into the composer. */
+  drafting: false,
 };
 let lastFocus: HTMLElement | null = null;
 
@@ -80,6 +83,9 @@ function seedPanel(): void {
   }
 }
 
+/** Contact mode starts on its channel choice (WhatsApp by default), chat mode on the composer. */
+const firstField = () => (chatForm().hidden ? contactForm().querySelector<HTMLElement>('input[name="via"]:checked') : q());
+
 export async function openPanel(): Promise<void> {
   if (!state.entered || state.panelOpen || state.busy) return;
   // The panel belongs to the world: switch to that page first if needed.
@@ -98,15 +104,14 @@ export async function openPanel(): Promise<void> {
   const delay = world ? world.focusOn() * 0.6 : 0;
   backdrop().hidden = false;
   panel().hidden = false;
+  syncMarquee();
   byId('app').setAttribute('inert', '');
   setTimeout(() => {
     requestAnimationFrame(() => {
       backdrop().classList.add('is-open');
       panel().classList.add('is-open');
     });
-    // Contact mode starts on its channel choice (WhatsApp by default), chat mode on the composer.
-    const first = () => (chatForm().hidden ? contactForm().querySelector<HTMLElement>('input[name="via"]:checked') : q());
-    setTimeout(() => first()?.focus({ preventScroll: true }), REDUCE ? 30 : 380);
+    setTimeout(() => firstField()?.focus({ preventScroll: true }), REDUCE ? 30 : 380);
   }, delay * 1000);
 }
 
@@ -114,8 +119,8 @@ export function closePanel(): void {
   if (!state.panelOpen) return;
   state.panelOpen = false;
   document.body.classList.remove('panel-open');
-  panel().classList.remove('is-open');
-  backdrop().classList.remove('is-open');
+  panel().classList.remove('is-open', 'is-min');
+  backdrop().classList.remove('is-open', 'is-min');
   panel().style.transform = '';
   byId('app').removeAttribute('inert');
   world?.unfocus();
@@ -155,31 +160,69 @@ function onKeydown(e: KeyboardEvent): void {
   }
 }
 
-/** Bottom sheet: drag the handle down to close (mobile). */
+/** Height of the bar left on screen when the sheet is down: the handle and the title row with the close button. */
+function peekHeight(): number {
+  return byId('panelHandle').offsetHeight + panel().querySelector<HTMLElement>('.panel-head')!.offsetHeight;
+}
+
+const isMin = () => panel().classList.contains('is-min');
+
+/**
+ * Sheet down (mobile): only the title bar stays at the bottom, the camera keeps its close-up of Franco,
+ * and the dimmed backdrop goes away. The bar comes back up with a tap or a drag; the close button still closes.
+ */
+function setMin(min: boolean): void {
+  const sheet = panel();
+  if (min) sheet.style.setProperty('--peek', `${peekHeight()}px`);
+  sheet.classList.toggle('is-min', min);
+  backdrop().classList.toggle('is-min', min);
+  sheet.style.transform = '';
+  // Down: the keyboard goes away with the composer's focus; focus stays in the dialog, on the close button.
+  if (min) {
+    byId('panelClose').focus({ preventScroll: true });
+    return;
+  }
+  // Up: back to the composer, ready to keep chatting, once the sheet is up (focusing mid-slide held the slide back).
+  setTimeout(() => {
+    if (state.panelOpen && !isMin()) firstField()?.focus({ preventScroll: true });
+  }, REDUCE ? 30 : 380);
+}
+
+/** Bottom sheet (mobile): drag the handle down to lower it to its title bar, up (or tap) to raise it again. */
 function bindHandle(): void {
   const handle = byId('panelHandle');
   let y0: number | null = null;
   let dy = 0;
+  let base = 0;
+  let lowest = 0;
   handle.addEventListener('pointerdown', (e) => {
     y0 = e.clientY;
     dy = 0;
+    lowest = panel().offsetHeight - peekHeight();
+    base = isMin() ? lowest : 0;
     panel().classList.add('is-dragging');
     handle.setPointerCapture(e.pointerId);
   });
   handle.addEventListener('pointermove', (e) => {
     if (y0 === null) return;
-    dy = Math.max(0, e.clientY - y0);
-    panel().style.transform = `translateY(${dy}px)`;
+    dy = e.clientY - y0;
+    panel().style.transform = `translateY(${Math.min(lowest, Math.max(0, base + dy))}px)`;
   });
   const end = () => {
     if (y0 === null) return;
     y0 = null;
     panel().classList.remove('is-dragging');
-    if (dy > 110) closePanel();
-    else panel().style.transform = '';
+    if (!isMin()) setMin(dy > 110);
+    else setMin(!(dy < -60 || Math.abs(dy) < 6));
   };
   handle.addEventListener('pointerup', end);
   handle.addEventListener('pointercancel', end);
+  // Lowered, the whole title bar raises the sheet (the close button keeps closing it).
+  panel()
+    .querySelector('.panel-head')!
+    .addEventListener('click', (e) => {
+      if (isMin() && !(e.target as HTMLElement).closest('#panelClose')) setMin(false);
+    });
 }
 
 // ---------- chat ----------
@@ -235,10 +278,71 @@ function bindChat(): void {
   chatForm().addEventListener('submit', (e) => {
     e.preventDefault();
     const question = input.value.trim();
-    if (!question || question.length > MAX_Q || chat.waiting) return;
+    // A suggestion still being typed is not a question yet.
+    if (!question || question.length > MAX_Q || chat.waiting || chat.drafting) return;
     input.value = '';
     syncComposer();
     void ask(question);
+  });
+}
+
+// ---------- suggested questions: a moving strip above the composer, as in the first version ----------
+/** Marquee speed, in pixels per second; kept constant however many chips are left. */
+const SUGGESTION_SPEED = 40;
+const TYPE_MS = 22;
+
+const remainingSuggestions = () => $$<HTMLButtonElement>('.suggestion', byId('suggestionsTrack'));
+
+function syncMarquee(): void {
+  const track = byId('suggestionsTrack');
+  const loop = track.scrollWidth / 2;
+  if (loop > 0) track.style.setProperty('--suggestions-duration', `${Math.max(8, loop / SUGGESTION_SPEED)}s`);
+}
+
+/** Types the question into the composer; the visitor sends it (or edits it first). */
+async function useSuggestion(chip: HTMLButtonElement): Promise<void> {
+  if (chat.drafting) return;
+  const question = chip.textContent?.trim() ?? '';
+  if (!question) return;
+  // A suggestion is offered once: drop both copies of the chip.
+  for (const twin of remainingSuggestions()) {
+    if (twin.dataset.suggestion === chip.dataset.suggestion) twin.remove();
+  }
+  if (!remainingSuggestions().length) byId('suggestions').hidden = true;
+  else syncMarquee();
+  const input = q();
+  input.focus({ preventScroll: true });
+  chat.drafting = true;
+  if (REDUCE) {
+    input.value = question;
+  } else {
+    // Paced by the clock, not by ticks: a busy main thread (the world renders behind) skips ahead instead of lagging.
+    const start = performance.now();
+    let shown = 0;
+    while (shown < question.length) {
+      shown = Math.min(question.length, Math.floor((performance.now() - start) / TYPE_MS) + 1);
+      input.value = question.slice(0, shown);
+      syncComposer();
+      if (shown < question.length) await wait(TYPE_MS);
+    }
+  }
+  chat.drafting = false;
+  syncComposer();
+  input.setSelectionRange(input.value.length, input.value.length);
+}
+
+function bindSuggestions(): void {
+  const strip = byId('suggestions');
+  // With a mouse, keep focus (and the keyboard on phones) on the composer.
+  strip.addEventListener('mousedown', (e) => e.preventDefault());
+  // Hold the strip still under a finger so a chip can be picked.
+  strip.addEventListener('pointerdown', () => strip.classList.add('is-held'));
+  for (const type of ['pointerup', 'pointercancel', 'pointerleave']) {
+    strip.addEventListener(type, () => strip.classList.remove('is-held'));
+  }
+  byId('suggestionsTrack').addEventListener('click', (e) => {
+    const chip = (e.target as HTMLElement | null)?.closest<HTMLButtonElement>('.suggestion');
+    if (chip) void useSuggestion(chip);
   });
 }
 
@@ -345,6 +449,7 @@ export function initPanel(): void {
   on('app:navigate', closePanel);
   bindHandle();
   bindChat();
+  bindSuggestions();
   bindContact();
   setConn('unknown');
 }

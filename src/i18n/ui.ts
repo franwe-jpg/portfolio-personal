@@ -124,6 +124,10 @@ export interface UiCopy {
     jobs: string;
     events: string;
     now: string;
+    /** Card at the end of the events column that goes to the projects page. */
+    projectsTitle: string;
+    /** The curl command shown under the intro, and the line under it. */
+    terminal: { command: string; note: string };
     photos: { eyebrow: string; title: string; more: string; open: string; viewer: string; close: string };
     stack: { eyebrow: string; title: string; askTitle: string; askText: string; toolsHead: string; toolsNote: string };
     contact: {
@@ -205,6 +209,8 @@ export interface UiCopy {
       send: string;
       count: (length: number, max: number) => string;
     };
+    /** Moving strip of suggested questions above the composer (chat mode). */
+    suggestions: { label: string; items: string[] };
   };
 }
 
@@ -329,6 +335,8 @@ const es: UiCopy = {
     jobs: 'Trabajos',
     events: 'Eventos y capacitaciones',
     now: 'Ahora',
+    projectsTitle: '¿Querés ver lo que construí?',
+    terminal: { command: 'curl francosolersistemas.com/hola', note: 'Probalo en tu terminal.' },
     photos: {
       eyebrow: 'Fotos',
       title: 'Además de programar, saco algunas fotos.',
@@ -383,7 +391,7 @@ const es: UiCopy = {
     checking: '○ verificando /api/chat…',
     live: '● conectado a /api/chat',
     offline: '○ sin conexión a /api/chat',
-    who: { ai: 'Franco (IA)', franco: 'Franco', me: 'Vos' },
+    who: { ai: 'Franco (IA)', franco: 'Franco', me: 'Yo' },
     typing: 'escribiendo…',
     errorStatus: (status) => `No pude responder (error ${status}).`,
     errorNetwork: 'No pude conectarme. Probá de nuevo en un momento, o escribime por mail.',
@@ -411,6 +419,22 @@ const es: UiCopy = {
       placeholder: 'Preguntame algo…',
       send: 'Enviar pregunta',
       count: (length, max) => `${length}/${max}`,
+    },
+    suggestions: {
+      label: 'Preguntas sugeridas',
+      items: [
+        '¿Quién sos?',
+        '¿Tenés algún hobbie?',
+        '¿Qué sabés hacer, concretamente?',
+        '¿Qué experiencia tenés?',
+        '¿De qué trata tu proyecto final de APU?',
+        '¿Cómo usás la IA para programar?',
+        '¿Qué es AtmOS y cómo te fue en la NASA Space Apps?',
+        '¿Qué es el sistema de gestión de restaurante?',
+        '¿Hacés páginas web para negocios?',
+        '¿Cómo arrancaste en la programación?',
+        '¿Tenés tiempo para proyectos nuevos?',
+      ],
     },
   },
 };
@@ -536,6 +560,8 @@ const en: UiCopy = {
     jobs: 'Jobs',
     events: 'Events and training',
     now: 'Now',
+    projectsTitle: 'Want to see what I built?',
+    terminal: { command: 'curl francosolersistemas.com/hi', note: 'Try it in your terminal.' },
     photos: {
       eyebrow: 'Photos',
       title: 'Besides coding, I take a few photos.',
@@ -590,7 +616,7 @@ const en: UiCopy = {
     checking: '○ checking /api/chat…',
     live: '● connected to /api/chat',
     offline: '○ no connection to /api/chat',
-    who: { ai: 'Franco (AI)', franco: 'Franco', me: 'You' },
+    who: { ai: 'Franco (AI)', franco: 'Franco', me: 'Me' },
     typing: 'typing…',
     errorStatus: (status) => `I could not answer (error ${status}).`,
     errorNetwork: 'I could not connect. Try again in a moment, or write to me by email.',
@@ -618,6 +644,22 @@ const en: UiCopy = {
       placeholder: 'Ask me something…',
       send: 'Send question',
       count: (length, max) => `${length}/${max}`,
+    },
+    suggestions: {
+      label: 'Suggested questions',
+      items: [
+        'Who are you?',
+        'Any hobbies?',
+        'What can you actually do?',
+        'What experience do you have?',
+        'What was your final degree project about?',
+        'How do you use AI to code?',
+        'What is AtmOS and how did the NASA Space Apps go?',
+        'What is the restaurant management system?',
+        'Do you build websites for businesses?',
+        'How did you get into programming?',
+        'Do you have time for new projects?',
+      ],
     },
   },
 };

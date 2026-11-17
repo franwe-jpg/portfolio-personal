@@ -83,6 +83,20 @@ const waHref = `https://wa.me/${profile.links.whatsapp}?text=${encodeURIComponen
     </form>
   </div>
   <form class="composer" id="chatForm">
+    {/* Suggested questions as a moving strip (as in the first version). Rendered twice: the second, inert copy makes the loop seamless. */}
+    <div class="suggestions" id="suggestions" role="group" aria-label={t.panel.suggestions.label}>
+      <div class="suggestions-track" id="suggestionsTrack">
+        {
+          [false, true].map((inert) =>
+            t.panel.suggestions.items.map((question, index) => (
+              <button type="button" class="suggestion" data-suggestion={index} aria-hidden={inert ? 'true' : undefined} tabindex={inert ? -1 : undefined}>
+                {question}
+              </button>
+            )),
+          )
+        }
+      </div>
+    </div>
     <label class="sr-only" for="q">{t.panel.composer.label}</label>
     <div class="composer-row">
       <textarea id="q" rows="1" maxlength={MAX_QUESTION} placeholder={t.panel.composer.placeholder} aria-describedby="qCount"></textarea>

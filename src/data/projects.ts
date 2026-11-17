@@ -62,7 +62,7 @@ const PROJECT_BASE: ProjectBase[] = [
     // Still being built: a stock food photo stands in until there are screenshots.
     id: 'gestion-restaurante',
     media: [{ kind: 'image', src: '/proyectos/restaurante-1.webp' }],
-    links: [],
+    links: [{ href: 'https://gestion-restaurante-g3.unpsjb.workers.dev/login' }],
   },
   {
     // First version of this site, kept online at v1.francosolersistemas.com after the redesign.
@@ -174,7 +174,7 @@ const PROJECT_COPY: Record<Lang, Record<string, ProjectCopy>> = {
       imageAlts: [
         'Platos de restaurante vistos desde arriba sobre una mesa de madera: carne con ensalada, croquetas y salsas',
       ],
-      linkLabels: [],
+      linkLabels: ['Ver en producción'],
     },
     'portfolio-v1': {
       title: 'Portfolio Personal',
@@ -248,7 +248,7 @@ const PROJECT_COPY: Record<Lang, Record<string, ProjectCopy>> = {
       imageAlts: [
         'Restaurant dishes seen from above on a wooden table: steak with salad, croquettes and sauces',
       ],
-      linkLabels: [],
+      linkLabels: ['See it live'],
     },
     'portfolio-v1': {
       title: 'Personal Portfolio',

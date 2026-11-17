@@ -31,16 +31,14 @@ const year = new Date().getFullYear();
         <div class="about-grid">
           <div>
             <p class="lead reveal">{copy.lead}</p>
-            <dl class="facts reveal">
-              {
-                copy.facts.map((fact) => (
-                  <div>
-                    <dt>{fact.label}</dt>
-                    <dd>{fact.value}</dd>
-                  </div>
-                ))
-              }
-            </dl>
+            <ul class="traits reveal">
+              {copy.traits.map((trait) => <li>{trait}</li>)}
+            </ul>
+            {/* A command people can run: /hola and /hi answer with a card for the terminal (src/pages). */}
+            <div class="term reveal">
+              <code class="term-cmd"><span class="term-prompt" aria-hidden="true">$ </span>{t.sobre.terminal.command}<span class="term-caret" aria-hidden="true"></span></code>
+              <p class="term-note">{t.sobre.terminal.note}</p>
+            </div>
           </div>
           <div>
             <div class="tk-host tk-host--photo">
@@ -83,6 +81,11 @@ const year = new Date().getFullYear();
                 ))
               }
             </ol>
+            {/* Same dark card as "¿Querés preguntarme más cosas?", as one more row: goes to the projects page. */}
+            <a class="svc svc-ask svc-row reveal" href="#proyectos" data-go="proyectos">
+              <span class="svc-ask-arrow" aria-hidden="true"><Icon name="arrow-right" size={18} /></span>
+              <h3>{t.sobre.projectsTitle}</h3>
+            </a>
           </div>
         </div>
       </div>

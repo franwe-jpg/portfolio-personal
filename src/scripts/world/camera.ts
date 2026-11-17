@@ -67,8 +67,13 @@ export function createCameraRig(st: Stage, css3d: Css3dLayer): CameraRig {
   const homeZoom = () => HOME_ZOOM[cam.viewMode] ?? 1;
 
   function resize(): void {
-    const w = innerWidth;
-    const h = innerHeight;
+    // The stage's own box, not innerWidth/innerHeight: on phones those follow the pinch-zoomed visual
+    // viewport, and zooming back out fires no window resize. A stale, smaller size stretched the canvas
+    // over the stage while the CSS3D layer (the TV's player) kept the old size, so the video no longer
+    // matched the screen it plays on.
+    const host = renderer.domElement.parentElement;
+    const w = host?.clientWidth || innerWidth;
+    const h = host?.clientHeight || innerHeight;
     view.w = w;
     view.h = h;
     renderer.setSize(w, h, false);
