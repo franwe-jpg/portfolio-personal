@@ -87,7 +87,6 @@
 .photos-head { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 14px; row-gap: 4px; }
 .photos-head .eyebrow { flex-basis: 100%; margin-bottom: 6px; }
 .photos-title { margin: 0; font: 500 clamp(19px, 1.9vw, 24px)/1.25 var(--font-body); letter-spacing: -.01em; }
-.photos-note { margin: 0; font: 400 14px var(--font-body); color: var(--muted); }
 .photos-stage { position: relative; display: flex; flex-direction: column; margin-top: 18px; }
 .photos { --row-h: 105px; display: flex; flex-wrap: wrap; gap: 6px; }
 /* Before the script runs: flex rows at about --row-h, a short last row is not stretched. */
