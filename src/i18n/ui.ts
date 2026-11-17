@@ -82,7 +82,7 @@ export interface UiCopy {
     /** Second hero button: goes to the about page. */
     about: string;
     /** Accessible names of the social links in the bottom-right corner. */
-    social: { label: string; instagram: string; linkedin: string; email: string };
+    social: { label: string; instagram: string; linkedin: string; github: string; email: string };
   };
 
   mundo: {
@@ -270,7 +270,7 @@ const es: UiCopy = {
       'Desarrollo software y estudio sistemas en Chubut. Entrá a mi mundo: vas a ver dónde estoy ahora y podés hablar conmigo.',
     explore: 'Explorar mi mundo',
     about: 'Sobre mí',
-    social: { label: 'Redes y contacto', instagram: 'Instagram', linkedin: 'LinkedIn', email: 'Enviarme un correo' },
+    social: { label: 'Redes y contacto', instagram: 'Instagram', linkedin: 'LinkedIn', github: 'GitHub', email: 'Enviarme un correo' },
   },
 
   mundo: {
@@ -499,7 +499,7 @@ const en: UiCopy = {
       'I build software and study systems in Chubut. Step into my world: you will see where I am right now, and you can talk to me.',
     explore: 'Explore my world',
     about: 'About me',
-    social: { label: 'Social and contact', instagram: 'Instagram', linkedin: 'LinkedIn', email: 'Send me an email' },
+    social: { label: 'Social and contact', instagram: 'Instagram', linkedin: 'LinkedIn', github: 'GitHub', email: 'Send me an email' },
   },
 
   mundo: {
