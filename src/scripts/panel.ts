@@ -33,7 +33,12 @@ const chat = {
   waiting: false,
   /** A suggested question is being typed into the composer. */
   drafting: false,
+  /** The visitor chose the AI chat in the home scene; reset once the scene changes. */
+  aiHome: false,
 };
+
+/** The home scene is direct contact unless the visitor asked for the AI. */
+const kindNow = (): PanelKind => (state.scene === 'home' && chat.aiHome ? 'chat' : KIND_OF[state.scene]);
 let lastFocus: HTMLElement | null = null;
 
 const panel = () => byId('panel');
@@ -63,7 +68,8 @@ function addMsg(kind: MsgKind, text: string, opts: { who?: string } = {}): HTMLL
 
 function seedPanel(): void {
   const scene = state.scene;
-  const kind = KIND_OF[scene];
+  if (scene !== 'home') chat.aiHome = false;
+  const kind = kindNow();
   const copy = t.mundo.scenes[scene];
   byId('panelTitle').textContent = kind === 'chat' ? t.panel.title(copy.where) : t.panel.titleContact;
   const sub = byId('panelSub');
@@ -72,13 +78,17 @@ function seedPanel(): void {
   byId('conn').hidden = true;
   chatForm().hidden = kind !== 'chat';
   contactForm().hidden = kind !== 'contact';
+  byId('panelBack').hidden = !(kind === 'chat' && scene === 'home');
   if (chat.kind !== kind) {
+    // A fresh conversation: the AI forgets what is no longer on screen.
     msgs().replaceChildren();
+    chat.history = [];
     chat.kind = kind;
     chat.scene = null;
   }
   if (chat.scene !== scene) {
-    addMsg('franco', copy.hello, { who: kind === 'chat' ? t.panel.who.ai : t.panel.who.franco });
+    const hello = kind === 'chat' && scene === 'home' ? t.panel.helloAiHome : copy.hello;
+    addMsg('franco', hello, { who: kind === 'chat' ? t.panel.who.ai : t.panel.who.franco });
     chat.scene = scene;
   }
 }
@@ -100,7 +110,7 @@ export async function openPanel(): Promise<void> {
   audio.tick();
   seedPanel();
   // A token solves in the background while the visitor types the first question.
-  if (KIND_OF[state.scene] === 'chat') humanCheck.load();
+  if (kindNow() === 'chat') humanCheck.load();
   const delay = world ? world.focusOn() * 0.6 : 0;
   backdrop().hidden = false;
   panel().hidden = false;
@@ -230,7 +240,7 @@ function bindHandle(): void {
   panel()
     .querySelector('.panel-head')!
     .addEventListener('click', (e) => {
-      if (isMin() && !(e.target as HTMLElement).closest('#panelClose')) setMin(false);
+      if (isMin() && !(e.target as HTMLElement).closest('#panelClose, #panelBack')) setMin(false);
     });
 }
 
@@ -387,6 +397,14 @@ function bindContact(): void {
     });
   }
   syncVia();
+  byId('cAi').addEventListener('click', () => {
+    audio.tick();
+    chat.aiHome = true;
+    seedPanel();
+    syncMarquee();
+    humanCheck.load();
+    focusComposer();
+  });
   const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]');
   let sending = false;
   form.addEventListener('submit', (e) => {
@@ -453,6 +471,12 @@ export function initPanel(): void {
     if (state.page === 'mundo') emit('app:talk', 'button');
   });
   byId('panelClose').addEventListener('click', closePanel);
+  byId('panelBack').addEventListener('click', () => {
+    audio.tick();
+    chat.aiHome = false;
+    seedPanel();
+    focusComposer();
+  });
   backdrop().addEventListener('click', closePanel);
   document.addEventListener('keydown', onKeydown);
   // Leaving the world page closes the panel (the world unfocuses with it).
