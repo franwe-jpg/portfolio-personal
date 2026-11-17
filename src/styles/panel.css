@@ -62,8 +62,10 @@
 .field input:focus, .field textarea:focus { outline: none; border-color: var(--signal); }
 .field [aria-invalid="true"] { border-color: #e8a33d; }
 .err { font: 400 11.5px var(--font-mono); color: #e8a33d; min-height: 0; }
-.segctl { display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 3px; background: var(--g0); width: 100%; }
-.segctl input { position: absolute; opacity: 0; pointer-events: none; }
+.segctl { position: relative; display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 3px; background: var(--g0); width: 100%; }
+/* The radios stay focusable but take no room: `.field input` would give them the panel's full
+   width, and focusing one on open scrolled the panel sideways, cutting off its right edge. */
+.segctl input { position: absolute; top: 0; left: 0; width: 1px; height: 1px; margin: 0; padding: 0; opacity: 0; pointer-events: none; }
 .segctl label { text-align: center; padding: 9px 10px; border-radius: 7px; font: 500 12px var(--font-mono); letter-spacing: .06em; color: var(--tmuted); cursor: pointer; }
 .segctl input:checked + label { background: var(--s3); color: var(--text); }
 .segctl input:focus-visible + label { outline: 2px solid var(--signal); outline-offset: 1px; }
