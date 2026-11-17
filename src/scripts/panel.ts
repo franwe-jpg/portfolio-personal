@@ -4,7 +4,7 @@ import { askChat, HISTORY_TURNS, humanCheck, type Turn } from './chat';
 import { sendContact } from './contact';
 import { busyCursor } from './cursor';
 import { $$, byId, el, wait } from './dom';
-import { REDUCE } from './env';
+import { COARSE, REDUCE } from './env';
 import { t } from './i18n';
 import { router } from './router';
 import { worldLoaded } from './stage';
@@ -33,7 +33,12 @@ const chat = {
   waiting: false,
   /** A suggested question is being typed into the composer. */
   drafting: false,
+  /** The visitor chose the AI chat in the home scene; reset once the scene changes. */
+  aiHome: false,
 };
+
+/** The home scene is direct contact unless the visitor asked for the AI. */
+const kindNow = (): PanelKind => (state.scene === 'home' && chat.aiHome ? 'chat' : KIND_OF[state.scene]);
 let lastFocus: HTMLElement | null = null;
 
 const panel = () => byId('panel');
@@ -63,7 +68,8 @@ function addMsg(kind: MsgKind, text: string, opts: { who?: string } = {}): HTMLL
 
 function seedPanel(): void {
   const scene = state.scene;
-  const kind = KIND_OF[scene];
+  if (scene !== 'home') chat.aiHome = false;
+  const kind = kindNow();
   const copy = t.mundo.scenes[scene];
   byId('panelTitle').textContent = kind === 'chat' ? t.panel.title(copy.where) : t.panel.titleContact;
   const sub = byId('panelSub');
@@ -72,13 +78,17 @@ function seedPanel(): void {
   byId('conn').hidden = true;
   chatForm().hidden = kind !== 'chat';
   contactForm().hidden = kind !== 'contact';
+  byId('panelBack').hidden = !(kind === 'chat' && scene === 'home');
   if (chat.kind !== kind) {
+    // A fresh conversation: the AI forgets what is no longer on screen.
     msgs().replaceChildren();
+    chat.history = [];
     chat.kind = kind;
     chat.scene = null;
   }
   if (chat.scene !== scene) {
-    addMsg('franco', copy.hello, { who: kind === 'chat' ? t.panel.who.ai : t.panel.who.franco });
+    const hello = kind === 'chat' && scene === 'home' ? t.panel.helloAiHome : copy.hello;
+    addMsg('franco', hello, { who: kind === 'chat' ? t.panel.who.ai : t.panel.who.franco });
     chat.scene = scene;
   }
 }
@@ -100,7 +110,7 @@ export async function openPanel(): Promise<void> {
   audio.tick();
   seedPanel();
   // A token solves in the background while the visitor types the first question.
-  if (KIND_OF[state.scene] === 'chat') humanCheck.load();
+  if (kindNow() === 'chat') humanCheck.load();
   const delay = world ? world.focusOn() * 0.6 : 0;
   backdrop().hidden = false;
   panel().hidden = false;
@@ -111,8 +121,17 @@ export async function openPanel(): Promise<void> {
       backdrop().classList.add('is-open');
       panel().classList.add('is-open');
     });
-    setTimeout(() => firstField()?.focus({ preventScroll: true }), REDUCE ? 30 : 380);
+    setTimeout(focusComposer, REDUCE ? 30 : 380);
   }, delay * 1000);
+}
+
+/**
+ * Moves focus into the open dialog. On touch screens focusing the composer pops up the
+ * keyboard, so focus lands on the close button and the keyboard waits for a tap on the field.
+ */
+function focusComposer(): void {
+  if (COARSE) byId('panelClose').focus({ preventScroll: true });
+  else firstField()?.focus({ preventScroll: true });
 }
 
 export function closePanel(): void {
@@ -184,7 +203,7 @@ function setMin(min: boolean): void {
   }
   // Up: back to the composer, ready to keep chatting, once the sheet is up (focusing mid-slide held the slide back).
   setTimeout(() => {
-    if (state.panelOpen && !isMin()) firstField()?.focus({ preventScroll: true });
+    if (state.panelOpen && !isMin()) focusComposer();
   }, REDUCE ? 30 : 380);
 }
 
@@ -221,7 +240,7 @@ function bindHandle(): void {
   panel()
     .querySelector('.panel-head')!
     .addEventListener('click', (e) => {
-      if (isMin() && !(e.target as HTMLElement).closest('#panelClose')) setMin(false);
+      if (isMin() && !(e.target as HTMLElement).closest('#panelClose, #panelBack')) setMin(false);
     });
 }
 
@@ -311,7 +330,8 @@ async function useSuggestion(chip: HTMLButtonElement): Promise<void> {
   if (!remainingSuggestions().length) byId('suggestions').hidden = true;
   else syncMarquee();
   const input = q();
-  input.focus({ preventScroll: true });
+  // On touch screens the keyboard only opens when the visitor taps the field itself.
+  if (!COARSE) input.focus({ preventScroll: true });
   chat.drafting = true;
   if (REDUCE) {
     input.value = question;
@@ -328,7 +348,7 @@ async function useSuggestion(chip: HTMLButtonElement): Promise<void> {
   }
   chat.drafting = false;
   syncComposer();
-  input.setSelectionRange(input.value.length, input.value.length);
+  if (document.activeElement === input) input.setSelectionRange(input.value.length, input.value.length);
 }
 
 function bindSuggestions(): void {
@@ -377,6 +397,14 @@ function bindContact(): void {
     });
   }
   syncVia();
+  byId('cAi').addEventListener('click', () => {
+    audio.tick();
+    chat.aiHome = true;
+    seedPanel();
+    syncMarquee();
+    humanCheck.load();
+    focusComposer();
+  });
   const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]');
   let sending = false;
   form.addEventListener('submit', (e) => {
@@ -443,6 +471,12 @@ export function initPanel(): void {
     if (state.page === 'mundo') emit('app:talk', 'button');
   });
   byId('panelClose').addEventListener('click', closePanel);
+  byId('panelBack').addEventListener('click', () => {
+    audio.tick();
+    chat.aiHome = false;
+    seedPanel();
+    focusComposer();
+  });
   backdrop().addEventListener('click', closePanel);
   document.addEventListener('keydown', onKeydown);
   // Leaving the world page closes the panel (the world unfocuses with it).

@@ -82,7 +82,7 @@ export interface UiCopy {
     /** Second hero button: goes to the about page. */
     about: string;
     /** Accessible names of the social links in the bottom-right corner. */
-    social: { label: string; instagram: string; linkedin: string; email: string };
+    social: { label: string; instagram: string; linkedin: string; github: string; email: string };
   };
 
   mundo: {
@@ -169,6 +169,11 @@ export interface UiCopy {
     /** Title and subtitle of the direct-contact mode (home scene). */
     titleContact: string;
     subContact: string;
+    /** Home scene: button under the contact options that switches to the AI chat, and its first bubble. */
+    aiCta: string;
+    /** Arrow at the top left of the AI chat in the home scene: back to WhatsApp / email. */
+    backContact: string;
+    helloAiHome: string;
     close: string;
     /** Status line under the title: probing, reachable, unreachable. */
     checking: string;
@@ -265,7 +270,7 @@ const es: UiCopy = {
       'Desarrollo software y estudio sistemas en Chubut. Entrá a mi mundo: vas a ver dónde estoy ahora y podés hablar conmigo.',
     explore: 'Explorar mi mundo',
     about: 'Sobre mí',
-    social: { label: 'Redes y contacto', instagram: 'Instagram', linkedin: 'LinkedIn', email: 'Enviarme un correo' },
+    social: { label: 'Redes y contacto', instagram: 'Instagram', linkedin: 'LinkedIn', github: 'GitHub', email: 'Enviarme un correo' },
   },
 
   mundo: {
@@ -315,7 +320,7 @@ const es: UiCopy = {
         titleAt: 'Franco, a esta hora, está disponible',
         where: 'disponible',
         hello:
-          'Ya terminé el día. Esto no lo contesta una IA: escribime por WhatsApp o dejame tu mensaje por mail, y te respondo yo.',
+          'Ya terminé el día. Esto no lo contesta una IA: escribime por WhatsApp o dejame tu mensaje por mail, y te respondo yo. Si igualmente querés hablar con mi IA, tocá el botón de abajo; o si preferís más diversión, tocá el reloj del mapa para adelantar la hora y verme en otro momento del día.',
       },
     },
     surpriseBack: 'Volver al mundo',
@@ -388,6 +393,10 @@ const es: UiCopy = {
     title: (where) => `Franco (IA) · ${where}`,
     titleContact: 'Franco · disponible',
     subContact: 'Te respondo yo, no una IA',
+    aiCta: 'Hablar con mi IA',
+    backContact: 'Volver a WhatsApp y mail',
+    helloAiHome:
+      'Ahora te responde mi versión IA: preguntame por mis proyectos, mi formación o cómo trabajo. Si preferís hablar conmigo, escribime por WhatsApp o mail.',
     close: 'Cerrar',
     checking: '○ verificando /api/chat…',
     live: '● conectado a /api/chat',
@@ -490,7 +499,7 @@ const en: UiCopy = {
       'I build software and study systems in Chubut. Step into my world: you will see where I am right now, and you can talk to me.',
     explore: 'Explore my world',
     about: 'About me',
-    social: { label: 'Social and contact', instagram: 'Instagram', linkedin: 'LinkedIn', email: 'Send me an email' },
+    social: { label: 'Social and contact', instagram: 'Instagram', linkedin: 'LinkedIn', github: 'GitHub', email: 'Send me an email' },
   },
 
   mundo: {
@@ -540,7 +549,7 @@ const en: UiCopy = {
         titleAt: 'At this hour, Franco is available',
         where: 'available',
         hello:
-          'My day is done. This is not an AI answering: message me on WhatsApp or leave me a note by email, and I will reply myself.',
+          'My day is done. This is not an AI answering: message me on WhatsApp or leave me a note by email, and I will reply myself. If you would still like to talk to my AI, tap the button below; or, for more fun, tap the clock on the map to move the time forward and see me at another moment of the day.',
       },
     },
     surpriseBack: 'Back to the world',
@@ -613,6 +622,10 @@ const en: UiCopy = {
     title: (where) => `Franco (AI) · ${where}`,
     titleContact: 'Franco · available',
     subContact: 'I reply myself, not an AI',
+    aiCta: 'Talk to my AI',
+    backContact: 'Back to WhatsApp and email',
+    helloAiHome:
+      'My AI version is answering now: ask me about my projects, my studies or how I work. If you would rather talk to me, message me on WhatsApp or by email.',
     close: 'Close',
     checking: '○ checking /api/chat…',
     live: '● connected to /api/chat',

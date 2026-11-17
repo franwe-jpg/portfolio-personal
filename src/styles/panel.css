@@ -25,6 +25,9 @@
 }
 .panel-head { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; align-items: start; padding: 18px 20px 14px; border-bottom: 1px solid var(--s3); }
 @media (max-width: 767px) { .panel-head { padding-top: 4px; } }
+.panel-headline { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.panel-back { width: 30px; height: 30px; flex: none; border-radius: 8px; }
+.panel-back[hidden] { display: none; }
 .panel-title { margin: 0; font: 500 18px/1.2 var(--font-body); }
 .panel-sub { margin: 4px 0 0; font: 400 11px var(--font-mono); letter-spacing: .06em; color: var(--tmuted); }
 .conn { grid-column: 1 / -1; display: inline-flex; align-items: center; gap: 6px; font: 400 10.5px var(--font-mono); letter-spacing: .06em; color: var(--tmuted); }
@@ -93,6 +96,10 @@
 .segctl input:focus-visible + label { outline: 2px solid var(--signal); outline-offset: 1px; }
 .btn-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 46px; padding: 10px 20px; border-radius: 999px; border: 0; background: var(--signal); color: var(--g0); font: 500 15px var(--font-body); }
 .btn-primary:hover { background: #29d184; }
+/* Secondary to the WhatsApp / email actions: an outline pill under them. */
+.btn-ai { display: inline-flex; align-items: center; justify-content: center; width: 100%; min-height: 46px; margin-top: 4px; padding: 10px 20px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--text); font: 500 15px var(--font-body); transition: border-color .18s, color .18s; }
+.btn-ai:hover { border-color: var(--signal); color: var(--signal); }
+.btn-ai:focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
 
 /* ===== ticket hunt: hidden tickets ===== */
 .tk-host { position: relative; display: inline-block; }
