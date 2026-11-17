@@ -80,43 +80,60 @@
 .about-photo img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .6s var(--e-out); }
 .about-photo:hover img { transform: scale(1.04); }
 @media (min-width: 900px) { .about-grid { grid-template-columns: 1.1fr 1fr; gap: 72px; } }
-/* Photos: kept low-key. A one-line heading, then one group of photos in justified rows: every
-   photo keeps its own ratio (portrait stays portrait). The arrow swaps the group for the next one:
-   on desktop it sits to the right of the photos, halfway down; on phones under them, to the right
-   (src/scripts/photos.ts sizes the groups and the rows). */
-.sec-photos .wrap { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-areas: "head" "photos" "more"; }
-.photos-head { grid-area: head; display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 14px; row-gap: 4px; }
+/* Photos: kept low-key. A one-line heading, then one group of photos laid out by
+   src/scripts/photos.ts: portrait photos take the band's full height, landscape ones stack in
+   pairs, every photo at its own ratio. The arrow swaps the group: below the photos, to the right;
+   on wide screens out in the right margin, halfway down, so the photos stay aligned with the page. */
+.photos-head { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 14px; row-gap: 4px; }
 .photos-head .eyebrow { flex-basis: 100%; margin-bottom: 6px; }
 .photos-title { margin: 0; font: 500 clamp(19px, 1.9vw, 24px)/1.25 var(--font-body); letter-spacing: -.01em; }
 .photos-note { margin: 0; font: 400 14px var(--font-body); color: var(--muted); }
-.photos { --row-h: 105px; grid-area: photos; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 18px; }
+.photos-stage { position: relative; display: flex; flex-direction: column; margin-top: 18px; }
+.photos { --row-h: 105px; display: flex; flex-wrap: wrap; gap: 6px; }
 /* Before the script runs: flex rows at about --row-h, a short last row is not stretched. */
 .photos::after { content: ""; flex-grow: 1000000; }
 .photo { position: relative; margin: 0; min-width: 0; flex: calc(var(--r) * 100) 1 calc(var(--r) * var(--row-h)); aspect-ratio: var(--r); max-height: calc(var(--row-h) * 1.6); border-radius: 8px; overflow: hidden; background: var(--paper-3); }
 .photo[hidden] { display: none; }
-/* Laid out by src/scripts/photos.ts: every row fills the width, sizes are inline. */
-.photos.is-justified::after { display: none; }
-.photos.is-justified .photo { flex: none; aspect-ratio: auto; max-height: none; }
+/* Placed by the script: absolute boxes, the grid gets its height inline. */
+.photos.is-laid { display: block; position: relative; }
+.photos.is-laid::after { display: none; }
+.photos.is-laid .photo { position: absolute; flex: none; aspect-ratio: auto; max-height: none; }
+.photo-open { display: block; width: 100%; height: 100%; padding: 0; border: 0; background: none; }
 .photo img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .6s var(--e-out); }
 .photo:hover img { transform: scale(1.04); }
-.photo figcaption { position: absolute; left: 10px; right: 10px; bottom: 8px; font: 500 10px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: #fff; text-shadow: 0 1px 8px rgba(0,0,0,.7); opacity: 0; transition: opacity .3s; }
+.photo figcaption { position: absolute; left: 10px; right: 10px; bottom: 8px; font: 500 10px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: #fff; text-shadow: 0 1px 8px rgba(0,0,0,.7); opacity: 0; transition: opacity .3s; pointer-events: none; }
 .photo:hover figcaption { opacity: 1; }
-/* "Ver más fotos": an arrow in a ring, the label next to it (phones) or under it (desktop). */
-.photos-more { grid-area: more; justify-self: end; display: inline-flex; align-items: center; gap: 12px; margin-top: 14px; padding: 4px 0; border: 0; background: none; color: var(--ink); text-align: right; }
-.photos-arrow { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(21,24,29,.25); background: var(--paper); transition: background-color .25s, color .25s, border-color .25s, transform .35s var(--e-out); }
+/* "Ver más fotos": the label and an arrow in a ring. */
+.photos-more { align-self: flex-end; display: inline-flex; align-items: center; gap: 12px; margin-top: 14px; padding: 4px 0; border: 0; background: none; color: var(--ink); text-align: right; }
+.photos-arrow { order: 2; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgba(21,24,29,.25); background: var(--paper); transition: background-color .25s, color .25s, border-color .25s, transform .35s var(--e-out); }
 .photos-more:hover .photos-arrow { background: var(--ink); color: var(--paper); border-color: var(--ink); transform: translateX(3px); }
 .photos-more-txt { display: grid; gap: 3px; font: 500 10.5px/1.3 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; }
 .photos-count { color: var(--muted); }
-/* Phones: label first, arrow at the right edge. */
-.photos-more .photos-arrow { order: 2; }
-@media (min-width: 900px) {
-  .sec-photos .wrap { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "head head" "photos more"; column-gap: 28px; }
-  .photos { --row-h: 190px; gap: 8px; }
+@media (min-width: 700px) {
+  .photos { gap: 8px; }
   .photo { border-radius: 10px; }
-  .photos-more { flex-direction: column; align-self: center; justify-self: center; gap: 10px; margin-top: 18px; text-align: center; }
-  .photos-more .photos-arrow { order: 0; width: 56px; height: 56px; }
-  .photos-more-txt { justify-items: center; }
 }
+/* Wide screens: the arrow sits in the right margin, centred in it and halfway down the photos. */
+@media (min-width: 1300px) {
+  .photos-more { position: absolute; top: 50%; left: calc(100% + (100vw - 100%) / 4); margin: 0; flex-direction: column; gap: 10px; text-align: center; transform: translate(-50%, -50%); }
+  .photos-arrow { order: 0; width: 56px; height: 56px; }
+  .photos-more-txt { justify-items: center; max-width: 76px; }
+}
+/* Viewer: the photo nearly full screen, rounded, over the dimmed page. */
+.lightbox { padding: 0; border: 0; background: none; max-width: none; max-height: none; overflow: visible; }
+.lightbox::backdrop { background: rgba(10,12,15,.74); }
+.lightbox-img { display: block; width: auto; height: auto; max-width: calc(100vw - 32px); max-height: calc(100dvh - 48px); border-radius: 16px; box-shadow: 0 30px 80px -20px rgba(0,0,0,.6); }
+.lightbox-close { position: absolute; top: 12px; right: 12px; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(255,255,255,.35); background: rgba(14,16,19,.55); color: #fff; -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); transition: background-color .2s; }
+.lightbox-close:hover { background: rgba(14,16,19,.85); }
+@media (min-width: 700px) { .lightbox-img { max-width: 92vw; max-height: 90vh; } }
+.lightbox[open] { animation: lightbox-in .35s var(--e-out); }
+.lightbox[open]::backdrop { animation: lightbox-fade .3s ease-out; }
+.lightbox.is-closing { animation: lightbox-out .18s ease-in forwards; }
+.lightbox.is-closing::backdrop { animation: lightbox-fade .18s ease-in reverse forwards; }
+@keyframes lightbox-in { from { opacity: 0; transform: scale(.96); } }
+@keyframes lightbox-out { to { opacity: 0; transform: scale(.97); } }
+@keyframes lightbox-fade { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .lightbox[open], .lightbox[open]::backdrop, .lightbox.is-closing, .lightbox.is-closing::backdrop { animation: none; } }
 .quote { margin: 18px 0 0; font: 400 18px var(--font-body); color: var(--muted); }
 .facts { display: grid; gap: 0; margin: 28px 0 0; border-top: 1px solid rgba(21,24,29,.12); }
 .facts div { display: grid; grid-template-columns: 120px 1fr; gap: 16px; padding: 14px 0; border-bottom: 1px solid rgba(21,24,29,.12); }

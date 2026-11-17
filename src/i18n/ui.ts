@@ -124,7 +124,7 @@ export interface UiCopy {
     jobs: string;
     events: string;
     now: string;
-    photos: { eyebrow: string; title: string; note: string; more: string };
+    photos: { eyebrow: string; title: string; note: string; more: string; open: string; viewer: string; close: string };
     stack: { eyebrow: string; title: string; toolsHead: string; toolsNote: string };
     contact: {
       eyebrow: string;
@@ -334,6 +334,9 @@ const es: UiCopy = {
       title: 'Además de programar, me gusta sacar fotos.',
       note: 'Algunas de las que voy sacando.',
       more: 'Ver más fotos',
+      open: 'Ampliar foto',
+      viewer: 'Foto ampliada',
+      close: 'Cerrar foto',
     },
     stack: {
       eyebrow: 'Qué hago',
@@ -537,6 +540,9 @@ const en: UiCopy = {
       title: 'Besides coding, I like taking photos.',
       note: 'A few of the ones I take.',
       more: 'More photos',
+      open: 'Enlarge photo',
+      viewer: 'Enlarged photo',
+      close: 'Close photo',
     },
     stack: {
       eyebrow: 'What I do',

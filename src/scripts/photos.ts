@@ -1,130 +1,224 @@
 import { gsap } from 'gsap';
 import { audio } from './audio';
-import { $$, byId } from './dom';
+import { $, $$, byId } from './dom';
 import { REDUCE } from './env';
 
 /**
- * The "Fotos" section: one group of photos at a time, in justified rows, and "Ver más fotos"
- * swapping the whole group for the next (wrapping to the first after the last).
+ * The "Fotos" section: one group of photos at a time, "Ver más fotos" swapping the whole group
+ * for the next (wrapping to the first after the last), and a viewer that opens a photo over the
+ * dimmed page.
  *
- * Groups are sized to the screen: a wide grid shows `WIDE.groups` groups in 2 rows (about 9
- * photos each), a narrow one `NARROW.groups` in 3 rows (about 7). The photos are cut into groups
- * by their summed ratio, not by count, so every group fills its rows at about the same height
- * and the section does not jump from one group to the next.
+ * Layout: the photos become columns. A portrait photo is a column of its own, as tall as the
+ * band; two landscape photos stack into one column (each keeps its ratio, so they share a width
+ * and their heights add up to the band). Columns fill bands that span the grid's width exactly,
+ * so every photo keeps its own ratio and nothing is cropped. A group is one band on wide screens
+ * and two on narrow ones; the bands are cut so their heights stay close to the target, which
+ * keeps the section at about the same height from one group to the next.
  */
-const WIDE = { groups: 3, rows: 2 };
-const NARROW = { groups: 4, rows: 3 };
+const WIDE = { band: 420, bandsPerGroup: 1 };
+const NARROW = { band: 220, bandsPerGroup: 2 };
 const NARROW_BELOW = 700;
 
 const ratioOf = (item: HTMLElement) => parseFloat(item.style.getPropertyValue('--r')) || 1;
 
-/** Cuts `items` (in order) into `count` runs whose summed ratios are as even as possible. */
-function group(items: HTMLElement[], count: number): HTMLElement[][] {
-  const total = items.reduce((sum, item) => sum + ratioOf(item), 0);
-  const groups: HTMLElement[][] = [[]];
-  let acc = 0;
-  for (const [i, item] of items.entries()) {
+/** A column: one photo, or two landscape photos stacked. */
+interface Column {
+  items: HTMLElement[];
+  ratios: number[];
+}
+
+/** Portrait photos stand alone; landscape ones pair with the next landscape one, in order. */
+function columnsOf(items: HTMLElement[]): Column[] {
+  const columns: Column[] = [];
+  let open: Column | null = null;
+  for (const item of items) {
     const r = ratioOf(item);
-    const goal = (total * groups.length) / count;
-    const left = items.length - i;
-    const slots = count - groups.length;
-    // Close the current group when adding this photo would overshoot its share by more than
-    // stopping short does (and keep enough photos for the groups still to fill).
-    if (groups.length < count && groups[groups.length - 1].length && (acc + r - goal > goal - acc || left <= slots)) {
-      groups.push([]);
+    if (r < 1) {
+      columns.push({ items: [item], ratios: [r] });
+    } else if (open) {
+      open.items.push(item);
+      open.ratios.push(r);
+      open = null;
+    } else {
+      open = { items: [item], ratios: [r] };
+      columns.push(open);
     }
-    groups[groups.length - 1].push(item);
-    acc += r;
   }
-  return groups;
+  return columns;
 }
 
 /**
- * Justified rows: lays `items` in `rows` rows that each fill the grid's width exactly, choosing
- * the breaks (in order) that keep the row heights as even as possible. Every photo keeps its own
- * ratio, nothing is cropped and no row is left half empty.
+ * Column width at band height `h` is linear, `a * h + b`: a single photo is `r * h`; a stack is
+ * `(h - gap) / (1/r1 + 1/r2)`, the width at which both heights plus the gap add up to `h`.
  */
-function justify(grid: HTMLElement, items: HTMLElement[], rowsWanted: number): void {
-  const W = grid.clientWidth - 1;
-  if (!items.length || W <= 0) return;
-  const gap = parseFloat(getComputedStyle(grid).columnGap) || 0;
-  const ratio = items.map(ratioOf);
-  const n = items.length;
-  const rows = Math.min(n, rowsWanted);
-  const heightOf = (from: number, to: number) => {
-    let sum = 0;
-    for (let k = from; k < to; k++) sum += ratio[k];
-    return (W - gap * (to - from - 1)) / sum;
-  };
-  const even = (rows * W) / ratio.reduce((a, b) => a + b, 0);
-  // best[r][i]: lowest cost to lay the first i photos in r rows; cut[r][i]: where row r starts.
-  const best = Array.from({ length: rows + 1 }, () => new Array<number>(n + 1).fill(Infinity));
-  const cut = Array.from({ length: rows + 1 }, () => new Array<number>(n + 1).fill(0));
+function widthTerms(col: Column, gap: number): [number, number] {
+  if (col.ratios.length === 1) return [col.ratios[0], 0];
+  const k = col.ratios.reduce((sum, r) => sum + 1 / r, 0);
+  return [1 / k, -gap / k];
+}
+
+/** The band height at which `cols` (side by side, `gap` apart) span exactly `W`. */
+function bandHeight(cols: Column[], W: number, gap: number): number {
+  let a = 0;
+  let b = 0;
+  for (const col of cols) {
+    const [ca, cb] = widthTerms(col, gap);
+    a += ca;
+    b += cb;
+  }
+  return (W - gap * (cols.length - 1) - b) / a;
+}
+
+/** Cuts the columns (in order) into the band count that best fits `target`, as even as possible. */
+function bands(cols: Column[], W: number, gap: number, target: number): Column[][] {
+  const n = cols.length;
+  const natural = cols.reduce((sum, col) => {
+    const [a, b] = widthTerms(col, gap);
+    return sum + a * target + b + gap;
+  }, -gap);
+  const count = Math.max(1, Math.min(n, Math.round(natural / W)));
+  // best[k][i]: lowest cost of the first i columns in k bands; cut[k][i]: where band k starts.
+  const best = Array.from({ length: count + 1 }, () => new Array<number>(n + 1).fill(Infinity));
+  const cut = Array.from({ length: count + 1 }, () => new Array<number>(n + 1).fill(0));
   best[0][0] = 0;
-  for (let r = 1; r <= rows; r++) {
-    for (let i = r; i <= n; i++) {
-      for (let j = r - 1; j < i; j++) {
-        const cost = best[r - 1][j] + Math.log(heightOf(j, i) / even) ** 2;
-        if (cost < best[r][i]) {
-          best[r][i] = cost;
-          cut[r][i] = j;
+  for (let k = 1; k <= count; k++) {
+    for (let i = k; i <= n; i++) {
+      for (let j = k - 1; j < i; j++) {
+        const cost = best[k - 1][j] + Math.log(bandHeight(cols.slice(j, i), W, gap) / target) ** 2;
+        if (cost < best[k][i]) {
+          best[k][i] = cost;
+          cut[k][i] = j;
         }
       }
     }
   }
-  for (let r = rows, i = n; r > 0; i = cut[r][i], r--) {
-    const h = heightOf(cut[r][i], i);
-    for (let k = cut[r][i]; k < i; k++) {
-      items[k].style.width = `${(ratio[k] * h).toFixed(2)}px`;
-      items[k].style.height = `${h.toFixed(2)}px`;
+  const out: Column[][] = [];
+  for (let k = count, i = n; k > 0; i = cut[k][i], k--) out.unshift(cols.slice(cut[k][i], i));
+  return out;
+}
+
+/** Places the bands' photos absolutely, band under band; returns the total height. */
+function place(groupBands: Column[][], W: number, gap: number): number {
+  let y = 0;
+  for (const cols of groupBands) {
+    const h = bandHeight(cols, W, gap);
+    let x = 0;
+    for (const col of cols) {
+      const [a, b] = widthTerms(col, gap);
+      const w = a * h + b;
+      let top = y;
+      for (const [i, item] of col.items.entries()) {
+        const ih = col.items.length === 1 ? h : w / col.ratios[i];
+        Object.assign(item.style, { left: `${x}px`, top: `${top}px`, width: `${w}px`, height: `${ih}px` });
+        top += ih + gap;
+      }
+      x += w + gap;
     }
+    y += h + gap;
   }
-  grid.classList.add('is-justified');
+  return y - gap;
+}
+
+/**
+ * The viewer: a modal dialog with the photo, over the dimmed page; Escape, ✕ or a click outside
+ * close it. Its animations are CSS (`.lightbox` in pages.css), never GSAP: to read a fixed
+ * element's transform GSAP detaches and re-attaches it, and that silently drops a dialog out of
+ * modal mode (no backdrop, no Escape).
+ */
+function initViewer(grid: HTMLElement): void {
+  const dialog = byId<HTMLDialogElement>('lightbox');
+  const img = byId<HTMLImageElement>('lightboxImg');
+  let opener: HTMLElement | null = null;
+  let closing = 0;
+  const close = () => {
+    if (!dialog.open || closing) return;
+    if (REDUCE) {
+      dialog.close();
+      return;
+    }
+    dialog.classList.add('is-closing');
+    closing = window.setTimeout(() => dialog.close(), 180);
+  };
+  dialog.addEventListener('close', () => {
+    clearTimeout(closing);
+    closing = 0;
+    dialog.classList.remove('is-closing');
+    opener?.focus({ preventScroll: true });
+  });
+  for (const button of $$<HTMLButtonElement>('.photo-open', grid)) {
+    button.addEventListener('click', () => {
+      const thumb = $<HTMLImageElement>('img', button);
+      if (!thumb) return;
+      opener = button;
+      img.src = thumb.currentSrc || thumb.src;
+      img.alt = thumb.alt;
+      img.width = thumb.naturalWidth || Number(thumb.getAttribute('width'));
+      img.height = thumb.naturalHeight || Number(thumb.getAttribute('height'));
+      audio.tick();
+      dialog.showModal();
+    });
+  }
+  byId('lightboxClose').addEventListener('click', close);
+  // A click on the backdrop lands on the dialog itself (the photo and the button stop it).
+  dialog.addEventListener('click', (e) => {
+    if (e.target === dialog) close();
+  });
+  dialog.addEventListener('cancel', (e) => {
+    e.preventDefault();
+    close();
+  });
 }
 
 export function initPhotos(): void {
   const grid = document.getElementById('photos');
   if (!grid) return;
+  initViewer(grid);
   const items = $$('.photo', grid);
+  const columns = columnsOf(items);
   const more = document.getElementById('photosMore');
   const count = more ? byId('photosCount') : null;
-  let mode = NARROW;
-  let groups: HTMLElement[][] = [items];
+  let groups: Column[][][] = [];
   let current = 0;
   let busy = false;
+  let W = 0;
+  let gap = 8;
 
   function show(): void {
-    const visible = new Set(groups[current]);
+    const group = groups[current];
+    if (!group) return;
+    const visible = new Set(group.flat().flatMap((col) => col.items));
     for (const item of items) item.hidden = !visible.has(item);
-    justify(grid!, groups[current], mode.rows);
+    grid!.style.height = `${place(group, W, gap)}px`;
+    grid!.classList.add('is-laid');
     if (count) count.textContent = `${current + 1}/${groups.length}`;
   }
   const prefetch = (index: number) => {
-    for (const img of $$<HTMLImageElement>('img', grid)) {
-      if (groups[index % groups.length].includes(img.parentElement as HTMLElement)) img.loading = 'eager';
+    const group = groups[index % groups.length];
+    if (!group) return;
+    for (const item of group.flat().flatMap((col) => col.items)) {
+      const img = $<HTMLImageElement>('img', item);
+      if (img) img.loading = 'eager';
     }
   };
 
-  // Regroup when the grid crosses the breakpoint; re-justify on any width change. The group
-  // that holds the first photo on screen stays the current one.
-  let lastW = 0;
+  // Regroup on every width change; the group that holds the first photo on screen stays current.
   new ResizeObserver(() => {
     const w = grid.clientWidth;
-    if (!w || w === lastW) return;
-    lastW = w;
-    const next = w < NARROW_BELOW ? NARROW : WIDE;
-    if (next !== mode || groups.length === 1) {
-      const anchor = groups[current][0];
-      mode = next;
-      groups = group(items, mode.groups);
-      current = Math.max(0, groups.findIndex((g) => g.includes(anchor)));
-    }
+    if (!w || w === W) return;
+    const anchor = groups[current]?.[0]?.[0]?.items[0] ?? items[0];
+    W = w;
+    gap = parseFloat(getComputedStyle(grid).columnGap) || 0;
+    const mode = W < NARROW_BELOW ? NARROW : WIDE;
+    const all = bands(columns, W, gap, mode.band);
+    groups = [];
+    for (let i = 0; i < all.length; i += mode.bandsPerGroup) groups.push(all.slice(i, i + mode.bandsPerGroup));
+    current = Math.max(0, groups.findIndex((g) => g.flat().some((col) => col.items.includes(anchor))));
     show();
   }).observe(grid);
 
   if (!more) return;
   more.addEventListener('click', async () => {
-    if (busy) return;
+    if (busy || groups.length < 2) return;
     busy = true;
     audio.tick();
     if (!REDUCE) await gsap.to(grid, { opacity: 0, y: -6, duration: 0.2, ease: 'power2.in' });
