@@ -79,7 +79,8 @@ export interface UiCopy {
     titleLine2: string;
     description: string;
     explore: string;
-    projects: string;
+    /** Second hero button: goes to the about page. */
+    about: string;
     /** Accessible names of the social links in the bottom-right corner. */
     social: { label: string; instagram: string; linkedin: string; email: string };
   };
@@ -263,7 +264,7 @@ const es: UiCopy = {
     description:
       'Desarrollo software y estudio sistemas en Chubut. Entrá a mi mundo: vas a ver dónde estoy ahora y podés hablar conmigo.',
     explore: 'Explorar mi mundo',
-    projects: 'Ver proyectos',
+    about: 'Sobre mí',
     social: { label: 'Redes y contacto', instagram: 'Instagram', linkedin: 'LinkedIn', email: 'Enviarme un correo' },
   },
 
@@ -488,7 +489,7 @@ const en: UiCopy = {
     description:
       'I build software and study systems in Chubut. Step into my world: you will see where I am right now, and you can talk to me.',
     explore: 'Explore my world',
-    projects: 'See projects',
+    about: 'About me',
     social: { label: 'Social and contact', instagram: 'Instagram', linkedin: 'LinkedIn', email: 'Send me an email' },
   },
 
