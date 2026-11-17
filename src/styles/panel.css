@@ -62,8 +62,10 @@
 .field input:focus, .field textarea:focus { outline: none; border-color: var(--signal); }
 .field [aria-invalid="true"] { border-color: #e8a33d; }
 .err { font: 400 11.5px var(--font-mono); color: #e8a33d; min-height: 0; }
-.segctl { display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 3px; background: var(--g0); width: 100%; }
-.segctl input { position: absolute; opacity: 0; pointer-events: none; }
+.segctl { position: relative; display: inline-grid; grid-auto-flow: column; grid-auto-columns: 1fr; border: 1px solid var(--line); border-radius: 10px; padding: 3px; gap: 3px; background: var(--g0); width: 100%; }
+/* The radios stay focusable but take no room: `.field input` would give them the panel's full
+   width, and focusing one on open scrolled the panel sideways, cutting off its right edge. */
+.segctl input { position: absolute; top: 0; left: 0; width: 1px; height: 1px; margin: 0; padding: 0; opacity: 0; pointer-events: none; }
 .segctl label { text-align: center; padding: 9px 10px; border-radius: 7px; font: 500 12px var(--font-mono); letter-spacing: .06em; color: var(--tmuted); cursor: pointer; }
 .segctl input:checked + label { background: var(--s3); color: var(--text); }
 .segctl input:focus-visible + label { outline: 2px solid var(--signal); outline-offset: 1px; }
@@ -90,6 +92,10 @@
 .tk[data-dir="up"] { bottom: calc(100% - 12px); right: 48px; height: 80px; }
 .tk[data-dir="up"] .tk-i { left: -12px; top: 19px; transform: translateY(90px) rotate(90deg); }
 .tk[data-dir="up"]:hover .tk-i { transform: translateY(32px) rotate(84deg); }
+/* Down: hangs under the host's bottom edge (the about photo), slides out downwards. */
+.tk[data-dir="down"] { top: calc(100% - 12px); left: 50%; margin-left: -32px; height: 80px; }
+.tk[data-dir="down"] .tk-i { left: -12px; top: 19px; transform: translateY(-90px) rotate(90deg); }
+.tk[data-dir="down"]:hover .tk-i { transform: translateY(-32px) rotate(96deg); }
 /* sparkles that hint at the hiding spot while the ticket itself stays out of sight */
 .tk-fx { position: absolute; inset: 0; transition: opacity .25s; }
 .tk:hover .tk-fx { opacity: 0; }
@@ -123,7 +129,6 @@
 .tk-host--block > .projects { margin-top: 0; }
 .tk-host--photo { display: block; justify-self: end; width: min(300px, 100%); }
 .tk-host--photo .about-photo { width: 100%; }
-.tk-host--photo .tk { top: 70%; }
 /* world ticket: pinned to the screen-left edge of an object in the 3D scene (moved every frame);
    it slides out to the left and its far end always stays "inside" the object */
 .tk.tk-world { left: 0; top: 0; right: auto; bottom: auto; margin-top: 0; z-index: 2; will-change: transform; }

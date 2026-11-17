@@ -99,6 +99,8 @@ export interface UiCopy {
     switcherLabel: string;
     modes: { auto: string; autoNow: string; office: string; uni: string; home: string };
     dragHint: [string, string];
+    /** Touch screens: the same hint for fingers. */
+    dragHintTouch: [string, string];
     sceneTag: (scene: SceneCopy) => string;
     statusLine: (scene: SceneCopy, time: string) => string;
     scenes: Record<Scene, SceneCopy>;
@@ -122,8 +124,8 @@ export interface UiCopy {
     jobs: string;
     events: string;
     now: string;
-    photos: { eyebrow: string; title: string; note: string };
-    stack: { eyebrow: string; title: string; toolsHead: string; toolsNote: string };
+    photos: { eyebrow: string; title: string; more: string; open: string; viewer: string; close: string };
+    stack: { eyebrow: string; title: string; askTitle: string; askText: string; toolsHead: string; toolsNote: string };
     contact: {
       eyebrow: string;
       title: string;
@@ -274,6 +276,7 @@ const es: UiCopy = {
     switcherLabel: 'Escena',
     modes: { auto: 'Auto', autoNow: ' (ahora)', office: 'Oficina', uni: 'Universidad', home: 'Disponible' },
     dragHint: ['Arrastrá para girar', 'Rueda para acercar'],
+    dragHintTouch: ['Deslizá para girar', 'Dos dedos para mover y acercar'],
     sceneTag: (scene) => `ESCENA ${scene.n} · ${scene.name}`,
     statusLine: (scene, time) => `AHORA · ${scene.status} · ${time} ART`,
     scenes: {
@@ -328,14 +331,19 @@ const es: UiCopy = {
     now: 'Ahora',
     photos: {
       eyebrow: 'Fotos',
-      title: 'Cuando no programo, saco fotos.',
-      note: 'Una selección de lo que voy sacando con el celular.',
+      title: 'Además de programar, saco algunas fotos.',
+      more: 'Ver más fotos',
+      open: 'Ampliar foto',
+      viewer: 'Foto ampliada',
+      close: 'Cerrar foto',
     },
     stack: {
       eyebrow: 'Qué hago',
       title: 'Construyo lo que el problema necesita.',
-      toolsHead: 'Herramientas usadas en proyectos',
-      toolsNote: 'No hay un stack fijo: elijo según lo que haya que construir',
+      askTitle: '¿Querés preguntarme más cosas?',
+      askText: 'Vení al chat y hablame en el mundo.',
+      toolsHead: 'Cómo trabajo',
+      toolsNote: 'La IA escribe código; yo decido qué construir, cómo, y verifico que funcione',
     },
     contact: {
       eyebrow: 'Contacto',
@@ -362,7 +370,7 @@ const es: UiCopy = {
     ticket: 'TICKET',
     ticketNo: 'Nº',
     screenHeader: 'De lo más profundo de mí, te comparto esta frase:',
-    prize: '¡Y te ganaste una landing page desarrollada por mí! Saca captura y enviámela.',
+    prize: '¡Y te ganaste una página web desarrollada por mí! Saca captura y enviámela.',
     terms: 'Ver condiciones',
     termsHref: '/tyc/',
   },
@@ -475,6 +483,7 @@ const en: UiCopy = {
     switcherLabel: 'Scene',
     modes: { auto: 'Auto', autoNow: ' (now)', office: 'Office', uni: 'University', home: 'Available' },
     dragHint: ['Drag to rotate', 'Scroll to zoom'],
+    dragHintTouch: ['Swipe to rotate', 'Two fingers to move and zoom'],
     sceneTag: (scene) => `SCENE ${scene.n} · ${scene.name}`,
     statusLine: (scene, time) => `NOW · ${scene.status} · ${time} ART`,
     scenes: {
@@ -529,14 +538,19 @@ const en: UiCopy = {
     now: 'Now',
     photos: {
       eyebrow: 'Photos',
-      title: 'When I am not coding, I take photos.',
-      note: 'A selection of what I shoot with my phone.',
+      title: 'Besides coding, I take a few photos.',
+      more: 'More photos',
+      open: 'Enlarge photo',
+      viewer: 'Enlarged photo',
+      close: 'Close photo',
     },
     stack: {
       eyebrow: 'What I do',
       title: 'I build what the problem needs.',
-      toolsHead: 'Tools used in projects',
-      toolsNote: 'No fixed stack: I pick according to what has to be built',
+      askTitle: 'Want to ask me more?',
+      askText: 'Come to the chat and talk to me in the world.',
+      toolsHead: 'How I work',
+      toolsNote: 'AI writes code; I decide what to build, how, and check that it works',
     },
     contact: {
       eyebrow: 'Contact',
@@ -563,7 +577,7 @@ const en: UiCopy = {
     ticket: 'TICKET',
     ticketNo: 'No.',
     screenHeader: 'From deep within me, I share this quote with you:',
-    prize: 'And you have won a landing page built by me! Take a screenshot and send it to me.',
+    prize: 'And you have won a website built by me! Take a screenshot and send it to me.',
     terms: 'See the terms',
     termsHref: '/en/tyc/',
   },

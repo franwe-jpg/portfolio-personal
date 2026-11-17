@@ -3,52 +3,85 @@ import { byId } from './dom';
 import { REDUCE } from './env';
 
 /**
- * "Mancha": an organic blob (two filtered circles, graphite + light rim,
- * displaced by fractal noise) that grows from the click to cover the screen,
- * then shrinks away over the new page.
+ * "Mancha": an organic blob (graphite fill + light rim) that grows from the click to cover the
+ * screen, then shrinks away over the new page. The wobbly edge is a closed curve whose radius is
+ * a sum of a few sines with random phases, rebuilt as a plain SVG path every frame. No SVG
+ * filter: full-screen turbulence + displacement re-rasterized each frame made every page change
+ * stutter, on phones above all.
  */
+const POINTS = 36;
+const RIM = 2.5;
+
 function createMancha() {
   const svg = byId<HTMLElement>('mancha');
-  const turb = byId<HTMLElement>('manchaTurb');
-  const disp = byId<HTMLElement>('manchaDisp');
-  const filter = byId<HTMLElement>('manchaFilter');
   const blob = byId<HTMLElement>('manchaBlob');
   const rim = byId<HTMLElement>('manchaRim');
   const m = { r: 0, cx: innerWidth / 2, cy: innerHeight / 2, wob: 0 };
-  let seed = 2;
+  // Edge shape: integer frequencies keep the curve closed; phases change every transition.
+  const waves = [
+    { f: 3, a: 0.5, p: 0, s: 1 },
+    { f: 5, a: 0.3, p: 0, s: -1.6 },
+    { f: 8, a: 0.2, p: 0, s: 2.3 },
+  ];
+  const cos = new Float32Array(POINTS);
+  const sin = new Float32Array(POINTS);
+  const offs = new Float32Array(POINTS);
+  for (let i = 0; i < POINTS; i++) {
+    const th = (i / POINTS) * Math.PI * 2;
+    cos[i] = Math.cos(th);
+    sin[i] = Math.sin(th);
+  }
 
   function origin(x: number, y: number): void {
     m.cx = x;
     m.cy = y;
   }
-  function fit(): void {
-    filter.setAttribute('x', '-300');
-    filter.setAttribute('y', '-300');
-    filter.setAttribute('width', String(innerWidth + 600));
-    filter.setAttribute('height', String(innerHeight + 600));
+  function reshape(): void {
+    for (const w of waves) w.p = Math.random() * Math.PI * 2;
   }
-  // Attributes are rewritten every frame so the browser repaints the filtered group.
+  /** Smooth closed curve through the points (quadratic segments between midpoints). */
+  function pathFor(r: number, amp: number): string {
+    const xs: number[] = [];
+    const ys: number[] = [];
+    for (let i = 0; i < POINTS; i++) {
+      const rr = Math.max(0, r + offs[i] * amp);
+      xs.push(m.cx + cos[i] * rr);
+      ys.push(m.cy + sin[i] * rr);
+    }
+    const mid = (i: number) => {
+      const j = (i + 1) % POINTS;
+      return `${((xs[i] + xs[j]) / 2).toFixed(1)} ${((ys[i] + ys[j]) / 2).toFixed(1)}`;
+    };
+    let d = `M${mid(POINTS - 1)}`;
+    for (let i = 0; i < POINTS; i++) d += `Q${xs[i].toFixed(1)} ${ys[i].toFixed(1)} ${mid(i)}`;
+    return `${d}Z`;
+  }
   function draw(): void {
     const r = Math.max(0, m.r);
-    const base = Math.min(140, innerWidth * 0.12, r * 0.5);
-    const scale = base * (1 + Math.sin(m.wob * Math.PI * 2) * 0.15); // edge wobble
-    for (const circle of [blob, rim]) {
-      circle.setAttribute('cx', m.cx.toFixed(1));
-      circle.setAttribute('cy', m.cy.toFixed(1));
+    if (r <= 0) {
+      blob.setAttribute('d', '');
+      rim.setAttribute('d', '');
+      return;
     }
-    blob.setAttribute('r', r.toFixed(1));
-    rim.setAttribute('r', (r + 2.5).toFixed(1));
-    disp.setAttribute('scale', scale.toFixed(1));
+    // Edge amplitude in px, as the old displacement filter: grows with the blob, capped.
+    const base = Math.min(70, innerWidth * 0.06, r * 0.25);
+    const amp = base * (1 + Math.sin(m.wob * Math.PI * 2) * 0.15);
+    const tw = m.wob * Math.PI * 2;
+    for (let i = 0; i < POINTS; i++) {
+      const th = (i / POINTS) * Math.PI * 2;
+      let o = 0;
+      for (const w of waves) o += w.a * Math.sin(th * w.f + w.p + tw * w.s);
+      offs[i] = o;
+    }
+    blob.setAttribute('d', pathFor(r, amp));
+    rim.setAttribute('d', pathFor(r + RIM, amp));
   }
+  // The edge can dip `base` px inward; cover past it.
   const coverRadius = () =>
-    Math.hypot(Math.max(m.cx, innerWidth - m.cx), Math.max(m.cy, innerHeight - m.cy)) + 200;
+    Math.hypot(Math.max(m.cx, innerWidth - m.cx), Math.max(m.cy, innerHeight - m.cy)) + 90;
 
   async function cover(): Promise<void> {
-    // New noise per transition; a slightly tighter frequency for the reveal half.
-    seed = (seed % 50) + 7;
-    turb.setAttribute('seed', String(seed));
-    turb.setAttribute('baseFrequency', '0.012');
-    fit();
+    reshape();
     m.r = 0;
     m.wob = 0;
     draw();
@@ -56,7 +89,6 @@ function createMancha() {
     await gsap.to(m, { r: coverRadius(), wob: 0.5, duration: 0.3, ease: 'expo.in', onUpdate: draw });
   }
   async function reveal(): Promise<void> {
-    turb.setAttribute('baseFrequency', '0.015');
     await gsap.to(m, { r: 0, wob: 1, duration: 1.0, ease: 'expo.out', onUpdate: draw });
     svg.classList.remove('is-on');
   }

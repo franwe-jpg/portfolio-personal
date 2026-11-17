@@ -7,7 +7,9 @@ import { $$, byId, el } from './dom';
 import { REDUCE } from './env';
 import { t } from './i18n';
 import { router } from './router';
+import { worldLoaded } from './stage';
 import { emit, on, state } from './state';
+import { mancha } from './transitions';
 import { world } from './world/handle';
 
 /**
@@ -324,6 +326,18 @@ export function initPanel(): void {
   byId('talk').addEventListener('click', () => emit('app:talk', 'button'));
   byId('fallbackTalk').addEventListener('click', () => emit('app:talk', 'button'));
   on('app:talk', () => void openPanel());
+  // "¿Querés preguntarme más cosas?" (Qué hago): the blob grows from the click, the world loads
+  // and Franco's chat opens with the camera on him, as if he had been tapped.
+  const ask = document.getElementById('askMore');
+  ask?.addEventListener('click', async (event: MouseEvent) => {
+    event.preventDefault();
+    if (!state.entered || state.busy) return;
+    mancha().origin(event.clientX || innerWidth / 2, event.clientY || innerHeight / 2);
+    await router.go('mundo');
+    if (state.page !== 'mundo') return;
+    await worldLoaded();
+    if (state.page === 'mundo') emit('app:talk', 'button');
+  });
   byId('panelClose').addEventListener('click', closePanel);
   backdrop().addEventListener('click', closePanel);
   document.addEventListener('keydown', onKeydown);

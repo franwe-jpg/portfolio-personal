@@ -9,7 +9,7 @@ import { t } from './i18n';
 import { loader, onProgressLabel, renderProgress, startLoading } from './loader';
 import { createParticles, type Particles } from './particles';
 import { router } from './router';
-import { emit, state } from './state';
+import { emit, state, type Page } from './state';
 
 /**
  * Entrance gate: the particle mark boots, the loader fills the bar, and the
@@ -21,13 +21,14 @@ const PAPER = '#e7eaee';
 const DARK = '#0e1013';
 
 let particles: Particles | null = null;
-let pending: { audio: boolean } | null = null;
+/** The enter request: audio choice and the page to land on (the hunt lands on mundo for its surprise). */
+let pending: { audio: boolean; landing: Page } | null = null;
 
 function setThemeColor(color: string): void {
   document.querySelector<HTMLMetaElement>('meta[name="theme-color"]')?.setAttribute('content', color);
 }
 
-function reveal(): void {
+function reveal(landing: Page): void {
   document.body.classList.add('entered');
   byId('gate').hidden = true;
   byId('mute').hidden = true;
@@ -36,9 +37,13 @@ function reveal(): void {
   byId('loadbar').style.opacity = '0';
   setThemeColor(DARK);
   emit('app:enter');
-  // First entry always lands on inicio; the hash only matters for back/forward afterwards.
-  void router.go('inicio', { instant: true, replace: true });
-  byId('heroTitle').focus({ preventScroll: true });
+  // First entry lands on inicio (mundo only for the hunt's surprise); the hash only matters for
+  // back/forward afterwards.
+  void router.go(landing, { instant: true, replace: true });
+  if (landing === 'inicio') {
+    heroIntro();
+    byId('heroTitle').focus({ preventScroll: true });
+  }
 }
 
 function doEnter(): void {
@@ -49,6 +54,7 @@ function doEnter(): void {
   if (enterBtn.hasAttribute('aria-busy')) busyCursor.end();
   enterBtn.removeAttribute('aria-busy');
   audio.set(pending.audio);
+  const { landing } = pending;
   const gate = byId('gate');
   const mute = byId('mute');
   const blackout = byId('blackout');
@@ -59,8 +65,7 @@ function doEnter(): void {
     gsap.to([gate, mute], { opacity: 0, duration: 0.25, ease: 'none' });
     gsap.set(blackout, { opacity: 1, delay: 0.25 });
     gsap.delayedCall(0.3, () => {
-      reveal();
-      heroIntro();
+      reveal(landing);
       gsap.to(blackout, { opacity: 0, duration: 0.3, ease: 'none' });
     });
     return;
@@ -70,14 +75,11 @@ function doEnter(): void {
   const tl = gsap.timeline();
   tl.to([copy, mute, byId('loadtxt'), byId('loadbar')], { opacity: 0, duration: 0.2, ease: 'power2.in' }, 0)
     .to(blackout, { opacity: 1, duration: 0.35, ease: 'power2.in' }, 0.55)
-    .add(() => {
-      reveal();
-      heroIntro();
-    }, 0.9)
+    .add(() => reveal(landing), 0.9)
     .to(blackout, { opacity: 0, duration: 1.0, ease: 'expo.out' }, 0.9);
 }
 
-export function requestEnter(withAudio: boolean): void {
+export function requestEnter(withAudio: boolean, landing: Page = 'inicio'): void {
   if (state.entered) return;
   // Inside the click handler: this is the only place audio may be unlocked.
   if (withAudio) audio.unlock();
@@ -86,7 +88,7 @@ export function requestEnter(withAudio: boolean): void {
   if (COARSE && typeof orientation.requestPermission === 'function') {
     orientation.requestPermission().catch(() => {});
   }
-  pending = { audio: withAudio };
+  pending = { audio: withAudio, landing };
   if (loader.state === 'ready' || loader.state === 'failed') {
     doEnter();
     return;

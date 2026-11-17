@@ -1,6 +1,6 @@
 ---
 import perfil from '../assets/perfil-profile.webp';
-import { photosFor } from '../data/photos';
+import { PHOTOS_FIRST_GROUP, photosFor } from '../data/photos';
 import { profile, PROFILE_COPY } from '../data/profile';
 import type { Lang } from '../i18n/config';
 import type { UiCopy } from '../i18n/ui';
@@ -47,7 +47,7 @@ const year = new Date().getFullYear();
               <figure class="about-photo reveal">
                 <img src={perfil.src} alt={copy.photoAlt} width="480" height="480" loading="lazy" />
               </figure>
-              <Ticket id="sobre" dir="left" />
+              <Ticket id="sobre" dir="down" />
             </div>
           </div>
         </div>
@@ -88,33 +88,47 @@ const year = new Date().getFullYear();
       </div>
     </div>
 
-    <div class="sec">
+    <div class="sec sec-photos">
       <div class="wrap">
-        <span class="eyebrow" data-scramble>{t.sobre.photos.eyebrow}</span>
-        <h2 class="h2 split" id="fotosH">{t.sobre.photos.title}</h2>
-        <p class="photos-note">{t.sobre.photos.note}</p>
-        <div class="photos" id="photos">
-          {
-            photos.map((photo) =>
-              photo.src ? (
-                <figure class:list={['photo', 'reveal-card', photo.shape]}>
-                  <img
-                    src={photo.src}
-                    alt={photo.alt ?? photo.caption}
-                    width={photo.width}
-                    height={photo.height}
-                    loading="lazy"
-                    decoding="async"
-                  />
-                  <figcaption>{photo.caption}</figcaption>
+        <div class="photos-head">
+          <span class="eyebrow" data-scramble>{t.sobre.photos.eyebrow}</span>
+          <h2 class="photos-title" id="fotosH">{t.sobre.photos.title}</h2>
+        </div>
+        <div class="photos-stage">
+          <div class="photos reveal" id="photos" aria-labelledby="fotosH">
+            {
+              photos.map((photo, index) => (
+                <figure class="photo" style={`--r: ${(photo.width / photo.height).toFixed(3)}`} hidden={index >= PHOTOS_FIRST_GROUP}>
+                  <button class="photo-open" type="button" aria-label={`${t.sobre.photos.open}: ${photo.alt}`} aria-haspopup="dialog">
+                    <img src={photo.src} alt={photo.alt} width={photo.width} height={photo.height} loading="lazy" decoding="async" />
+                  </button>
+                  {photo.date && <figcaption>{photo.date}</figcaption>}
                 </figure>
-              ) : (
-                <figure class:list={['photo', 'slot', 'reveal-card', photo.shape]}>{photo.caption}</figure>
-              ),
+              ))
+            }
+          </div>
+          {
+            photos.length > PHOTOS_FIRST_GROUP && (
+              <button class="photos-more" id="photosMore" type="button" aria-controls="photos">
+                <span class="photos-arrow" aria-hidden="true">
+                  <Icon name="arrow-right" size={18} />
+                </span>
+                <span class="photos-more-txt">
+                  {t.sobre.photos.more}
+                  <span class="photos-count" id="photosCount" />
+                </span>
+              </button>
             )
           }
         </div>
       </div>
+      {/* Photo viewer: a modal dialog over the dimmed page (src/scripts/photos.ts). */}
+      <dialog class="lightbox" id="lightbox" aria-label={t.sobre.photos.viewer}>
+        <img class="lightbox-img" id="lightboxImg" alt="" />
+        <button class="lightbox-close" id="lightboxClose" type="button" aria-label={t.sobre.photos.close}>
+          <Icon name="close" size={18} />
+        </button>
+      </dialog>
     </div>
 
     <div class="sec">
@@ -133,6 +147,14 @@ const year = new Date().getFullYear();
               </article>
             ))
           }
+          {/* Last card: goes to the world and opens the chat (src/scripts/panel.ts). */}
+          <a class="svc svc-ask reveal-card" href="#mundo" id="askMore">
+            <span class="svc-ask-arrow" aria-hidden="true"><Icon name="arrow-right" size={18} /></span>
+            <div>
+              <h3>{t.sobre.stack.askTitle}</h3>
+              <p>{t.sobre.stack.askText}</p>
+            </div>
+          </a>
         </div>
         <div class="tools">
           <div class="tools-head">
@@ -140,7 +162,7 @@ const year = new Date().getFullYear();
             <span class="tools-note">{t.sobre.stack.toolsNote}</span>
           </div>
           <ul class="chips" id="chips">
-            {profile.tools.map((tool) => <li class="chip">{tool}</li>)}
+            {copy.skills.map((skill) => <li class="chip">{skill}</li>)}
           </ul>
         </div>
       </div>

@@ -59,6 +59,8 @@ export function initRain(): void {
   let mono = 'monospace';
   let atlas: HTMLCanvasElement | null = null;
   let rows: Row[] = [];
+  /** What the atlas was built for: rebuilding it costs ~1100 fillText, so each visit reuses it. */
+  let atlasKey = '';
   /** Slow-frame budget: if the rain keeps missing frames, it drops to half density once. */
   let slow = 0;
   let lite = false;
@@ -129,12 +131,20 @@ export function initRain(): void {
     dpr = Math.min(lite ? 1 : 2, devicePixelRatio || 1);
     W = canvas.clientWidth;
     H = canvas.clientHeight;
-    canvas.width = Math.round(W * dpr);
-    canvas.height = Math.round(H * dpr);
+    const cw0 = Math.round(W * dpr);
+    const ch0 = Math.round(H * dpr);
+    if (canvas.width !== cw0 || canvas.height !== ch0) {
+      canvas.width = cw0;
+      canvas.height = ch0;
+    }
     ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
     mono = getComputedStyle(document.documentElement).getPropertyValue('--font-mono') || 'monospace';
     base = COARSE ? 12 : 15;
-    buildAtlas();
+    const key = `${dpr}|${base}|${mono}`;
+    if (!atlas || key !== atlasKey) {
+      buildAtlas();
+      atlasKey = key;
+    }
     const cw = base * 0.8;
     const n = Math.ceil(W / cw) + 1;
     streams = [];

@@ -74,6 +74,23 @@ function glyphField(canvas: HTMLCanvasElement, pageName: string, theme: FieldThe
     target.fillStyle = DORMANT;
     target.fillText(cells[i].g, x, y);
   }
+  /** Back on the page at the same size: reuse the dormant grid instead of redrawing every cell. */
+  function resume(): boolean {
+    if (!ctx || !layer) return false;
+    const dpr = Math.min(2, devicePixelRatio || 1);
+    if (canvas.clientWidth !== W || canvas.clientHeight !== H || layer.width !== Math.round(W * dpr)) return false;
+    const lc = layer.getContext('2d');
+    if (!lc) return false;
+    lc.font = `500 ${FS}px ${mono}`;
+    lc.textBaseline = 'top';
+    for (const i of hot) {
+      cells[i].h = 0;
+      paintDormant(lc, i);
+    }
+    hot.clear();
+    ctx.drawImage(layer, 0, 0, W, H);
+    return true;
+  }
   function size(): void {
     if (!ctx) return;
     const dpr = Math.min(2, devicePixelRatio || 1);
@@ -177,7 +194,7 @@ function glyphField(canvas: HTMLCanvasElement, pageName: string, theme: FieldThe
   function start(): void {
     if (!ctx || on || document.hidden) return;
     on = true;
-    size();
+    if (!resume()) size();
     last = performance.now();
     px = py = -1e4;
     wake = 0;
