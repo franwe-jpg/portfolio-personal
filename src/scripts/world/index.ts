@@ -202,11 +202,14 @@ export async function initWorld(): Promise<WorldApi> {
     else start();
     syncActive();
   });
-  addEventListener('resize', () => {
+  // The stage's box decides the size (see cam.resize); it changes with the window and with the phone's browser bars.
+  const onResize = () => {
     cam.resize();
     cam.applyCamera();
     if (!running) cam.render();
-  });
+  };
+  addEventListener('resize', onResize);
+  new ResizeObserver(onResize).observe(byId('stage3d'));
   // The label only exists on the interactive view.
   const setLabel = (on: boolean) => {
     // Close-ups (chat, surprise) keep it off: a late tween (the intro dolly) must not bring it back.
