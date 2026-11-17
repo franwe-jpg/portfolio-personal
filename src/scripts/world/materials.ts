@@ -29,8 +29,11 @@ export const mat = {
   screen: M(0x27313a, { emissive: 0x6f8aa0, emissiveIntensity: 0.55, roughness: 0.4 }),
   screen2: M(0x1f2a24, { emissive: 0x3fa883, emissiveIntensity: 0.5, roughness: 0.4 }),
   dog: M(0x16181c, { flatShading: false, roughness: 0.7 }),
-  catW: M(0xe4e6e9),
-  catO: M(0xd9873a),
+  // The white cat is seen up close in the POV shot: smooth shading like the poodle.
+  catW: M(0xe4e6e9, { flatShading: false, roughness: 0.8 }),
+  catO: M(0xd9873a, { flatShading: false, roughness: 0.8 }),
+  /** Nose and inner ears of the white cat. */
+  catNose: M(0xd88a8c, { flatShading: false }),
   catB: M(0x22252c),
   silver: M(0xc6ccd4, { roughness: 0.3, metalness: 0.7 }),
   glass: M(0x2a2e36, { roughness: 0.35, metalness: 0.5 }),
