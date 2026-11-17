@@ -1,6 +1,6 @@
 ---
 import perfil from '../assets/perfil-profile.webp';
-import { photosFor } from '../data/photos';
+import { photoPagesFor } from '../data/photos';
 import { profile, PROFILE_COPY } from '../data/profile';
 import type { Lang } from '../i18n/config';
 import type { UiCopy } from '../i18n/ui';
@@ -15,7 +15,7 @@ interface Props {
 
 const { lang, t } = Astro.props;
 const copy = PROFILE_COPY[lang];
-const photos = photosFor(lang);
+const photoPages = photoPagesFor(lang);
 const year = new Date().getFullYear();
 ---
 
@@ -88,32 +88,35 @@ const year = new Date().getFullYear();
       </div>
     </div>
 
-    <div class="sec">
+    <div class="sec sec-photos">
       <div class="wrap">
-        <span class="eyebrow" data-scramble>{t.sobre.photos.eyebrow}</span>
-        <h2 class="h2 split" id="fotosH">{t.sobre.photos.title}</h2>
-        <p class="photos-note">{t.sobre.photos.note}</p>
-        <div class="photos" id="photos">
+        <div class="photos-head">
+          <span class="eyebrow" data-scramble>{t.sobre.photos.eyebrow}</span>
+          <h2 class="photos-title" id="fotosH">{t.sobre.photos.title}</h2>
+          <p class="photos-note">{t.sobre.photos.note}</p>
+        </div>
+        <div class="photos reveal" id="photos" aria-labelledby="fotosH">
           {
-            photos.map((photo) =>
-              photo.src ? (
-                <figure class:list={['photo', 'reveal-card', photo.shape]}>
-                  <img
-                    src={photo.src}
-                    alt={photo.alt ?? photo.caption}
-                    width={photo.width}
-                    height={photo.height}
-                    loading="lazy"
-                    decoding="async"
-                  />
-                  <figcaption>{photo.caption}</figcaption>
-                </figure>
-              ) : (
-                <figure class:list={['photo', 'slot', 'reveal-card', photo.shape]}>{photo.caption}</figure>
-              ),
-            )
+            photoPages.map((page, index) => (
+              <div class="photos-page" data-photo-page={index} hidden={index > 0}>
+                {page.map((photo) => (
+                  <figure class="photo" style={`--r: ${(photo.width / photo.height).toFixed(3)}`}>
+                    <img src={photo.src} alt={photo.alt} width={photo.width} height={photo.height} loading="lazy" decoding="async" />
+                    <figcaption>{photo.caption}</figcaption>
+                  </figure>
+                ))}
+              </div>
+            ))
           }
         </div>
+        {
+          photoPages.length > 1 && (
+            <button class="photos-more" id="photosMore" type="button" aria-controls="photos">
+              {t.sobre.photos.more}
+              <span class="photos-count" id="photosCount">{`1/${photoPages.length}`}</span>
+            </button>
+          )
+        }
       </div>
     </div>
 
