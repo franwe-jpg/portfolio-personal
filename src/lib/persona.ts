@@ -4,16 +4,22 @@
  */
 
 /**
- * Maximum questions per IP per UTC day.
- *
- * The real ceiling is not this number: Workers AI grants 10,000 neurons/day on
- * the free plan and an answer costs about 24 (measured), so the whole site runs
- * dry at ~400 answers/day no matter what this says. On the free plan exhausting
- * it makes requests fail; on Workers Paid the excess is billed. Note this cap
- * is per IP, and offices, universities and mobile carriers put many people
- * behind a single one.
+ * Maximum questions per network per UTC day (IPv6 clients are grouped by /64).
+ * One person cannot spend the whole site's budget, but offices, universities
+ * and mobile carriers put many people behind a single address, so keep it
+ * generous enough for them.
  */
-export const DAILY_LIMIT = 25;
+export const DAILY_LIMIT = 10;
+
+/**
+ * Maximum model answers per UTC day across ALL visitors. Workers AI grants
+ * 10,000 neurons/day on the free plan and an answer from the 70B model costs
+ * roughly 140-200 (estimated from its token prices), so ~50 answers keep the
+ * site inside the free allowance. Past it the endpoint says so politely
+ * instead of letting the AI call fail. Raise it only if you accept paying
+ * (Workers Paid bills the excess, about $0.011 per 1,000 neurons).
+ */
+export const GLOBAL_DAILY_LIMIT = 50;
 
 /** Maximum accepted length of a visitor question, in characters. */
 export const MAX_QUESTION_CHARS = 500;
