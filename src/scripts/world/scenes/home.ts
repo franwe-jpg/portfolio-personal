@@ -5,7 +5,7 @@ import { t as ui } from '../../i18n';
 import { state } from '../../state';
 import { Batch } from '../batch';
 import { makeClock } from '../clock';
-import { FPS6, SCENE_X } from '../config';
+import { FPS6, MOBILE, SCENE_X } from '../config';
 import type { Css3dLayer } from '../css3d';
 import { makeFranco } from '../figure';
 import { floorGlow, windowGlow, windowLight } from '../lights';
@@ -57,10 +57,15 @@ export function home(scene: T.Scene, css3d: Css3dLayer): HomeDiorama {
   const b = new Batch(root);
   base(root, b, { wallLeftOpen: { a: -1.6, b: 0.6, y0: 1.0, y1: 2.5 }, night: true });
   rug(b, 0.2, -2.9, 4.6, 3.0, mat.rug2);
-  // TV unit against the back wall; a white console lying at its right end, round black grille on top.
+  // TV unit against the back wall; at its right end the Xbox Series X, standing upright: a matte black
+  // tower (15 x 15 x 30 cm), the round vent on top with its green tint inside, disc slot and power
+  // light on the front.
   tvUnit(b, 0, -4.5, 3.4);
-  b.box(1.3, 0.54, -4.5, 0.3, 0.065, 0.16, mat.catW);
-  b.cyl(1.38, 0.605, -4.5, 0.045, 0.006, mat.black, 16);
+  b.box(1.36, 0.54, -4.5, 0.15, 0.3, 0.15, mat.black);
+  b.cyl(1.36, 0.84, -4.5, 0.062, 0.004, mat.plant, 16);
+  b.cyl(1.36, 0.843, -4.5, 0.05, 0.003, mat.dark, 16);
+  b.box(1.32, 0.6, -4.422, 0.008, 0.07, 0.004, mat.dark);
+  b.box(1.41, 0.81, -4.422, 0.014, 0.014, 0.004, mat.pale);
   const bands = createTvBands();
   // Reduced motion never mounts the player nor animates the bands: leave one still frame on the screen.
   if (REDUCE) bands.draw(0);
@@ -302,8 +307,9 @@ export function home(scene: T.Scene, css3d: Css3dLayer): HomeDiorama {
     syncScreen();
   }
   let tvLast = -1;
-  // Back wall, halfway between the TV and the right end of the wall.
-  const clock = makeClock(root, 3.0, 2.4, -4.77);
+  // Back wall, halfway between the TV and the right end of the wall. Phones start closer and cut the
+  // slab's side corners (PORTRAIT_NEAR in camera.ts), so there it sits nearer the TV to stay in view.
+  const clock = makeClock(root, MOBILE ? 2.2 : 3.0, 2.4, -4.77);
   // POV: the centre of the TV screen, straight ahead of Franco.
   const pov = { target: toWorld(root, 0, 1.19, -4.56), back: new T.Vector3(0, 0, 1) };
   // The surprise covers the player and pauses it muted (the piano plays instead); off, the

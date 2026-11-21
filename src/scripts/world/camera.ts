@@ -1,7 +1,7 @@
 import * as T from 'three';
 import { REDUCE } from '../env';
 import type { Css3dLayer } from './css3d';
-import { FOV } from './config';
+import { FOV, MOBILE } from './config';
 import type { Stage } from './renderer';
 
 /**
@@ -20,6 +20,13 @@ const TAN_HALF = Math.tan(((FOV / 2) * Math.PI) / 180);
 
 export type ViewMode = 'off' | 'inicio' | 'mundo';
 const HOME_ZOOM: Record<ViewMode, number> = { inicio: 0.62, mundo: 1.3, off: 1 };
+/**
+ * Portrait phones fit the slab by its width, which leaves it small under the HUD: the interactive
+ * view starts this much closer. The slab's side corners fall off screen; the two-finger slide and
+ * the pinch (down to 0.75) bring them back. Everything that takes a tap stays in view (the home
+ * clock moves in for that, see scenes/home.ts).
+ */
+const PORTRAIT_NEAR = 1.2;
 
 export interface Rig {
   x: number;
@@ -44,11 +51,13 @@ export interface CameraRig {
   para: { az: number; el: number };
   /** Look-at offset in world units (`x/y/z`, eased towards the goal `gx/gy/gz`). */
   pan: { x: number; y: number; z: number; gx: number; gy: number; gz: number };
-  view: { userZoom: number; halfH: number; dist: number; w: number; h: number; camY: number };
+  view: { userZoom: number; halfH: number; dist: number; w: number; h: number; camY: number; near: number };
   pov: Pov;
   /** Mutable view state shared with the loop and the input. */
   cam: { focused: boolean; viewMode: ViewMode; elapsed: number };
   homeZoom(): number;
+  /** Recomputes the portrait framing (`view.near`, `view.camY`) for the current view mode. */
+  frameView(): void;
   resize(): void;
   applyCamera(): void;
   render(): void;
@@ -60,11 +69,19 @@ export function createCameraRig(st: Stage, css3d: Css3dLayer): CameraRig {
   const orbit = { az: 0, el: 0, goalAz: 0, goalEl: 0, vAz: 0 };
   const para = { az: 0, el: 0 };
   const pan = { x: 0, y: 0, z: 0, gx: 0, gy: 0, gz: 0 };
-  const view = { userZoom: 1, halfH: 7, dist: 33, w: 1, h: 1, camY: CAM_Y };
+  const view = { userZoom: 1, halfH: 7, dist: 33, w: 1, h: 1, camY: CAM_Y, near: 1 };
   const cam = { focused: false, viewMode: 'off' as ViewMode, elapsed: 0 };
   const pov: Pov = { mix: 0, fov: FOV, pos: new T.Vector3(), target: new T.Vector3() };
   const _ct = new T.Vector3();
-  const homeZoom = () => HOME_ZOOM[cam.viewMode] ?? 1;
+  const homeZoom = () => (HOME_ZOOM[cam.viewMode] ?? 1) * view.near;
+
+  function frameView(): void {
+    const portrait = view.w / view.h < 0.8;
+    view.near = MOBILE && portrait && cam.viewMode === 'mundo' ? PORTRAIT_NEAR : 1;
+    // Portrait: the HUD takes the top third, so aim higher to drop the diorama lower. Closer up the
+    // same lift would push it past the bottom edge, so it shrinks with the extra zoom.
+    view.camY = CAM_Y + (portrait ? (0.26 * view.halfH) / Math.cos(BASE_EL) / (view.near * view.near) : 0);
+  }
 
   function resize(): void {
     // The stage's own box, not innerWidth/innerHeight: on phones those follow the pinch-zoomed visual
@@ -84,9 +101,13 @@ export function createCameraRig(st: Stage, css3d: Css3dLayer): CameraRig {
     // Same framing as the old orthographic frustum: at the target distance the
     // visible half-height is halfH, so dist = halfH / tan(fov / 2).
     view.dist = view.halfH / TAN_HALF;
-    // Portrait: the HUD takes the top third, so aim higher to drop the diorama lower.
-    view.camY = CAM_Y + (aspect < 0.8 ? (0.26 * view.halfH) / Math.cos(BASE_EL) : 0);
-    if (!cam.focused) rig.y = view.camY;
+    // A rotated phone changes the portrait zoom: keep the rig on the new home framing.
+    const zoom0 = homeZoom();
+    frameView();
+    if (!cam.focused) {
+      rig.y = view.camY;
+      rig.zoom *= homeZoom() / zoom0;
+    }
     camera.aspect = aspect;
     camera.updateProjectionMatrix();
   }
@@ -127,5 +148,5 @@ export function createCameraRig(st: Stage, css3d: Css3dLayer): CameraRig {
     camera.updateMatrixWorld();
   }
 
-  return { rig, orbit, para, pan, view, pov, cam, homeZoom, resize, applyCamera, render };
+  return { rig, orbit, para, pan, view, pov, cam, homeZoom, frameView, resize, applyCamera, render };
 }

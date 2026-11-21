@@ -16,6 +16,7 @@ const TOTAL = 5;
   <div class="hunt-panel" id="huntPanel" role="dialog" aria-label={t.hunt.dialogLabel} hidden>
     <p>{t.hunt.intro}</p>
     <p>{t.hunt.reward}</p>
+    <p class="hunt-hint">{t.hunt.hint}</p>
     <ol class="hunt-pips" id="huntPips" aria-hidden="true">
       {Array.from({ length: TOTAL }, () => <li />)}
     </ol>

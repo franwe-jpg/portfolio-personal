@@ -180,11 +180,19 @@
 body[data-page="inicio"] .hunt { display: block; }
 .hunt-tab { position: fixed; z-index: 41; left: 0; bottom: calc(68px + var(--sb)); writing-mode: vertical-rl; transform: rotate(180deg); padding: 14px 7px 16px; border: 0; border-radius: 8px 0 0 8px; background: #c8222a; color: #fff3ee; font: 600 11px var(--font-mono); letter-spacing: .2em; text-transform: uppercase; box-shadow: inset 0 0 0 3px #c8222a, inset 0 0 0 4px rgba(255,217,208,.5); transition: transform .3s var(--e-out), background-color .2s; }
 .hunt-tab:hover, .hunt-tab[aria-expanded="true"] { transform: rotate(180deg) translateX(-4px); background: #dc2f37; }
+/* A light that keeps travelling around the tab's edge: a conic gradient turning behind a ring-shaped mask
+   (crisp line in ::before, its soft halo in ::after). Without @property the angle does not animate and the light stays put. */
+@property --hunt-turn { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+.hunt-tab::before, .hunt-tab::after { content: ""; position: absolute; border-radius: inherit; pointer-events: none; background: conic-gradient(from var(--hunt-turn), transparent 0 62%, rgba(255,210,122,.7) 78%, #fff3ee 88%, transparent 94%); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0); animation: hunt-turn 3.6s linear infinite; }
+.hunt-tab::before { inset: 0; padding: 2px; }
+.hunt-tab::after { inset: -1px; padding: 6px; filter: blur(3px); opacity: .75; }
+@keyframes hunt-turn { to { --hunt-turn: 360deg; } }
 /* Same red ticket look as the ÁBREME tab. */
 .hunt-panel { position: fixed; z-index: 42; left: 40px; bottom: calc(68px + var(--sb)); width: min(290px, calc(100vw - 56px)); padding: 18px 20px; border-radius: 12px; background: #c8222a; border: 0; color: #fff3ee; box-shadow: inset 0 0 0 3px #c8222a, inset 0 0 0 4px rgba(255,217,208,.5), 0 24px 50px -24px rgba(0,0,0,.6); }
 .hunt-panel[hidden] { display: none; }
 .hunt-panel p { margin: 0; font-size: 15px; line-height: 1.45; }
 .hunt-panel p + p { margin-top: 6px; color: rgba(255,243,238,.8); }
+.hunt-panel .hunt-hint { margin-top: 10px; font: 400 10.5px/1.5 var(--font-mono); letter-spacing: .08em; text-transform: uppercase; }
 .hunt-pips { display: flex; gap: 6px; list-style: none; margin: 14px 0 8px; padding: 0; }
 .hunt-pips li { width: 30px; height: 15px; border-radius: 3px; border: 1px dashed rgba(255,217,208,.45); }
 .hunt-pips li.is-found { border: 0; background: #fff3ee; box-shadow: inset 0 0 0 2px #fff3ee, inset 0 0 0 3px rgba(200,34,42,.6); }
@@ -195,4 +203,6 @@ body[data-page="inicio"] .hunt { display: block; }
 @media (prefers-reduced-motion: reduce) {
   .tk:hover svg, .tk-toast.is-on .tk-toast-ticket, .tk-toast.is-on .tk-toast-msg { animation: none !important; }
   .tk-fx i { animation: none !important; opacity: .7; }
+  /* No travelling light: the tab keeps its plain ticket border. */
+  .hunt-tab::before, .hunt-tab::after { display: none; }
 }
