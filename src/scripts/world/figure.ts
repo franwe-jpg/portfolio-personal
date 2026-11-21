@@ -42,7 +42,8 @@ const POSES: Record<Pose, PoseDef> = {
 const GLASS_RING = new T.TorusGeometry(0.032, 0.006, 4, 10);
 
 /**
- * Optional details: glasses, watch (left wrist), curly hair, receding hairline, long hair,
+ * Optional details: glasses, watch (left wrist), curly hair, receding hairline, long hair (with
+ * `curly`, long curls),
  * polo collar (material) and the shirt showing under a jacket (lapel material).
  */
 export interface FigureOptions {
@@ -126,7 +127,25 @@ export function figure(m: FigureMats, pose: Pose, ph = 0, o: FigureOptions = {})
     mesh(UNIT_BOX, m.hair, head, 0.112, 0.2, -0.03).scale.set(0.02, 0.1, 0.18);
     mesh(UNIT_BOX, m.hair, head, -0.112, 0.2, -0.03).scale.set(0.02, 0.1, 0.18);
   }
-  if (o.long) {
+  if (o.long && o.curly) {
+    // Long curls: puffs tumbling down the back to mid height and over the shoulders (x, y, z, size;
+    // mirrored left and right unless on the centre line).
+    const locks: [number, number, number, number][] = [
+      [0.06, 0.02, -0.125, 0.075],
+      [0, -0.05, -0.15, 0.078],
+      [0.105, -0.05, -0.115, 0.068],
+      [0.055, -0.13, -0.175, 0.072],
+      [0, -0.2, -0.18, 0.068],
+      [0.095, -0.2, -0.16, 0.06],
+      [0.045, -0.27, -0.175, 0.058],
+      [0.135, 0.06, -0.03, 0.062],
+      [0.145, -0.02, 0.01, 0.058],
+      [0.14, -0.09, 0.07, 0.052],
+    ];
+    for (const [x, y, z, sz] of locks) {
+      for (const s of x ? [-1, 1] : [1]) mesh(PUFF, m.hair, head, x * s, y, z).scale.setScalar(sz);
+    }
+  } else if (o.long) {
     // Long hair: down the back to mid height and down the sides to the shoulders.
     mesh(UNIT_BOX, m.hair, head, 0, -0.04, -0.1).scale.set(0.24, 0.42, 0.08);
     for (const s of [-1, 1]) mesh(UNIT_BOX, m.hair, head, 0.125 * s, 0.03, -0.03).scale.set(0.03, 0.3, 0.17);
