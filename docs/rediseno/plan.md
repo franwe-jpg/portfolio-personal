@@ -45,6 +45,10 @@ No se midieron fps reales: las capturas headless usan GPU por software. Si hace 
 
 ## Decisiones
 
+- **2026-11-21** — Chat caído (rama `fix/chat-modelo-limites`):
+  - **Causa.** Cloudflare retiró `@cf/meta/llama-3.1-8b-instruct-fp8` el 2026-11-20 (error 5028 de Workers AI) y el endpoint respondía el 503 genérico. No era un límite de Neuronas.
+  - **Modelo.** Pasa a `@cf/meta/llama-3.3-70b-instruct-fp8-fast`. Los modelos nuevos devuelven `choices[0].message.content` en vez de `response`: `modelText()` lee ambos formatos. Los `catch` de `chat.ts` ahora hacen `console.error` (visible en Observability y `wrangler tail`).
+  - **Límites.** 10 preguntas por red al día (antes 25), con IPv6 agrupado por /64 (`networkKey` en `lib/api.ts`), y tope global de 50 respuestas del modelo por día (`GLOBAL_DAILY_LIMIT`): al llegar, el chat avisa con un 429 y un mensaje claro en vez de fallar. El 70B gasta unas 140-200 Neuronas por respuesta (estimado por precio de tokens, no medido), así que 50 respuestas entran en las 10.000 gratis. El formulario de contacto sigue agrupando por IP completa.
 - **2026-11-17** — Ajustes pedidos por el usuario (rama `fix/chat-movil`):
   - **Parallax del inicio en celular.** La frase "Analista Programador · Trelew, Chubut" tenía profundidad negativa: al inclinar el celular hacia atrás bajaba mientras el resto subía, y con 18 px de separación terminaba encima del título. Ahora va a `0.3`, como la descripción.
   - **Teclado del chat.** En pantallas táctiles el teclado solo se abre al tocar el campo: abrir el panel, subir la hoja o elegir una pregunta sugerida dejan el foco en la cruz del diálogo. En la compu el cursor sigue yendo directo al campo.

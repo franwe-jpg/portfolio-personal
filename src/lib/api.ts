@@ -41,6 +41,21 @@ export async function hashIp(ip: string): Promise<string> {
     .join('');
 }
 
+/**
+ * The key a client is rate-limited by. IPv4 is used as is. IPv6 collapses to its
+ * /64 prefix: a single device rotates through many addresses inside one /64
+ * (privacy extensions), so the full address would let it dodge the limit.
+ */
+export function networkKey(ip: string): string {
+  if (!ip.includes(':') || ip.includes('.')) return ip;
+  const [head, tail] = ip.split('::');
+  const first = head ? head.split(':') : [];
+  const last = tail ? tail.split(':') : [];
+  const gap = ip.includes('::') ? Array(Math.max(0, 8 - first.length - last.length)).fill('0') : [];
+  const groups = [...first, ...gap, ...last].slice(0, 4);
+  return groups.map((g) => g.padStart(4, '0').toLowerCase()).join(':') + '::/64';
+}
+
 export type HumanCheck = 'passed' | 'rejected' | 'unavailable';
 
 /**
