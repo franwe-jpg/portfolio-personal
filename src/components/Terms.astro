@@ -3,8 +3,9 @@ import type { Lang } from '../i18n/config';
 import Icon from './Icon.astro';
 
 /**
- * The "terms and conditions" of the ticket-hunt prize: a joke page. One real sentence in bold,
- * then a wall of formal-sounding nonsense generated at build time from word pools with a seeded
+ * The "terms and conditions" of the ticket-hunt prize: a joke page. Two real paragraphs in bold
+ * (how far the site can be customised and who pays for publishing it, then the repository
+ * handover when it is not published), then a wall of formal-sounding nonsense generated at build time from word pools with a seeded
  * PRNG (same text on every build), and a bold punchline at the end. It opens in the same tab
  * from the surprise view: both back controls return to the site, which resumes the surprise
  * (src/scripts/hunt.ts).
@@ -20,7 +21,8 @@ const COPY = {
     title: 'Términos y Condiciones del Premio Obtenido',
     subtitle: 'Anexo I · Reglamento General de Adjudicación, Uso y Mantenimiento de la Página Web',
     opening:
-      'El desarrollo de la página web será personalizable en lo que el usuario quiera y sea accesible, pero el costo y mantenimiento es por cargo del usuario.',
+      'El desarrollo de la página web será personalizable en lo que el usuario quiera y sea accesible, si el usuario quiere publicarla en internet los costos de hosting y de dominio corren por cuenta del usuario.',
+    handover: 'De lo contrario, le entrego el repositorio con los archivos.',
     closing:
       'Seguro no leíste todo, pero no te preocupes, es lo que todos hacemos 🙂👍 (lamentablemente). Por tu suerte, no había nada importante (vuelve a mirar).',
     article: 'Artículo N.º',
@@ -122,7 +124,8 @@ const COPY = {
     title: 'Terms and Conditions of the Prize Obtained',
     subtitle: 'Annex I · General Regulations for Award, Use and Maintenance of the Website',
     opening:
-      'The website will be customisable in whatever the user wants and is feasible, but its cost and maintenance are borne by the user.',
+      'The website will be customisable in whatever the user wants and is feasible; if the user wants it published online, hosting and domain costs are paid by the user.',
+    handover: 'Otherwise, I hand over the repository with the files.',
     closing:
       'You surely did not read all of it, but do not worry, that is what we all do 🙂👍 (unfortunately). Luckily for you, there was nothing important in it (look again).',
     article: 'Article No.',
@@ -271,6 +274,7 @@ const articles = Array.from({ length: ARTICLES }, (_, i) => {
     <p class="subtitle">{copy.subtitle}</p>
   </header>
   <p class="lead"><strong>{copy.opening}</strong></p>
+  <p class="lead"><strong>{copy.handover}</strong></p>
   {
     articles.map((a) => (
       <section>

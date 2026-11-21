@@ -17,6 +17,8 @@ export const mat = {
   paper: M(0xc9cfd8),
   dark: M(0x15181d),
   black: M(0x0f1114),
+  /** Robot-white plastic of the home Xbox. */
+  consoleW: M(0xe6e8eb),
   metal: M(0x6b7482, { roughness: 0.45, metalness: 0.35 }),
   plant: M(0x3d6b57),
   plant2: M(0x335a49),
