@@ -5,7 +5,7 @@ import { t as ui } from '../../i18n';
 import { state } from '../../state';
 import { Batch } from '../batch';
 import { makeClock } from '../clock';
-import { FPS6, SCENE_X } from '../config';
+import { FPS6, MOBILE, SCENE_X } from '../config';
 import type { Css3dLayer } from '../css3d';
 import { makeFranco } from '../figure';
 import { floorGlow, windowGlow, windowLight } from '../lights';
@@ -307,8 +307,9 @@ export function home(scene: T.Scene, css3d: Css3dLayer): HomeDiorama {
     syncScreen();
   }
   let tvLast = -1;
-  // Back wall, halfway between the TV and the right end of the wall.
-  const clock = makeClock(root, 3.0, 2.4, -4.77);
+  // Back wall, halfway between the TV and the right end of the wall. Phones start closer and cut the
+  // slab's side corners (PORTRAIT_NEAR in camera.ts), so there it sits nearer the TV to stay in view.
+  const clock = makeClock(root, MOBILE ? 2.2 : 3.0, 2.4, -4.77);
   // POV: the centre of the TV screen, straight ahead of Franco.
   const pov = { target: toWorld(root, 0, 1.19, -4.56), back: new T.Vector3(0, 0, 1) };
   // The surprise covers the player and pauses it muted (the piano plays instead); off, the
