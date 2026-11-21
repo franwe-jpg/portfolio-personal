@@ -262,6 +262,7 @@ export async function initWorld(): Promise<WorldApi> {
   function setView(mode: ViewMode, { instant = false }: { instant?: boolean } = {}): void {
     if (mode === cam.cam.viewMode) return;
     cam.cam.viewMode = mode;
+    cam.frameView();
     syncActive();
     stage.classList.toggle('is-off', mode === 'off');
     stage.classList.toggle('is-inicio', mode === 'inicio');
@@ -285,6 +286,7 @@ export async function initWorld(): Promise<WorldApi> {
           zoom: z,
           el,
           az: 0,
+          y: view.camY,
           duration: 1.4,
           ease: 'expo.out',
           onComplete: () => {

@@ -147,6 +147,8 @@ export interface UiCopy {
     dialogLabel: string;
     intro: string;
     reward: string;
+    /** Where to look: one ticket on each page. */
+    hint: string;
     count: (found: number, total: number) => string;
     show: string;
     reset: string;
@@ -375,6 +377,7 @@ const es: UiCopy = {
     dialogLabel: 'Búsqueda de tickets escondidos',
     intro: 'Busca los 5 tickets escondidos por la web.',
     reward: 'Si encuentras todos, te ganas una sorpresa.',
+    hint: 'Pista: solo hay un ticket por página.',
     count: (found, total) => `${found}/${total} encontrados`,
     show: 'Ver sorpresa',
     reset: 'Reiniciar',
@@ -604,6 +607,7 @@ const en: UiCopy = {
     dialogLabel: 'Hidden ticket hunt',
     intro: 'Find the 5 tickets hidden around the site.',
     reward: 'Find them all and you win a surprise.',
+    hint: 'Hint: there is only one ticket per page.',
     count: (found, total) => `${found}/${total} found`,
     show: 'See the surprise',
     reset: 'Start over',

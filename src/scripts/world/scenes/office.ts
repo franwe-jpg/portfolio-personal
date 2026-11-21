@@ -174,10 +174,10 @@ export function office(scene: T.Scene): Diorama {
   // Across from Franco: red-haired girl with long hair, lilac shirt and black trousers.
   seat(makePerson({ shirt: 0xb08ad0, pants: 0x15181d, skin: 0xe6c7ad, hair: 0xd8642a, long: true }), sA, Math.PI / 2);
   if (!MOBILE) {
-    // Other island, facing each other: guy with glasses and a brown polo; girl with black curls and
-    // glasses, black jacket over a light shirt and light-blue jeans.
+    // Other island, facing each other: guy with glasses and a brown polo; girl with long black
+    // curls and glasses, white top and light-blue jeans.
     seat(makePerson({ shirt: 0x6b4a32, collar: 0x80603f, pants: 0x2a2f38, skin: 0xb98a66, hair: 0x1b1e23, glasses: true }), sB, -Math.PI / 2);
-    seat(makePerson({ shirt: 0x1a1d22, lapel: 0xd6dbe2, pants: 0x6f9cc4, skin: 0xc8a68e, hair: 0x15171b, glasses: true, curly: true }), sC, Math.PI / 2);
+    seat(makePerson({ shirt: 0xeef0f2, pants: 0x6f9cc4, skin: 0xc8a68e, hair: 0x15171b, glasses: true, curly: true, long: true }), sC, Math.PI / 2);
   }
 
   const glow = new T.PointLight(0xbff5da, 0, 3, 1.4);
