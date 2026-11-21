@@ -91,6 +91,31 @@ export function bindInput(core: InputCore): WorldInput {
     if (!FINE) canvas.style.cursor = on ? 'pointer' : '';
     if (on) audio.tick();
   }
+  /**
+   * A finger grabs the bar from this far (CSS px): on a phone the bar projects to a strip a few
+   * pixels tall, which a fingertip misses, and the touch then starts an orbit drag instead.
+   */
+  const BAR_SLOP = 22;
+  const _barA = new T.Vector3();
+  const _barB = new T.Vector3();
+  function hitBar(tv: NonNullable<ReturnType<typeof tvUi>>, clientX: number, clientY: number, touch: boolean): boolean {
+    if (hitMesh(tv.bar.hit, clientX, clientY)) return true;
+    // The screen and the clock keep their own taps.
+    if (!touch || hitMesh(tv.hit, clientX, clientY) || hitClock(clientX, clientY)) return false;
+    const r = canvas.getBoundingClientRect();
+    tv.bar.hit.getWorldPosition(_barA);
+    _barB.copy(_barA);
+    _barA.x -= tv.bar.w / 2;
+    _barB.x += tv.bar.w / 2;
+    _barA.project(camera);
+    _barB.project(camera);
+    const ax = r.left + (_barA.x * 0.5 + 0.5) * r.width;
+    const ay = r.top + (-_barA.y * 0.5 + 0.5) * r.height;
+    const dx = (_barB.x - _barA.x) * 0.5 * r.width;
+    const dy = -(_barB.y - _barA.y) * 0.5 * r.height;
+    const k = Math.max(0, Math.min(1, ((clientX - ax) * dx + (clientY - ay) * dy) / (dx * dx + dy * dy || 1)));
+    return Math.hypot(clientX - ax - dx * k, clientY - ay - dy * k) <= BAR_SLOP;
+  }
   function volumeFromPointer(clientX: number, clientY: number): void {
     const bar = tvUi()?.bar;
     if (!bar) return;
@@ -170,7 +195,7 @@ export function bindInput(core: InputCore): WorldInput {
   canvas.addEventListener('pointerdown', (e) => {
     if (locked()) return;
     const tv = inSurprise() ? null : tvUi();
-    if (tv && hitMesh(tv.bar.hit, e.clientX, e.clientY)) {
+    if (tv && hitBar(tv, e.clientX, e.clientY, e.pointerType !== 'mouse')) {
       volDrag = true;
       canvas.setPointerCapture(e.pointerId);
       volumeFromPointer(e.clientX, e.clientY);
