@@ -57,11 +57,11 @@ export function home(scene: T.Scene, css3d: Css3dLayer): HomeDiorama {
   const b = new Batch(root);
   base(root, b, { wallLeftOpen: { a: -1.6, b: 0.6, y0: 1.0, y1: 2.5 }, night: true });
   rug(b, 0.2, -2.9, 4.6, 3.0, mat.rug2);
-  // TV unit against the back wall; at its right end the Xbox Series X, standing upright: a matte black
+  // TV unit against the back wall; at its right end the Xbox Series X, standing upright: a white
   // tower (15 x 15 x 30 cm), the round vent on top with its green tint inside, disc slot and power
   // light on the front.
   tvUnit(b, 0, -4.5, 3.4);
-  b.box(1.36, 0.54, -4.5, 0.15, 0.3, 0.15, mat.black);
+  b.box(1.36, 0.54, -4.5, 0.15, 0.3, 0.15, mat.consoleW);
   b.cyl(1.36, 0.84, -4.5, 0.062, 0.004, mat.plant, 16);
   b.cyl(1.36, 0.843, -4.5, 0.05, 0.003, mat.dark, 16);
   b.box(1.32, 0.6, -4.422, 0.008, 0.07, 0.004, mat.dark);
