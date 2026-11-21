@@ -38,7 +38,7 @@ const PHOTOS: PhotoEntry[] = [
   { file: 'acantilado-atardecer.webp', width: 900, height: 1600, date: '2026-05', alt: { es: 'Atardecer en el acantilado', en: 'Sunset by the cliff' } },
   { file: 'bote-lago.webp', width: 1200, height: 1600, date: '2026-01', alt: { es: 'Bote en el lago', en: 'Raft on the lake' } },
   { file: 'atardecer-meseta.webp', width: 1600, height: 900, date: '2026-06', alt: { es: 'Atardecer en la meseta', en: 'Sunset over the steppe' } },
-  { file: 'puente-rojo.webp', width: 900, height: 1600, date: '2026-03', alt: { es: 'Puente rojo', en: 'Red bridge' } },
+  { file: 'puente-rojo.webp', width: 900, height: 1600, alt: { es: 'Puente rojo', en: 'Red bridge' } },
   { file: 'gaviotines.webp', width: 1600, height: 1200, alt: { es: 'Gaviotines en la amarra', en: 'Terns on a mooring line' } },
   { file: 'margarita.webp', width: 1200, height: 1600, date: '2024-12', alt: { es: 'Margarita', en: 'Daisy' } },
   { file: 'vacas-camino.webp', width: 1600, height: 900, date: '2026-01', alt: { es: 'Vacas en el camino', en: 'Cows on the trail' } },
