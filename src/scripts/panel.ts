@@ -207,41 +207,45 @@ function setMin(min: boolean): void {
   }, REDUCE ? 30 : 380);
 }
 
-/** Bottom sheet (mobile): drag the handle down to lower it to its title bar, up (or tap) to raise it again. */
+/**
+ * Bottom sheet (mobile): drag the handle or the title bar under it down to lower the sheet to its
+ * title bar, up (or tap it) to raise it again. The close and back buttons keep their own taps.
+ */
 function bindHandle(): void {
-  const handle = byId('panelHandle');
+  const grips = [byId('panelHandle'), panel().querySelector<HTMLElement>('.panel-head')!];
   let y0: number | null = null;
   let dy = 0;
   let base = 0;
   let lowest = 0;
-  handle.addEventListener('pointerdown', (e) => {
-    y0 = e.clientY;
-    dy = 0;
-    lowest = panel().offsetHeight - peekHeight();
-    base = isMin() ? lowest : 0;
-    panel().classList.add('is-dragging');
-    handle.setPointerCapture(e.pointerId);
-  });
-  handle.addEventListener('pointermove', (e) => {
-    if (y0 === null) return;
-    dy = e.clientY - y0;
-    panel().style.transform = `translateY(${Math.min(lowest, Math.max(0, base + dy))}px)`;
-  });
   const end = () => {
     if (y0 === null) return;
     y0 = null;
     panel().classList.remove('is-dragging');
-    if (!isMin()) setMin(dy > 110);
-    else setMin(!(dy < -60 || Math.abs(dy) < 6));
+    if (isMin()) setMin(!(dy < -60 || Math.abs(dy) < 6));
+    else if (dy > 110) setMin(true);
+    // Up and not dragged far: settle back (a tap on the title must not pop the keyboard).
+    else panel().style.transform = '';
   };
-  handle.addEventListener('pointerup', end);
-  handle.addEventListener('pointercancel', end);
-  // Lowered, the whole title bar raises the sheet (the close button keeps closing it).
-  panel()
-    .querySelector('.panel-head')!
-    .addEventListener('click', (e) => {
-      if (isMin() && !(e.target as HTMLElement).closest('#panelClose, #panelBack')) setMin(false);
+  for (const grip of grips) {
+    grip.addEventListener('pointerdown', (e) => {
+      // Desktop has no sheet to lower (the handle is hidden there; the title bar stays put).
+      if (getComputedStyle(byId('panelHandle')).display === 'none') return;
+      if ((e.target as HTMLElement).closest('button:not(#panelHandle)')) return;
+      y0 = e.clientY;
+      dy = 0;
+      lowest = panel().offsetHeight - peekHeight();
+      base = isMin() ? lowest : 0;
+      panel().classList.add('is-dragging');
+      grip.setPointerCapture(e.pointerId);
     });
+    grip.addEventListener('pointermove', (e) => {
+      if (y0 === null) return;
+      dy = e.clientY - y0;
+      panel().style.transform = `translateY(${Math.min(lowest, Math.max(0, base + dy))}px)`;
+    });
+    grip.addEventListener('pointerup', end);
+    grip.addEventListener('pointercancel', end);
+  }
 }
 
 // ---------- chat ----------

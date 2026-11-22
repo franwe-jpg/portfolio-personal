@@ -77,7 +77,8 @@ export function bindInput(core: InputCore): WorldInput {
 
   const tvUi = () => (state.scene === 'home' ? dioramas.home.tv : null);
   let tvHot = false;
-  let volDrag = false;
+  /** Pointer dragging the volume bar, or -1. Only that pointer moves the volume and ends the drag. */
+  let volId = -1;
   const _barPlane = new T.Plane(new T.Vector3(0, 0, 1), 0);
   const _barPt = new T.Vector3();
   function setTvHover(part: TvPart): void {
@@ -194,9 +195,13 @@ export function bindInput(core: InputCore): WorldInput {
   }
   canvas.addEventListener('pointerdown', (e) => {
     if (locked()) return;
+    // A primary pointer starts a new gesture with no other finger down: drop any pointer whose
+    // up/cancel never arrived, or every later tap would count as the second finger of a pinch.
+    if (e.isPrimary) pointers.clear();
     const tv = inSurprise() ? null : tvUi();
-    if (tv && hitBar(tv, e.clientX, e.clientY, e.pointerType !== 'mouse')) {
-      volDrag = true;
+    // Only a lone finger grabs the bar: a second finger landing near it belongs to a pinch.
+    if (tv && volId < 0 && pointers.size === 0 && hitBar(tv, e.clientX, e.clientY, e.pointerType !== 'mouse')) {
+      volId = e.pointerId;
       canvas.setPointerCapture(e.pointerId);
       volumeFromPointer(e.clientX, e.clientY);
       audio.tick();
@@ -231,7 +236,7 @@ export function bindInput(core: InputCore): WorldInput {
     }
   });
   canvas.addEventListener('pointermove', (e) => {
-    if (volDrag) {
+    if (e.pointerId === volId) {
       volumeFromPointer(e.clientX, e.clientY);
       return;
     }
@@ -275,8 +280,8 @@ export function bindInput(core: InputCore): WorldInput {
     }
   });
   const endDrag = (e: PointerEvent, cancelled: boolean) => {
-    if (volDrag) {
-      volDrag = false;
+    if (e.pointerId === volId) {
+      volId = -1;
       return;
     }
     pointers.delete(e.pointerId);

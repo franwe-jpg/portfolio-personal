@@ -24,7 +24,8 @@
   .panel-handle::before { content: ""; width: 44px; height: 4px; border-radius: 4px; background: var(--line); }
 }
 .panel-head { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; align-items: start; padding: 18px 20px 14px; border-bottom: 1px solid var(--s3); }
-@media (max-width: 767px) { .panel-head { padding-top: 4px; } }
+/* Mobile: the title bar is part of the grip that drags the sheet (src/scripts/panel.ts, bindHandle). */
+@media (max-width: 767px) { .panel-head { padding-top: 4px; touch-action: none; user-select: none; -webkit-user-select: none; cursor: grab; } }
 .panel-headline { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .panel-back { width: 30px; height: 30px; flex: none; border-radius: 8px; }
 .panel-back[hidden] { display: none; }
